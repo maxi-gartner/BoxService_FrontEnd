@@ -26,12 +26,12 @@ El frontend se comunica con el backend mediante `fetch()` y muestra los datos al
 
 ## Integrantes
 
-| Nombre               | Legajo | Módulo                               |
-| -------------------- | ------ | ------------------------------------ |
-| Gartner, Maximiliano | 18396  | Arquitecto + Presupuestos y Facturas |
-| Carrasco, Cristhian  | 18403  | Clientes                             |
-| Busch, Leonardo      | 18404  | Vehículos                            |
-| Quesada, Oscar       | 18382  | Services + Dashboard                 |
+| Nombre               | Legajo | Módulo                                 |
+| -------------------- | ------ | -------------------------------------- |
+| Gartner, Maximiliano | 18396  | Arquitectura + Presupuestos y Facturas |
+| Carrasco, Cristhian  | 18403  | Clientes                               |
+| Busch, Leonardo      | 18404  | Vehículos                              |
+| Quesada, Oscar       | 18382  | Services + Dashboard                   |
 
 ---
 
