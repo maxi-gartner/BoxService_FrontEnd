@@ -1,29 +1,86 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BoxService — Vehículos</title>
-  <link rel="stylesheet" href="../css/main.css">
-  <link rel="stylesheet" href="../css/vehiculos.css">
-</head>
-<body>
-  <nav class="navbar">
-    <span class="navbar-brand">⚙ BoxService</span>
-    <ul class="navbar-links">
-      <li><a href="../index.html">Dashboard</a></li>
-      <li><a href="clientes.html">Clientes</a></li>
-      <li><a href="vehiculos.html" class="active">Vehículos</a></li>
-      <li><a href="services.html">Services</a></li>
-      <li><a href="presupuestos.html">Presupuestos</a></li>
-      <li><a href="facturas.html">Facturas</a></li>
-    </ul>
-  </nav>
-  <div class="container">
-    <h1 class="page-title">Vehículos</h1>
-    <!-- TODO: Leo (ROL C) — implementar listado, buscador por patente y formulario -->
-    <p class="text-muted">Módulo en desarrollo.</p>
-  </div>
-  <script type="module" src="../js/vehiculos.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BoxService - Vehículos</title>
+    <link rel="stylesheet" href="../css/Main.css" />
+    <link rel="stylesheet" href="../css/vehiculos.css" />
+  </head>
+  <body>
+    <header class="navbar">
+      <span class="navbar-brand">BoxService</span>
+      <nav>
+        <ul class="navbar-links">
+          <li><a href="../index.html">Dashboard</a></li>
+          <li><a href="vehiculos.html" class="active">Vehículos</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <main class="container">
+      <h1 class="page-title">Vehículos</h1>
+
+      <div id="page-alert" class="alert"></div>
+
+      <div class="vehiculos-grid">
+        <section class="card">
+          <h2 class="card-title">Registrar vehículo</h2>
+          <form id="vehiculo-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="patente">Patente</label>
+                <input class="form-control" type="text" id="patente" name="patente" placeholder="ABC123" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="marca">Marca</label>
+                <input class="form-control" type="text" id="marca" name="marca" placeholder="Toyota" required />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="modelo">Modelo</label>
+                <input class="form-control" type="text" id="modelo" name="modelo" placeholder="Corolla" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="anio">Año</label>
+                <input class="form-control" type="number" id="anio" name="anio" placeholder="2022" min="1900" max="2100" required />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="cliente">Cliente</label>
+              <input class="form-control" type="text" id="cliente" name="cliente" placeholder="Nombre del cliente" required />
+            </div>
+
+            <div class="vehiculos-actions">
+              <button class="btn btn-primary" type="submit">Guardar vehículo</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="card">
+          <h2 class="card-title">Lista de vehículos</h2>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Patente</th>
+                  <th>Marca</th>
+                  <th>Modelo</th>
+                  <th>Año</th>
+                  <th>Cliente</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="vehiculos-body"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <script type="module" src="../js/vehiculos.js"></script>
+  </body>
 </html>

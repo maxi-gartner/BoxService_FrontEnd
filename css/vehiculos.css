@@ -1,0 +1,38 @@
+.vehiculos-header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--space-4);
+  align-items: center;
+  margin-bottom: var(--space-6);
+}
+
+.vehiculos-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: var(--space-6);
+}
+
+.vehiculos-grid .card {
+  min-height: 420px;
+}
+
+.vehiculos-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.table-wrapper {
+  max-height: 580px;
+}
+
+.table-wrapper table {
+  min-width: 700px;
+}
+
+@media (max-width: 900px) {
+  .vehiculos-grid {
+    grid-template-columns: 1fr;
+  }
+}

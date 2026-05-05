@@ -1,66 +1,64 @@
-// =====================================================
-// BoxService — api.js
-// Archivo central de comunicación con el backend.
-// TODOS los fetch pasan por acá. NO duplicar lógica de fetch en otros archivos.
-// Solo Maxi agrega funciones acá.
-// =====================================================
+const BASE_URL = "http://localhost:5000";
 
-const API_URL = "http://localhost:5001";
+async function sendRequest(path, options = {}) {
+  try {
+    const response = await fetch(`${BASE_URL}${path}`, options);
+    const data = await response.json();
 
-// ── Función base ───────────────────────────────────────
-async function request(method, endpoint, body = null) {
-  const options = {
-    method,
-    headers: { "Content-Type": "application/json" },
-  };
-  if (body) options.body = JSON.stringify(body);
+    if (!response.ok) {
+      return {
+        success: false,
+        data: null,
+        error: {
+          code: response.status,
+          message: data?.message || "Error en la API",
+        },
+      };
+    }
 
-  const res = await fetch(`${API_URL}${endpoint}`, options);
-  const json = await res.json();
-  return json; // siempre devuelve { success, data, error }
+    return {
+      success: true,
+      data,
+      error: null,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      data: null,
+      error: {
+        code: 0,
+        message: error.message || "No se pudo conectar con el backend",
+      },
+    };
+  }
 }
 
-// ── Health ─────────────────────────────────────────────
-export const getHealth = () => request("GET", "/health");
+export async function getVehiculos() {
+  return await sendRequest("/api/vehiculos");
+}
 
-// ── Clientes ───────────────────────────────────────────
-// TODO: Cristhian completa estas funciones
-export const getClientes = () => request("GET", "/api/clientes");
-export const getClienteById = (id) => request("GET", `/api/clientes/${id}`);
-export const getVehiculosCliente = (id) =>
-  request("GET", `/api/clientes/${id}/vehiculos`);
-export const crearCliente = (data) => request("POST", "/api/clientes", data);
+export async function createVehiculo(vehiculo) {
+  return await sendRequest("/api/vehiculos", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(vehiculo),
+  });
+}
 
-// ── Vehículos ──────────────────────────────────────────
-// TODO: Leo completa estas funciones
-export const getVehiculos = () => request("GET", "/api/vehiculos");
-export const getVehiculoById = (id) => request("GET", `/api/vehiculos/${id}`);
-export const buscarVehiculoPorPatente = (pat) =>
-  request("GET", `/api/vehiculos/buscar?patente=${pat}`);
-export const getHistorialVehiculo = (id) =>
-  request("GET", `/api/vehiculos/${id}/historial`);
-export const crearVehiculo = (data) => request("POST", "/api/vehiculos", data);
+export async function deleteVehiculo(id) {
+  return await sendRequest(`/api/vehiculos/${id}`, {
+    method: "DELETE",
+  });
+}
 
-// ── Services ───────────────────────────────────────────
-// TODO: Oscar completa estas funciones
-export const getServices = () => request("GET", "/api/services");
-export const getServiceById = (id) => request("GET", `/api/services/${id}`);
-export const crearService = (data) => request("POST", "/api/services", data);
-
-// ── Presupuestos ───────────────────────────────────────
-export const getPresupuestos = () => request("GET", "/api/presupuestos");
-export const getPresupuestoById = (id) =>
-  request("GET", `/api/presupuestos/${id}`);
-export const crearPresupuesto = (data) =>
-  request("POST", "/api/presupuestos", data);
-export const cambiarEstadoPresp = (id, estado) =>
-  request("PUT", `/api/presupuestos/${id}/estado`, { estado });
-export const aprobarPresupuesto = (id) =>
-  request("POST", `/api/presupuestos/${id}/aprobar`);
-
-// ── Facturas ───────────────────────────────────────────
-export const getFacturas = () => request("GET", "/api/facturas");
-export const getFacturaById = (id) => request("GET", `/api/facturas/${id}`);
-export const crearFactura = (data) => request("POST", "/api/facturas", data);
-export const cambiarEstadoFactura = (id, estado) =>
-  request("PUT", `/api/facturas/${id}/estado`, { estado });
+export async function updateVehiculo(id, vehiculo) {
+  return await sendRequest(`/api/vehiculos/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(vehiculo),
+  });
+}
