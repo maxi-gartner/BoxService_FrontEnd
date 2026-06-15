@@ -1,12 +1,8 @@
-// =====================================================
-// BoxService — api.js
-// Archivo central de comunicación con el backend.
-// TODOS los fetch pasan por acá. NO duplicar lógica de fetch en otros archivos.
-// =====================================================
+// api.js — todas las llamadas al backend pasan por acá
+// NO duplicar fetch en otros archivos.
 
 const API_URL = "http://localhost:5001";
 
-// ── Función base ───────────────────────────────────────
 async function request(method, endpoint, body = null) {
   const options = {
     method,
@@ -30,99 +26,90 @@ async function request(method, endpoint, body = null) {
         data: null,
         error: {
           code: res.status,
-          message: "La respuesta del servidor no es JSON válido"
-        }
+          message: "La respuesta del servidor no es JSON válido",
+        },
       };
     }
 
     return json;
-  } catch (error) {
+  } catch (err) {
     return {
       success: false,
       data: null,
       error: {
         code: 0,
-        message: "No se pudo conectar con el servidor"
-      }
+        message: err.message || "No se pudo conectar con el servidor",
+      },
     };
   }
 }
 
-// ── Health ─────────────────────────────────────────────
-export const getHealth = () =>
-  request("GET", "/health");
+// ── Health ──────────────────────────────────────────
+export const getHealth = () => request("GET", "/health");
 
-// ── Clientes ───────────────────────────────────────────
-// OJO: ahora esta ruta está dando 404.
-// Cuando el backend de clientes exista o te digan la ruta real,
-// cambiás solamente acá.
-export const getClientes = () =>
-  request("GET", "/api/clientes");
+// ── Clients / Clientes ──────────────────────────────
+export const getClients = () => request("GET", "/api/clients");
+export const getClientById = (id) => request("GET", `/api/clients/${id}`);
+export const getClientVehicles = (id) =>
+  request("GET", `/api/clients/${id}/vehicles`);
+export const createClient = (data) => request("POST", "/api/clients", data);
 
-export const getClienteById = (id) =>
-  request("GET", `/api/clientes/${id}`);
+// Alias en español, por si alguna página los usa
+export const getClientes = getClients;
+export const getClienteById = getClientById;
+export const getVehiculosCliente = getClientVehicles;
+export const crearCliente = createClient;
 
-export const getVehiculosCliente = (id) =>
-  request("GET", `/api/clientes/${id}/vehiculos`);
-
-export const crearCliente = (data) =>
-  request("POST", "/api/clientes", data);
-
-// ── Vehículos ──────────────────────────────────────────
-export const getVehiculos = () =>
-  request("GET", "/api/vehiculos");
-
-export const getVehiculoById = (id) =>
-  request("GET", `/api/vehiculos/${id}`);
-
-export const buscarVehiculoPorPatente = (pat) =>
-  request("GET", `/api/vehiculos/buscar?patente=${pat}`);
-
-export const getHistorialVehiculo = (id) =>
+// ── Vehicles / Vehículos ─────────────────────────────
+export const getVehiculos = () => request("GET", "/api/vehiculos");
+export const getVehiculoById = (id) => request("GET", `/api/vehiculos/${id}`);
+export const searchVehiculoByPlate = (plate) =>
+  request("GET", `/api/vehiculos/buscar?plate=${plate}`);
+export const getVehiculoHistory = (id) =>
   request("GET", `/api/vehiculos/${id}/historial`);
+export const createVehiculo = (data) => request("POST", "/api/vehiculos", data);
 
-export const crearVehiculo = (data) =>
-  request("POST", "/api/vehiculos", data);
+// Alias en español
+export const buscarVehiculoPorPatente = searchVehiculoByPlate;
+export const getHistorialVehiculo = getVehiculoHistory;
+export const crearVehiculo = createVehiculo;
 
-// ── Services ───────────────────────────────────────────
-// ESTA es la que vamos a usar para cargar el historial.
-export const getServices = () =>
-  request("GET", "/api/services");
+// ── Services / Servicios ─────────────────────────────
+export const getServices = () => request("GET", "/api/services");
+export const getServiceById = (id) => request("GET", `/api/services/${id}`);
+export const createService = (data) => request("POST", "/api/services", data);
 
-export const getServiceById = (id) =>
-  request("GET", `/api/services/${id}`);
-
-export const crearService = (data) =>
-  request("POST", "/api/services", data);
+// Alias en español
+export const crearService = createService;
 
 export const crearDetalleService = (idService, data) =>
   request("POST", `/api/services/${idService}/detalles`, data);
 
-// ── Presupuestos ───────────────────────────────────────
-export const getPresupuestos = () =>
-  request("GET", "/api/presupuestos");
+// ── Budgets / Presupuestos ───────────────────────────
+export const getBudgets = () => request("GET", "/api/budgets");
+export const getBudgetById = (id) => request("GET", `/api/budgets/${id}`);
+export const createBudget = (data) => request("POST", "/api/budgets", data);
+export const updateBudgetStatus = (id, status) =>
+  request("PUT", `/api/budgets/${id}/status`, { status });
+export const approveBudget = (id) =>
+  request("POST", `/api/budgets/${id}/approve`);
 
-export const getPresupuestoById = (id) =>
-  request("GET", `/api/presupuestos/${id}`);
+// Alias en español
+export const getPresupuestos = getBudgets;
+export const getPresupuestoById = getBudgetById;
+export const crearPresupuesto = createBudget;
+export const cambiarEstadoPresp = updateBudgetStatus;
+export const aprobarPresupuesto = approveBudget;
 
-export const crearPresupuesto = (data) =>
-  request("POST", "/api/presupuestos", data);
+// ── Invoices / Facturas ──────────────────────────────
+export const getInvoices = () => request("GET", "/api/invoices");
+export const getInvoiceById = (id) => request("GET", `/api/invoices/${id}`);
+export const createInvoice = (data) => request("POST", "/api/invoices", data);
+export const updateInvoiceStatus = (id, status) =>
+  request("PUT", `/api/invoices/${id}/status`, { status });
 
-export const cambiarEstadoPresp = (id, estado) =>
-  request("PUT", `/api/presupuestos/${id}/estado`, { estado });
-
-export const aprobarPresupuesto = (id) =>
-  request("POST", `/api/presupuestos/${id}/aprobar`);
-
-// ── Facturas ───────────────────────────────────────────
-export const getFacturas = () =>
-  request("GET", "/api/facturas");
-
-export const getFacturaById = (id) =>
-  request("GET", `/api/facturas/${id}`);
-
-export const crearFactura = (data) =>
-  request("POST", "/api/facturas", data);
-
-export const cambiarEstadoFactura = (id, estado) =>
-  request("PUT", `/api/facturas/${id}/estado`, { estado });
+// Alias en español
+export const getFacturas = getInvoices;
+export const getFacturaById = getInvoiceById;
+export const crearFactura = createInvoice;
+export const cambiarEstadoFactura = updateInvoiceStatus;
