@@ -46,6 +46,8 @@ export const createVehiculo = (data) => request("POST", "/api/vehiculos", data);
 export const getServices = () => request("GET", "/api/services");
 export const getServiceById = (id) => request("GET", `/api/services/${id}`);
 export const createService = (data) => request("POST", "/api/services", data);
+export const createServiceDetail = (serviceId, data) => 
+  request("POST", `/api/services/${serviceId}/details`, data);
 
 // ── Budgets / Presupuestos (Maxi) ───────────────────
 export const getBudgets = () => request("GET", "/api/budgets");
