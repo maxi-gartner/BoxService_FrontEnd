@@ -5,9 +5,27 @@ const clienteForm = document.querySelector("#cliente-form");
 const formFeedback = document.querySelector("#form-feedback");
 const refreshButton = document.querySelector("#refresh-clientes");
 
+async function request(path, options = {}) {
+  const response = await fetch(path, {
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers || {}),
+    },
+    ...options,
+  });
+
+  const payload = await response.json();
+
+  if (!response.ok || !payload.success) {
+    throw new Error(payload.error?.message || "Ocurrio un error inesperado");
+  }
+
+  return payload.data;
+}
+
 async function cargarClientes() {
   try {
-    const clientes = await api.get("/api/clientes");
+    const clientes = await request("/api/clientes");
 
     if (!clientes.length) {
       clientesTbody.innerHTML = `
@@ -48,7 +66,7 @@ async function cargarVehiculos(clienteId, clienteNombre) {
   vehiculosSubtitle.textContent = `Vehiculos asociados a ${clienteNombre}`;
 
   try {
-    const vehiculos = await api.get(`/api/clientes/${clienteId}/vehiculos`);
+    const vehiculos = await request(`/api/clientes/${clienteId}/vehiculos`);
 
     if (!vehiculos.length) {
       vehiculosTbody.innerHTML = `
@@ -96,7 +114,10 @@ clienteForm.addEventListener("submit", async (event) => {
   formFeedback.dataset.state = "loading";
 
   try {
-    const cliente = await api.post("/api/clientes", payload);
+    const cliente = await request("/api/clientes", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
     formFeedback.textContent = `Cliente creado con ID ${cliente.id_cliente}`;
     formFeedback.dataset.state = "success";
     clienteForm.reset();
