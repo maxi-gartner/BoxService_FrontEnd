@@ -1,17 +1,15 @@
+// vehiculos.js — lógica de presentación
+// Solo fetch y mostrar. Sin lógica de negocio.
 import { getVehiculos, createVehiculo, deleteVehiculo } from "./api.js";
 
 const tablaBody = document.getElementById("vehiculos-body");
 const formVehiculo = document.getElementById("vehiculo-form");
 const alertBox = document.getElementById("page-alert");
 
-function mostrarAlerta(mensaje, tipo = "error") {
-  alertBox.textContent = mensaje;
-  alertBox.className = `alert ${tipo === "ok" ? "alert-ok" : "alert-error"} show`;
-}
-
-function ocultarAlerta() {
-  alertBox.textContent = "";
-  alertBox.className = "alert";
+function showAlert(msg, type = "error") {
+  alertBox.textContent = msg;
+  alertBox.className = `alert show alert-${type}`;
+  setTimeout(() => (alertBox.className = "alert"), 4000);
 }
 
 function obtenerKilometraje(vehiculo) {
@@ -31,20 +29,18 @@ function obtenerKilometraje(vehiculo) {
 function crearFilaVehiculo(vehiculo) {
   const tr = document.createElement("tr");
   tr.innerHTML = `
-    <td>${vehiculo.placa || vehiculo.Placa || "-"}</td>
-    <td>${vehiculo.marca || vehiculo.Marca || "-"}</td>
-    <td>${vehiculo.modelo || vehiculo.Modelo || "-"}</td>
-    <td>${vehiculo.ano || vehiculo.Ano || "-"}</td>
-    <td>${vehiculo.clienteId || vehiculo.ClienteId || "-"}</td>
+    <td>${vehiculo.placa || vehiculo.Placa || vehiculo.plate || vehiculo.Plate || "-"}</td>
+    <td>${vehiculo.marca || vehiculo.Marca || vehiculo.brand || vehiculo.Brand || "-"}</td>
+    <td>${vehiculo.modelo || vehiculo.Modelo || vehiculo.model || vehiculo.Model || "-"}</td>
+    <td>${vehiculo.ano || vehiculo.Ano || vehiculo.year || vehiculo.Year || "-"}</td>
+    <td>${vehiculo.clienteId || vehiculo.ClienteId || vehiculo.clientId || vehiculo.ClientId || "-"}</td>
     <td>${obtenerKilometraje(vehiculo)}</td>
     <td>
-      <button class="btn btn-secondary btn-sm" data-action="delete" data-id="${vehiculo.vehiculoId || vehiculo.VehiculoId}">Eliminar</button>
+      <button class="btn btn-danger btn-sm" data-action="delete" data-id="${vehiculo.vehiculoId || vehiculo.VehiculoId || vehiculo.id || vehiculo._id || vehiculo.vehicleId || vehiculo.VehicleId || ""}">Eliminar</button>
     </td>
   `;
   return tr;
 }
-
-let vehiculosCache = [];
 
 function renderVehiculos(vehiculos) {
   tablaBody.innerHTML = "";
@@ -72,68 +68,43 @@ function extraerListaVehiculos(resData) {
   return [];
 }
 
-function extraerVehiculoCreado(resData) {
-  if (!resData) return null;
-  if (resData.vehiculoId || resData.VehiculoId) return resData;
-  if (resData.id || resData._id) return resData;
-  if (resData.vehiculo) return resData.vehiculo;
-  if (resData.data && (resData.data.vehiculoId || resData.data.VehiculoId)) return resData.data;
-  if (resData.data && (resData.data.id || resData.data._id)) return resData.data;
-  return null;
-}
-
 async function cargarVehiculos() {
-  ocultarAlerta();
-  const res = await getVehiculos();
+  tablaBody.innerHTML =
+    '<tr><td colspan="7" class="text-muted">Cargando...</td></tr>';
 
+  const res = await getVehiculos();
   if (!res.success) {
-    vehiculosCache = [];
-    renderVehiculos([]);
-    mostrarAlerta(res.error.message || "Error al cargar vehículos.");
+    showAlert(res.error.message || "Error al cargar vehículos.");
+    tablaBody.innerHTML =
+      '<tr><td colspan="7" class="text-muted">Error al cargar.</td></tr>';
     return;
   }
 
-  const vehiculos = extraerListaVehiculos(res.data);
-
-  if (!vehiculos.length && res.data && !Array.isArray(res.data)) {
-    console.warn("Vehículos: formato de respuesta inesperado", res.data);
-  }
-
-  vehiculosCache = vehiculos;
-  renderVehiculos(vehiculosCache);
+  const lista = extraerListaVehiculos(res.data);
+  renderVehiculos(lista);
 }
 
 async function manejarEnvioFormulario(event) {
   event.preventDefault();
-  ocultarAlerta();
+  const fd = new FormData(formVehiculo);
 
-  const formData = new FormData(formVehiculo);
-  const vehiculo = {
-    clienteId: parseInt(formData.get("cliente").trim()) || 0,
-    marca: formData.get("marca").trim(),
-    modelo: formData.get("modelo").trim(),
-    ano: formData.get("anio").trim() ? parseInt(formData.get("anio").trim()) : null,
-    placa: formData.get("patente").trim(),
+  const payload = {
+    clientId: parseInt(fd.get("cliente")) || 0,
+    brand: fd.get("marca").trim(),
+    model: fd.get("modelo").trim(),
+    year: fd.get("anio") ? parseInt(fd.get("anio")) : null,
+    plate: fd.get("patente").trim(),
   };
 
-  const res = await createVehiculo(vehiculo);
-
+  const res = await createVehiculo(payload);
   if (!res.success) {
-    mostrarAlerta(res.error.message || "No se pudo crear el vehículo.");
+    showAlert(res.error.message || "No se pudo crear el vehículo.");
     return;
   }
 
   formVehiculo.reset();
-  mostrarAlerta("Vehículo creado correctamente.", "ok");
-
-  const nuevoVehiculo = extraerVehiculoCreado(res.data);
-  if (nuevoVehiculo) {
-    vehiculosCache = [...vehiculosCache, nuevoVehiculo];
-    renderVehiculos(vehiculosCache);
-    return;
-  }
-
-  await cargarVehiculos();
+  showAlert("Vehículo creado correctamente.", "ok");
+  cargarVehiculos();
 }
 
 async function manejarClickTabla(event) {
@@ -141,21 +112,22 @@ async function manejarClickTabla(event) {
   if (!button) return;
 
   const id = button.dataset.id;
+  if (!id) return;
+
   const confirmacion = window.confirm("¿Eliminar este vehículo?");
   if (!confirmacion) return;
 
   const res = await deleteVehiculo(id);
-
   if (!res.success) {
-    mostrarAlerta(res.error.message || "No se pudo eliminar el vehículo.");
+    showAlert(res.error.message || "No se pudo eliminar el vehículo.");
     return;
   }
 
-  mostrarAlerta("Vehículo eliminado correctamente.", "ok");
-  await cargarVehiculos();
+  showAlert("Vehículo eliminado correctamente.", "ok");
+  cargarVehiculos();
 }
 
 formVehiculo.addEventListener("submit", manejarEnvioFormulario);
 tablaBody.addEventListener("click", manejarClickTabla);
 
-window.addEventListener("DOMContentLoaded", cargarVehiculos);
+document.addEventListener("DOMContentLoaded", cargarVehiculos);
