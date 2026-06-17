@@ -1,11 +1,12 @@
+// service.js
 import {
   getHealth,
-  crearService,
-  crearDetalleService,
+  createService,
+  createServiceDetail,
   getVehiculos,
   getServices,
-  getClientes,
-  getPresupuestos
+  getClients,
+  getBudgets
 } from "./api.js";
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -88,129 +89,45 @@ document.addEventListener("DOMContentLoaded", () => {
   // =========================
   // HELPERS VEHÍCULOS
   // =========================
-  function getIdVehiculo(v) {
-    return (
-      v.VehicleId ??
-      v.vehicleId ??
-      v.idVehiculo ??
-      v.id_vehiculo
-    );
-  }
-
-  function getIdCliente(v) {
-    return (
-      v.ClientId ??
-      v.clientId ??
-      v.IdCliente ??
-      v.idCliente ??
-      v.id_cliente
-    );
-  }
-
   function getClienteVehiculo(v) {
-    const idCliente = getIdCliente(v);
+    if (v.clientName) return v.clientName;
 
-    return (
-      v.ClientName ??
-      v.clientName ??
-      v.clienteNombre ??
-      v.nombreCliente ??
-      v.cliente ??
-      clientesPorId[idCliente] ??
-      `Cliente ID: ${idCliente ?? "-"}`
-    );
+    if (v.clientId && clientesPorId[v.clientId]) {
+      return clientesPorId[v.clientId];
+    }
+
+    return `Cliente ID: ${v.clientId ?? "-"}`;
   }
 
-  function getMarcaVehiculo(v) {
-    return (
-      v.Brand ??
-      v.brand ??
-      v.marca ??
-      ""
-    );
-  }
-
-  function getModeloVehiculo(v) {
-    return (
-      v.Model ??
-      v.model ??
-      v.modelo ??
-      ""
-    );
-  }
-
-  function getPatenteVehiculo(v) {
-    return (
-      v.Plate ??
-      v.plate ??
-      v.patente ??
-      "-"
-    );
-  }
-
-  function getKmVehiculo(v) {
-    return (
-      v.CurrentMileage ??
-      v.currentMileage ??
-      v.kilometrajeActual ??
-      v.kilometraje_actual ??
-      v.Mileage ??
-      v.mileage ??
-      v.kilometraje ??
-      null
-    );
-  }
-
-  function getVehiculoPorId(idVehiculo) {
-    return vehiculos.find((v) => {
-      const id = getIdVehiculo(v);
-      return Number(id) === Number(idVehiculo);
-    });
+  function getVehiculoPorId(vehicleId) {
+    return vehiculos.find((v) => Number(v.vehicleId) === Number(vehicleId));
   }
 
   // =========================
   // CARGAR VEHÍCULOS + CLIENTES
   // =========================
   async function cargarVehiculos() {
-    const resClientes = await getClientes();
+    const resClientes = await getClients();
 
     clientesPorId = {};
 
     if (resClientes.success && Array.isArray(resClientes.data)) {
       resClientes.data.forEach((c) => {
-        const idCliente =
-          c.ClientId ??
-          c.clientId ??
-          c.IdCliente ??
-          c.idCliente ??
-          c.id_cliente;
-
-        const nombreCliente =
-          c.FullName ??
-          c.fullName ??
-          c.Name ??
-          c.name ??
-          c.Nombre ??
-          c.nombre ??
-          c.apellidoNombre ??
-          c.clienteNombre ??
-          "-";
-
-        if (idCliente) {
-          clientesPorId[idCliente] = nombreCliente;
+        if (c.clientId) {
+          clientesPorId[c.clientId] = c.fullName;
         }
       });
     }
 
-    const res = await getVehiculos();
+    const resVehiculos = await getVehiculos();
 
-    if (!res.success || !Array.isArray(res.data)) {
+    if (!resVehiculos.success || !Array.isArray(resVehiculos.data)) {
       vehiculos = [];
       renderVehiculos([]);
       return;
     }
 
-    vehiculos = res.data;
+    vehiculos = resVehiculos.data;
     renderVehiculos(vehiculos);
   }
 
@@ -227,16 +144,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     lista.forEach((v) => {
-      const idVehiculo = getIdVehiculo(v);
-      const cliente = getClienteVehiculo(v);
-      const marca = getMarcaVehiculo(v);
-      const modelo = getModeloVehiculo(v);
-      const patente = getPatenteVehiculo(v);
-      const km = getKmVehiculo(v) ?? "-";
-
       const estaSeleccionado =
         vehiculoSeleccionadoId !== null &&
-        Number(idVehiculo) === Number(vehiculoSeleccionadoId);
+        Number(v.vehicleId) === Number(vehiculoSeleccionadoId);
 
       const row = document.createElement("tr");
 
@@ -246,12 +156,12 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       row.innerHTML = `
-        <td>${cliente}</td>
-        <td>${marca} ${modelo}</td>
-        <td>${patente}</td>
-        <td>${km}</td>
+        <td>${getClienteVehiculo(v)}</td>
+        <td>${v.brand ?? "-"} ${v.model ?? ""}</td>
+        <td>${v.plate ?? "-"}</td>
+        <td>${v.currentMileage ?? "-"}</td>
         <td>
-          <button class="btn ${estaSeleccionado ? "btn-selected" : "btn-secondary"} btn-sm" data-id="${idVehiculo}">
+          <button class="btn ${estaSeleccionado ? "btn-selected" : "btn-secondary"} btn-sm" data-id="${v.vehicleId}">
             ${estaSeleccionado ? "Seleccionado" : "Elegir"}
           </button>
         </td>
@@ -266,9 +176,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function seleccionarVehiculo(v, rowSeleccionada = null) {
-    const idVehiculo = getIdVehiculo(v);
-    const cliente = getClienteVehiculo(v);
-
     if (filaVehiculoSeleccionada) {
       filaVehiculoSeleccionada.classList.remove("selected-vehicle-row");
 
@@ -293,21 +200,13 @@ document.addEventListener("DOMContentLoaded", () => {
       filaVehiculoSeleccionada = rowSeleccionada;
     }
 
-    vehiculoSeleccionadoId = idVehiculo;
+    vehiculoSeleccionadoId = v.vehicleId;
 
-    document.getElementById("idVehiculo").value = idVehiculo;
-    document.getElementById("clienteNombre").textContent = cliente;
-
-    const marca = getMarcaVehiculo(v);
-    const modelo = getModeloVehiculo(v);
-
-    document.getElementById("vehiculoNombre").textContent =
-      `${marca} ${modelo}`;
-
-    document.getElementById("patente").textContent = getPatenteVehiculo(v);
-
-    document.getElementById("kmActual").textContent =
-      getKmVehiculo(v) ?? "-";
+    document.getElementById("idVehiculo").value = v.vehicleId;
+    document.getElementById("clienteNombre").textContent = getClienteVehiculo(v);
+    document.getElementById("vehiculoNombre").textContent = `${v.brand ?? "-"} ${v.model ?? ""}`;
+    document.getElementById("patente").textContent = v.plate ?? "-";
+    document.getElementById("kmActual").textContent = v.currentMileage ?? "-";
 
     const bloqueSeleccionado = document.getElementById("vehiculoSeleccionado");
     bloqueSeleccionado.style.display = "block";
@@ -317,10 +216,10 @@ document.addEventListener("DOMContentLoaded", () => {
       block: "start"
     });
 
-    cargarHistorialVehiculo(idVehiculo);
+    cargarHistorialVehiculo(v.vehicleId);
 
     if (modoCreacion && modoCreacion.value === "presupuesto") {
-      cargarPresupuestosAprobadosVehiculo(idVehiculo);
+      cargarPresupuestosAprobadosVehiculo(v.vehicleId);
     }
   }
 
@@ -330,19 +229,13 @@ document.addEventListener("DOMContentLoaded", () => {
       const palabras = texto.split(/\s+/).filter(Boolean);
 
       const filtrados = vehiculos.filter((v) => {
-        const cliente = getClienteVehiculo(v);
-        const telefono = v.Phone ?? v.phone ?? v.telefono ?? "";
-        const patente = getPatenteVehiculo(v);
-        const marca = getMarcaVehiculo(v);
-        const modelo = getModeloVehiculo(v);
-
         const textoVehiculo = `
-          ${cliente}
-          ${telefono}
-          ${patente}
-          ${marca}
-          ${modelo}
-          ${marca} ${modelo}
+          ${getClienteVehiculo(v)}
+          ${v.phone ?? ""}
+          ${v.plate ?? ""}
+          ${v.brand ?? ""}
+          ${v.model ?? ""}
+          ${v.brand ?? ""} ${v.model ?? ""}
         `.toLowerCase();
 
         return palabras.every((palabra) =>
@@ -357,7 +250,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // =========================
   // HISTORIAL POR VEHÍCULO
   // =========================
-  async function cargarHistorialVehiculo(idVehiculo) {
+  async function cargarHistorialVehiculo(vehicleId) {
     const mensaje = document.getElementById("historialMensaje");
 
     servicesTableBody.innerHTML = "";
@@ -383,13 +276,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const historialVehiculo = res.data.filter((service) => {
-      const serviceVehicleId =
-        service.VehicleId ??
-        service.vehicleId ??
-        service.idVehiculo ??
-        service.id_vehiculo;
-
-      return Number(serviceVehicleId) === Number(idVehiculo);
+      return Number(service.vehicleId) === Number(vehicleId);
     });
 
     if (historialVehiculo.length === 0) {
@@ -415,11 +302,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const row = document.createElement("tr");
 
       row.innerHTML = `
-        <td>${formatearFecha(service.Date ?? service.date ?? service.fecha)}</td>
-        <td>${service.Mileage ?? service.mileage ?? service.kilometraje ?? "-"}</td>
-        <td>${service.ServiceType ?? service.serviceType ?? service.tipoService ?? service.tipo_service ?? "-"}</td>
-        <td>${service.NextMileage ?? service.nextMileage ?? service.proximoKm ?? service.proximo_km ?? "-"}</td>
-        <td>${formatearFecha(service.NextDate ?? service.nextDate ?? service.proximaFecha ?? service.proxima_fecha)}</td>
+        <td>${formatearFecha(service.date)}</td>
+        <td>${service.mileage ?? "-"}</td>
+        <td>${service.serviceType ?? "-"}</td>
+        <td>${service.nextMileage ?? "-"}</td>
+        <td>${formatearFecha(service.nextDate)}</td>
       `;
 
       servicesTableBody.appendChild(row);
@@ -444,7 +331,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  async function cargarPresupuestosAprobadosVehiculo(idVehiculoSeleccionado) {
+  async function cargarPresupuestosAprobadosVehiculo(vehicleId) {
     if (!presupuestosTableBody) return;
 
     presupuestosTableBody.innerHTML = `
@@ -458,7 +345,7 @@ document.addEventListener("DOMContentLoaded", () => {
         "Buscando presupuestos aprobados para el vehículo seleccionado...";
     }
 
-    const resPresupuestos = await getPresupuestos();
+    const resPresupuestos = await getBudgets();
 
     if (!resPresupuestos.success || !Array.isArray(resPresupuestos.data)) {
       presupuestosTableBody.innerHTML = `
@@ -476,49 +363,19 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const presupuestosAprobadosVehiculo = resPresupuestos.data.filter((p) => {
-      const idVehiculoPresupuesto =
-        p.VehicleId ??
-        p.vehicleId ??
-        p.IdVehiculo ??
-        p.idVehiculo ??
-        p.id_vehiculo;
-
-      const estado = String(
-        p.Status ??
-        p.status ??
-        p.Estado ??
-        p.estado ??
-        ""
-      ).toLowerCase();
-
-      const idServicePresupuesto =
-        p.ServiceId ??
-        p.serviceId ??
-        p.IdService ??
-        p.idService ??
-        p.id_service;
-
-      const idPresupuesto =
-        p.BudgetId ??
-        p.budgetId ??
-        p.IdPresupuesto ??
-        p.idPresupuesto ??
-        p.id_presupuesto;
-
-      const esDelVehiculo =
-        Number(idVehiculoPresupuesto) === Number(idVehiculoSeleccionado);
+      const esDelVehiculo = Number(p.vehicleId) === Number(vehicleId);
 
       const estaAprobado =
-        estado === "approved" ||
-        estado === "aprobado";
+        String(p.status).toLowerCase() === "approved" ||
+        String(p.status).toLowerCase() === "aprobado";
 
       const noTieneService =
-        idServicePresupuesto === null ||
-        idServicePresupuesto === undefined ||
-        idServicePresupuesto === "";
+        p.serviceId === null ||
+        p.serviceId === undefined ||
+        p.serviceId === "";
 
       const noFueGeneradoLocal =
-        !presupuestosGeneradosLocal.has(String(idPresupuesto));
+        !presupuestosGeneradosLocal.has(String(p.budgetId));
 
       return esDelVehiculo && estaAprobado && noTieneService && noFueGeneradoLocal;
     });
@@ -549,50 +406,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     presupuestosAprobadosVehiculo.forEach((p) => {
-      const idPresupuesto =
-        p.BudgetId ??
-        p.budgetId ??
-        p.IdPresupuesto ??
-        p.idPresupuesto ??
-        p.id_presupuesto;
-
-      const numero =
-        p.Number ??
-        p.number ??
-        p.Numero ??
-        p.numero ??
-        `#${idPresupuesto}`;
-
-      const fecha =
-        p.Date ??
-        p.date ??
-        p.Fecha ??
-        p.fecha;
-
-      const estado =
-        p.Status ??
-        p.status ??
-        p.Estado ??
-        p.estado ??
-        "-";
-
-      const trabajoAprobado =
-        p.Description ??
-        p.description ??
-        p.Descripcion ??
-        p.descripcion ??
-        p.Notes ??
-        p.notes ??
-        p.Observaciones ??
-        p.observaciones ??
-        "Trabajo aprobado sin descripción.";
+      const numero = p.number ?? `#${p.budgetId}`;
+      const trabajoAprobado = p.description ?? "Trabajo aprobado sin descripción.";
 
       const row = document.createElement("tr");
 
       row.innerHTML = `
         <td>${numero}</td>
-        <td>${formatearFecha(fecha)}</td>
-        <td><span class="badge badge-aprobado">${estado}</span></td>
+        <td>${formatearFecha(p.date)}</td>
+        <td><span class="badge badge-aprobado">${p.status ?? "-"}</span></td>
         <td>${trabajoAprobado}</td>
         <td>
           <button class="btn btn-primary btn-sm">
@@ -612,30 +434,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function crearServiceDesdePresupuesto(presupuesto) {
-    const idPresupuesto =
-      presupuesto.BudgetId ??
-      presupuesto.budgetId ??
-      presupuesto.IdPresupuesto ??
-      presupuesto.idPresupuesto ??
-      presupuesto.id_presupuesto;
+    const numero = presupuesto.number ?? `#${presupuesto.budgetId}`;
+    const vehiculo = getVehiculoPorId(presupuesto.vehicleId);
 
-    const numero =
-      presupuesto.Number ??
-      presupuesto.number ??
-      presupuesto.Numero ??
-      presupuesto.numero ??
-      `#${idPresupuesto}`;
-
-    const idVehiculo =
-      presupuesto.VehicleId ??
-      presupuesto.vehicleId ??
-      presupuesto.IdVehiculo ??
-      presupuesto.idVehiculo ??
-      presupuesto.id_vehiculo;
-
-    const vehiculo = getVehiculoPorId(idVehiculo);
-
-    let kilometraje = vehiculo ? getKmVehiculo(vehiculo) : null;
+    let kilometraje = vehiculo ? vehiculo.currentMileage : null;
 
     if (!kilometraje || Number(kilometraje) <= 0) {
       const kmIngresado = prompt(
@@ -655,26 +457,17 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const trabajoAprobado =
-      presupuesto.Description ??
-      presupuesto.description ??
-      presupuesto.Descripcion ??
-      presupuesto.descripcion ??
-      presupuesto.Notes ??
-      presupuesto.notes ??
-      presupuesto.Observaciones ??
-      presupuesto.observaciones ??
-      "";
+    const trabajoAprobado = presupuesto.description ?? "";
 
     const serviceData = {
-      Date: new Date().toISOString().split("T")[0],
-      Mileage: Number(kilometraje),
-      ServiceType: "Service desde presupuesto",
-      Notes: `Generado desde presupuesto ${numero}.`,
-      VehicleId: Number(idVehiculo)
+      date: new Date().toISOString().split("T")[0],
+      mileage: Number(kilometraje),
+      serviceType: "Service desde presupuesto",
+      notes: `Generado desde presupuesto ${numero}.`,
+      vehicleId: Number(presupuesto.vehicleId)
     };
 
-    const res = await crearService(serviceData);
+    const res = await createService(serviceData);
 
     if (!res.success) {
       const mensajeError =
@@ -686,15 +479,15 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const idServiceCreado = getIdServiceCreado(res);
+    const serviceIdCreado = res.data?.serviceId;
 
-    if (idServiceCreado && trabajoAprobado) {
+    if (serviceIdCreado && trabajoAprobado) {
       const detalleData = {
-        Description: trabajoAprobado,
-        Done: true
+        description: trabajoAprobado,
+        done: true
       };
 
-      const resDetalle = await crearDetalleService(idServiceCreado, detalleData);
+      const resDetalle = await createServiceDetail(serviceIdCreado, detalleData);
 
       if (!resDetalle.success) {
         const mensajeErrorDetalle =
@@ -703,33 +496,18 @@ document.addEventListener("DOMContentLoaded", () => {
         mostrarAlerta(mensajeErrorDetalle, "error");
         mostrarMensajeFormulario(mensajeErrorDetalle, "error");
 
-        cargarHistorialVehiculo(idVehiculo);
+        cargarHistorialVehiculo(presupuesto.vehicleId);
         return;
       }
     }
 
-    presupuestosGeneradosLocal.add(String(idPresupuesto));
+    presupuestosGeneradosLocal.add(String(presupuesto.budgetId));
 
     mostrarAlerta("Service y detalle creados desde presupuesto aprobado.", "ok");
     mostrarMensajeFormulario("Service y detalle creados desde presupuesto aprobado.", "ok");
 
-    cargarHistorialVehiculo(idVehiculo);
-    cargarPresupuestosAprobadosVehiculo(idVehiculo);
-  }
-
-  // =========================
-  // HELPERS SERVICES
-  // =========================
-  function getIdServiceCreado(res) {
-    const data = res.data ?? res.Data ?? res;
-
-    return (
-      data.ServiceId ??
-      data.serviceId ??
-      data.IdService ??
-      data.idService ??
-      data.id_service
-    );
+    cargarHistorialVehiculo(presupuesto.vehicleId);
+    cargarPresupuestosAprobadosVehiculo(presupuesto.vehicleId);
   }
 
   // =========================
@@ -738,9 +516,9 @@ document.addEventListener("DOMContentLoaded", () => {
   serviceForm.addEventListener("submit", async (event) => {
     event.preventDefault();
 
-    const idVehiculo = document.getElementById("idVehiculo").value;
+    const vehicleId = document.getElementById("idVehiculo").value;
 
-    if (!idVehiculo) {
+    if (!vehicleId) {
       mostrarAlerta("Primero tenés que seleccionar un vehículo.", "error");
       mostrarMensajeFormulario("Primero tenés que seleccionar un vehículo.", "error");
       return;
@@ -756,14 +534,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const serviceData = {
-      Date: document.getElementById("fecha").value,
-      Mileage: Number(document.getElementById("kilometraje").value),
-      ServiceType: document.getElementById("tipoService").value,
-      Notes: observaciones,
-      VehicleId: Number(idVehiculo)
+      date: document.getElementById("fecha").value,
+      mileage: Number(document.getElementById("kilometraje").value),
+      serviceType: document.getElementById("tipoService").value,
+      notes: observaciones,
+      vehicleId: Number(vehicleId)
     };
 
-    const res = await crearService(serviceData);
+    const res = await createService(serviceData);
 
     if (!res.success) {
       const mensajeError =
@@ -775,15 +553,15 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const idServiceCreado = getIdServiceCreado(res);
+    const serviceIdCreado = res.data?.serviceId;
 
-    if (idServiceCreado) {
+    if (serviceIdCreado) {
       const detalleData = {
-        Description: detalleService,
-        Done: true
+        description: detalleService,
+        done: true
       };
 
-      const resDetalle = await crearDetalleService(idServiceCreado, detalleData);
+      const resDetalle = await createServiceDetail(serviceIdCreado, detalleData);
 
       if (!resDetalle.success) {
         const mensajeErrorDetalle =
@@ -792,7 +570,7 @@ document.addEventListener("DOMContentLoaded", () => {
         mostrarAlerta(mensajeErrorDetalle, "error");
         mostrarMensajeFormulario(mensajeErrorDetalle, "error");
 
-        cargarHistorialVehiculo(idVehiculo);
+        cargarHistorialVehiculo(vehicleId);
         return;
       }
     }
@@ -802,9 +580,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     serviceForm.reset();
 
-    document.getElementById("idVehiculo").value = idVehiculo;
+    document.getElementById("idVehiculo").value = vehicleId;
 
-    cargarHistorialVehiculo(idVehiculo);
+    cargarHistorialVehiculo(vehicleId);
   });
 
   // =========================
