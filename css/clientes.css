@@ -1,69 +1,49 @@
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: var(--space-4);
-  margin-bottom: var(--space-8);
-}
+/* =====================================================
+   BoxService — clientes.css
+   Estilos exclusivos de Clientes
+   ===================================================== */
 
 .clientes-layout {
   display: grid;
-  grid-template-columns: 360px minmax(0, 1fr);
+  grid-template-columns: 340px minmax(0, 1fr);
   gap: var(--space-6);
   margin-bottom: var(--space-6);
 }
 
 .form-grid {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: var(--space-4);
 }
 
-.panel-heading {
+.form-grid label {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--space-4);
-  margin-bottom: var(--space-4);
+  flex-direction: column;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.form-grid input {
+  margin-top: 0;
 }
 
 .feedback {
-  min-height: 24px;
-  margin: var(--space-4) 0 0;
+  min-height: 20px;
+  margin-top: var(--space-3);
   font-size: var(--text-sm);
+  line-height: 1.4;
 }
 
-.feedback[data-state="success"] {
-  color: var(--color-success);
-}
-
-.feedback[data-state="error"] {
-  color: var(--color-danger);
-}
-
-.feedback[data-state="loading"] {
-  color: var(--color-accent);
-}
-
-.table-action {
-  min-height: 36px;
-  padding: var(--space-2) var(--space-3);
-}
+.feedback[data-state="success"] { color: var(--color-success); }
+.feedback[data-state="error"]   { color: var(--color-danger); }
+.feedback[data-state="loading"] { color: var(--color-accent); }
 
 @media (max-width: 920px) {
   .clientes-layout {
     grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 720px) {
-  .page-header,
-  .panel-heading {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .button-secondary,
-  .button-primary {
-    width: 100%;
   }
 }

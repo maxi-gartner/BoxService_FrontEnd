@@ -12,42 +12,35 @@
 
       <div class="main-content">
         <div class="container">
-          <h1 class="page-title">Dashboard</h1>
-
-          <div id="alert-box" class="alert"></div>
-
-          <div class="form-row mb-6">
-            <div class="card">
-              <p class="text-muted">Estado del servidor</p>
-              <p
-                id="status-server"
-                class="text-xl mt-4"
-                style="font-weight: 700"
-              >
-                —
-              </p>
-            </div>
-            <div class="card">
-              <p class="text-muted">Base de datos</p>
-              <p id="status-db" class="text-xl mt-4" style="font-weight: 700">
-                —
-              </p>
-            </div>
-            <div class="card">
-              <p class="text-muted">Versión</p>
-              <p
-                id="status-version"
-                class="text-xl mt-4"
-                style="font-weight: 700"
-              >
-                —
-              </p>
+          <div class="page-header">
+            <div>
+              <p class="page-eyebrow">BoxService</p>
+              <h1 class="page-title">Dashboard</h1>
             </div>
           </div>
 
+          <div id="alert-box" class="alert"></div>
+
+          <!-- Estado del sistema -->
+          <div class="stat-grid mb-6">
+            <div class="stat-card">
+              <p class="stat-label">Servidor</p>
+              <p class="stat-value" id="status-server">—</p>
+            </div>
+            <div class="stat-card">
+              <p class="stat-label">Base de datos</p>
+              <p class="stat-value" id="status-db">—</p>
+            </div>
+            <div class="stat-card">
+              <p class="stat-label">Versión</p>
+              <p class="stat-value" id="status-version">—</p>
+            </div>
+          </div>
+
+          <!-- Accesos rápidos -->
           <div class="card">
             <p class="card-title">Accesos rápidos</p>
-            <div class="flex gap-4" style="flex-wrap: wrap">
+            <div class="flex flex-wrap gap-3">
               <a href="pages/clientes.html" class="btn btn-secondary"
                 >👤 Clientes</a
               >
@@ -58,7 +51,7 @@
                 >🔧 Services</a
               >
               <a href="pages/presupuestos.html" class="btn btn-primary"
-                >📋 Nuevo Presupuesto</a
+                >📋 Nuevo presupuesto</a
               >
               <a href="pages/facturas.html" class="btn btn-secondary"
                 >🧾 Facturas</a
@@ -66,7 +59,6 @@
             </div>
           </div>
         </div>
-
         <div id="footer-container"></div>
       </div>
     </div>
@@ -77,14 +69,16 @@
       async function checkHealth() {
         const res = await getHealth();
         if (res.success) {
-          document.getElementById("status-server").textContent =
-            res.data.status;
-          document.getElementById("status-server").style.color = "#6EE7B7";
-          document.getElementById("status-db").textContent = res.data.database;
-          document.getElementById("status-db").style.color =
-            res.data.database === "connected" ? "#6EE7B7" : "#FCA5A5";
-          document.getElementById("status-version").textContent =
-            res.data.version;
+          const srv = document.getElementById("status-server");
+          const db = document.getElementById("status-db");
+          const ver = document.getElementById("status-version");
+          srv.textContent = res.data.status;
+          srv.classList.add("success");
+          db.textContent = res.data.database;
+          db.classList.add(
+            res.data.database === "connected" ? "success" : "danger",
+          );
+          ver.textContent = res.data.version;
         }
       }
       document.addEventListener("DOMContentLoaded", checkHealth);
