@@ -4,20 +4,185 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>BoxService — Services</title>
+
     <link rel="stylesheet" href="../css/main.css" />
     <link rel="stylesheet" href="../css/services.css" />
   </head>
+
   <body data-page="services">
     <div class="app-wrapper">
       <div id="sidebar-container"></div>
 
       <div class="main-content">
         <div class="container">
-          <h1 class="page-title">Services</h1>
+          <h1 class="page-title">Gestión de Services</h1>
+
           <div id="alert-box" class="alert"></div>
-          <!-- TODO: Oscar (ROL D) — implementar contenido -->
-          <p class="text-muted">Módulo en desarrollo.</p>
+
+          <!-- BUSCAR VEHÍCULO -->
+          <div class="card">
+            <h2>Buscar cliente / vehículo</h2>
+
+            <div class="form-group">
+              <label>Buscar por cliente, teléfono o patente</label>
+              <input
+                type="text"
+                id="searchInput"
+                placeholder="Ej: Juan, 343..., ABC123"
+              />
+            </div>
+
+            <table id="searchResults">
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>Vehículo</th>
+                  <th>Patente</th>
+                  <th>KM actual</th>
+                  <th>Acción</th>
+                </tr>
+              </thead>
+
+              <tbody></tbody>
+            </table>
+          </div>
+
+          <!-- VEHÍCULO SELECCIONADO -->
+          <div class="card" id="vehiculoSeleccionado" style="display: none">
+            <h2>Vehículo seleccionado</h2>
+
+            <p><strong>Cliente:</strong> <span id="clienteNombre"></span></p>
+            <p><strong>Vehículo:</strong> <span id="vehiculoNombre"></span></p>
+            <p><strong>Patente:</strong> <span id="patente"></span></p>
+            <p><strong>KM actual:</strong> <span id="kmActual"></span></p>
+          </div>
+
+          <!-- HISTORIAL -->
+          <div class="card">
+            <h2>Historial del vehículo seleccionado</h2>
+
+            <p class="info-text" id="historialMensaje">
+              Seleccioná un vehículo para ver su historial de services.
+            </p>
+
+            <table id="servicesTable">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>KM</th>
+                  <th>Tipo</th>
+                  <th>Próx KM</th>
+                  <th>Próx Fecha</th>
+                </tr>
+              </thead>
+
+              <tbody></tbody>
+            </table>
+          </div>
+
+          <!-- MODO DE CREACIÓN -->
+          <div class="card">
+            <h2>Crear Service</h2>
+
+            <div class="form-group">
+              <label>Modo de creación</label>
+              <select id="modoCreacion">
+                <option value="manual">Service manual</option>
+                <option value="presupuesto">
+                  Desde presupuesto aprobado
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <!-- PRESUPUESTOS APROBADOS DEL VEHÍCULO -->
+          <div
+            class="card"
+            id="bloquePresupuestoAprobado"
+            style="display: none"
+          >
+            <h2>Presupuestos aprobados del vehículo</h2>
+
+            <p class="info-text" id="presupuestosMensaje">
+              Seleccioná un vehículo para ver si tiene presupuestos aprobados
+              pendientes de service.
+            </p>
+
+            <table id="presupuestosAprobadosTable">
+              <thead>
+                <tr>
+                  <th>Número</th>
+                  <th>Fecha</th>
+                  <th>Estado</th>
+                  <th>Trabajo aprobado</th>
+                  <th>Acción</th>
+                </tr>
+              </thead>
+
+              <tbody></tbody>
+            </table>
+          </div>
+
+          <!-- FORMULARIO MANUAL -->
+          <div class="card" id="bloqueServiceManual">
+            <h2>Nuevo Service Manual</h2>
+
+            <form id="serviceForm">
+              <input type="hidden" id="idVehiculo" />
+
+              <div class="form-group">
+                <label>Fecha</label>
+                <input type="date" id="fecha" required />
+              </div>
+
+              <div class="form-group">
+                <label>Kilometraje</label>
+                <input type="number" id="kilometraje" required />
+              </div>
+
+              <div class="form-group">
+                <label>Tipo de Service</label>
+                <select id="tipoService" required>
+                  <option value="">Seleccionar tipo de service</option>
+                  <option value="Service completo">Service completo</option>
+                  <option value="Cambio de aceite">Cambio de aceite</option>
+                  <option value="Revisión general">Revisión general</option>
+                  <option value="Pre-viaje">Pre-viaje</option>
+                  <option value="Mantenimiento preventivo">
+                    Mantenimiento preventivo
+                  </option>
+                  <option value="Otro">Otro</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Observaciones generales</label>
+                <input
+                  type="text"
+                  id="observaciones"
+                  placeholder="Ej: Cliente viaja a Córdoba, revisar antes de salir"
+                />
+              </div>
+
+              <div class="form-group">
+                <label>Detalle del trabajo realizado</label>
+                <input
+                  type="text"
+                  id="detalleService"
+                  placeholder="Ej: Control de luces, revisión de cubiertas y control de fluidos"
+                  required
+                />
+              </div>
+
+              <div id="serviceFormMensaje" class="alert"></div>
+
+              <button type="submit" class="btn btn-primary">
+                Crear Service Manual
+              </button>
+            </form>
+          </div>
         </div>
+
         <div id="footer-container"></div>
       </div>
     </div>
