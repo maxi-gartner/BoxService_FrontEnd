@@ -1,0 +1,25 @@
+/* invoice.css — estilos exclusivos de la página de facturas */
+
+.invoice-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-6);
+  margin-bottom: var(--space-6);
+}
+
+.invoice-total {
+  font-size: var(--text-3xl);
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.invoice-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+@media (max-width: 768px) {
+  .invoice-form-row { grid-template-columns: 1fr; }
+}
