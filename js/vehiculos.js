@@ -1,6 +1,6 @@
 // vehiculos.js — lógica de presentación
 // Solo fetch y mostrar. Sin lógica de negocio.
-import { getVehiculos, createVehiculo } from "./api.js";
+import { getVehiculos, createVehiculo, deleteVehiculo } from "./api.js";
 
 const tablaBody = document.getElementById("vehiculos-body");
 const formVehiculo = document.getElementById("vehiculo-form");
@@ -12,46 +12,80 @@ function showAlert(msg, type = "error") {
   setTimeout(() => (alertBox.className = "alert"), 4000);
 }
 
-function renderRow(v) {
+function obtenerKilometraje(vehiculo) {
+  return (
+    vehiculo.kilometraje ||
+    vehiculo.Kilometraje ||
+    vehiculo.km ||
+    vehiculo.KM ||
+    vehiculo.kms ||
+    vehiculo.KMs ||
+    vehiculo.kilometros ||
+    vehiculo.Kilometros ||
+    "-"
+  );
+}
+
+function crearFilaVehiculo(vehiculo) {
   const tr = document.createElement("tr");
   tr.innerHTML = `
-    <td class="text-accent">${v.plate ?? "-"}</td>
-    <td>${v.brand ?? "-"}</td>
-    <td>${v.model ?? "-"}</td>
-    <td>${v.year ?? "-"}</td>
-    <td>${v.clientId ?? "-"}</td>
+    <td>${vehiculo.placa || vehiculo.Placa || vehiculo.plate || vehiculo.Plate || "-"}</td>
+    <td>${vehiculo.marca || vehiculo.Marca || vehiculo.brand || vehiculo.Brand || "-"}</td>
+    <td>${vehiculo.modelo || vehiculo.Modelo || vehiculo.model || vehiculo.Model || "-"}</td>
+    <td>${vehiculo.ano || vehiculo.Ano || vehiculo.year || vehiculo.Year || "-"}</td>
+    <td>${vehiculo.clienteId || vehiculo.ClienteId || vehiculo.clientId || vehiculo.ClientId || "-"}</td>
+    <td>${obtenerKilometraje(vehiculo)}</td>
     <td>
-      <button class="btn btn-danger btn-sm" data-id="${v.vehicleId}">Eliminar</button>
+      <button class="btn btn-danger btn-sm" data-action="delete" data-id="${vehiculo.vehiculoId || vehiculo.VehiculoId || vehiculo.id || vehiculo._id || vehiculo.vehicleId || vehiculo.VehicleId || ""}">Eliminar</button>
     </td>
   `;
   return tr;
 }
 
-async function cargarVehiculos() {
-  tablaBody.innerHTML =
-    '<tr><td colspan="6" class="text-muted">Cargando...</td></tr>';
-  const res = await getVehiculos();
-
-  if (!res.success) {
-    showAlert(res.error.message);
-    tablaBody.innerHTML =
-      '<tr><td colspan="6" class="text-muted">Error al cargar.</td></tr>';
-    return;
-  }
-
-  const lista = res.data ?? [];
-  if (!lista.length) {
-    tablaBody.innerHTML =
-      '<tr><td colspan="6" class="text-muted">No hay vehículos registrados.</td></tr>';
-    return;
-  }
-
+function renderVehiculos(vehiculos) {
   tablaBody.innerHTML = "";
-  lista.forEach((v) => tablaBody.appendChild(renderRow(v)));
+
+  if (!vehiculos || vehiculos.length === 0) {
+    tablaBody.innerHTML = `
+      <tr>
+        <td colspan="7" class="text-muted">No hay vehículos registrados.</td>
+      </tr>
+    `;
+    return;
+  }
+
+  vehiculos.forEach((vehiculo) => {
+    tablaBody.appendChild(crearFilaVehiculo(vehiculo));
+  });
 }
 
-formVehiculo.addEventListener("submit", async (e) => {
-  e.preventDefault();
+function extraerListaVehiculos(resData) {
+  if (!resData) return [];
+  if (Array.isArray(resData)) return resData;
+  if (Array.isArray(resData.data)) return resData.data;
+  if (Array.isArray(resData.vehiculos)) return resData.vehiculos;
+  if (Array.isArray(resData.data?.vehiculos)) return resData.data.vehiculos;
+  return [];
+}
+
+async function cargarVehiculos() {
+  tablaBody.innerHTML =
+    '<tr><td colspan="7" class="text-muted">Cargando...</td></tr>';
+
+  const res = await getVehiculos();
+  if (!res.success) {
+    showAlert(res.error.message || "Error al cargar vehículos.");
+    tablaBody.innerHTML =
+      '<tr><td colspan="7" class="text-muted">Error al cargar.</td></tr>';
+    return;
+  }
+
+  const lista = extraerListaVehiculos(res.data);
+  renderVehiculos(lista);
+}
+
+async function manejarEnvioFormulario(event) {
+  event.preventDefault();
   const fd = new FormData(formVehiculo);
 
   const payload = {
@@ -64,13 +98,36 @@ formVehiculo.addEventListener("submit", async (e) => {
 
   const res = await createVehiculo(payload);
   if (!res.success) {
-    showAlert(res.error.message);
+    showAlert(res.error.message || "No se pudo crear el vehículo.");
     return;
   }
 
-  showAlert("Vehículo creado correctamente.", "ok");
   formVehiculo.reset();
+  showAlert("Vehículo creado correctamente.", "ok");
   cargarVehiculos();
-});
+}
+
+async function manejarClickTabla(event) {
+  const button = event.target.closest("button[data-action='delete']");
+  if (!button) return;
+
+  const id = button.dataset.id;
+  if (!id) return;
+
+  const confirmacion = window.confirm("¿Eliminar este vehículo?");
+  if (!confirmacion) return;
+
+  const res = await deleteVehiculo(id);
+  if (!res.success) {
+    showAlert(res.error.message || "No se pudo eliminar el vehículo.");
+    return;
+  }
+
+  showAlert("Vehículo eliminado correctamente.", "ok");
+  cargarVehiculos();
+}
+
+formVehiculo.addEventListener("submit", manejarEnvioFormulario);
+tablaBody.addEventListener("click", manejarClickTabla);
 
 document.addEventListener("DOMContentLoaded", cargarVehiculos);
