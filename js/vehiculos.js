@@ -14,6 +14,20 @@ function ocultarAlerta() {
   alertBox.className = "alert";
 }
 
+function obtenerKilometraje(vehiculo) {
+  return (
+    vehiculo.kilometraje ||
+    vehiculo.Kilometraje ||
+    vehiculo.km ||
+    vehiculo.KM ||
+    vehiculo.kms ||
+    vehiculo.KMs ||
+    vehiculo.kilometros ||
+    vehiculo.Kilometros ||
+    "-"
+  );
+}
+
 function crearFilaVehiculo(vehiculo) {
   const tr = document.createElement("tr");
   tr.innerHTML = `
@@ -22,6 +36,7 @@ function crearFilaVehiculo(vehiculo) {
     <td>${vehiculo.modelo || vehiculo.Modelo || "-"}</td>
     <td>${vehiculo.ano || vehiculo.Ano || "-"}</td>
     <td>${vehiculo.clienteId || vehiculo.ClienteId || "-"}</td>
+    <td>${obtenerKilometraje(vehiculo)}</td>
     <td>
       <button class="btn btn-secondary btn-sm" data-action="delete" data-id="${vehiculo.vehiculoId || vehiculo.VehiculoId}">Eliminar</button>
     </td>
@@ -37,7 +52,7 @@ function renderVehiculos(vehiculos) {
   if (!vehiculos || vehiculos.length === 0) {
     tablaBody.innerHTML = `
       <tr>
-        <td colspan="6" class="text-muted">No hay vehículos registrados.</td>
+        <td colspan="7" class="text-muted">No hay vehículos registrados.</td>
       </tr>
     `;
     return;
