@@ -1,69 +1,73 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BoxService — Facturas</title>
-  <link rel="stylesheet" href="../css/main.css">
-  <link rel="stylesheet" href="../css/invoice.css">
-</head>
-<body data-page="facturas">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BoxService — Facturas</title>
+    <link rel="stylesheet" href="../css/main.css" />
+    <link rel="stylesheet" href="../css/invoice.css" />
+  </head>
+  <body data-page="facturas">
+    <div class="app-wrapper">
+      <div id="sidebar-container"></div>
 
-  <div class="app-wrapper">
-    <div id="sidebar-container"></div>
+      <div class="main-content">
+        <div class="container">
 
-    <div class="main-content">
-      <div class="container">
-
-        <h1 class="page-title">Facturas</h1>
-
-        <div id="alert-box" class="alert"></div>
-
-        <!-- Emitir factura -->
-        <div class="card mb-6">
-          <p class="card-title">Emitir Factura</p>
-          <div class="invoice-form-row">
-            <div class="form-group">
-              <label class="form-label">ID Service</label>
-              <input type="number" id="inp-service" class="form-control" placeholder="ID del service finalizado">
-            </div>
-            <div class="form-group">
-              <label class="form-label">ID Presupuesto (opcional)</label>
-              <input type="number" id="inp-budget" class="form-control" placeholder="Para calcular el total">
+          <div class="page-header">
+            <div>
+              <p class="page-eyebrow">Gestión</p>
+              <h1 class="page-title">Facturas</h1>
             </div>
           </div>
-          <div class="invoice-actions">
-            <button class="btn btn-primary" id="btn-emit">Emitir factura</button>
-          </div>
-        </div>
 
-        <!-- Tabla listado -->
-        <div class="card">
-          <p class="card-title">Listado</p>
-          <div class="table-wrapper">
-            <table>
-              <thead>
-                <tr>
-                  <th>Número</th>
-                  <th>Fecha</th>
-                  <th>Total</th>
-                  <th>Estado</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="table-body">
-                <tr><td colspan="5" class="text-muted">Cargando...</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+          <div id="alert-box" class="alert"></div>
 
+          <!-- Emitir factura -->
+          <div class="card mb-6">
+            <p class="card-title">Emitir Factura</p>
+            <div class="invoice-form-row">
+              <div class="form-group">
+                <label class="form-label">ID Service</label>
+                <input type="number" id="inp-service" class="form-control" placeholder="ID del service finalizado" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">ID Presupuesto <span class="muted">(opcional)</span></label>
+                <input type="number" id="inp-budget" class="form-control" placeholder="Para calcular el total" />
+              </div>
+            </div>
+            <div class="invoice-actions">
+              <button class="btn btn-primary" id="btn-emit">Emitir factura</button>
+            </div>
+          </div>
+
+          <!-- Listado -->
+          <div class="card">
+            <p class="card-title">Listado</p>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Número</th>
+                    <th>Fecha</th>
+                    <th>Total</th>
+                    <th>Estado</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="table-body">
+                  <tr><td colspan="5" class="empty-state">Cargando...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+        <div id="footer-container"></div>
       </div>
-      <div id="footer-container"></div>
     </div>
-  </div>
 
-  <script type="module" src="../js/components.js"></script>
-  <script type="module" src="../js/invoice.js"></script>
-</body>
+    <script type="module" src="../js/components.js"></script>
+    <script type="module" src="../js/invoice.js"></script>
+  </body>
 </html>
