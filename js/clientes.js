@@ -1,147 +1,182 @@
-// clientes.js — lógica de presentación
-// Solo fetch y mostrar. Sin lógica de negocio.
-import { getClients, getClientVehicles, createClient } from "./api.js";
+import { createClient, getClientVehicles, getClients } from "./api.js";
 
-const clientesTbody = document.getElementById("clientes-tbody");
-const vehiculosTbody = document.getElementById("vehiculos-tbody");
-const vehiculosSubtitle = document.getElementById("vehiculos-subtitle");
-const clienteForm = document.getElementById("cliente-form");
-const alertBox = document.getElementById("alert-box");
+const clientesTbody = document.querySelector("#clientes-tbody");
+const vehiculosTbody = document.querySelector("#vehiculos-tbody");
+const vehiculosSubtitle = document.querySelector("#vehiculos-subtitle");
+const clienteForm = document.querySelector("#cliente-form");
+const formFeedback = document.querySelector("#form-feedback");
+const refreshButton = document.querySelector("#refresh-clientes");
 
-// ── Helpers ────────────────────────────────────────────
-function showAlert(msg, type = "error") {
-  alertBox.textContent = msg;
-  alertBox.className = `alert show alert-${type}`;
-  setTimeout(() => (alertBox.className = "alert"), 5000);
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
-function setLoading(btn, loading) {
-  if (loading) {
-    btn.disabled = true;
-    btn.dataset.original = btn.textContent;
-    btn.textContent = "Guardando...";
-    btn.style.opacity = "0.6";
-  } else {
-    btn.disabled = false;
-    btn.textContent = btn.dataset.original;
-    btn.style.opacity = "1";
+function getField(source, ...keys) {
+  for (const key of keys) {
+    if (source?.[key] !== undefined && source[key] !== null) {
+      return source[key];
+    }
   }
+  return "";
 }
 
-// ── Cargar clientes ────────────────────────────────────
+function normalizeList(data, key) {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.[key])) return data[key];
+  if (Array.isArray(data?.data)) return data.data;
+  if (Array.isArray(data?.data?.[key])) return data.data[key];
+  return [];
+}
+
+function showError(tbody, colspan, message) {
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="${colspan}" class="text-muted">${escapeHtml(message)}</td>
+    </tr>
+  `;
+}
+
 async function cargarClientes() {
-  clientesTbody.innerHTML =
-    '<tr><td colspan="5" class="text-muted">Cargando...</td></tr>';
-
-  const res = await getClients();
-
-  if (!res.success) {
-    clientesTbody.innerHTML = `<tr><td colspan="5" class="text-muted">Error: ${res.error.message}</td></tr>`;
-    return;
-  }
-
-  const lista = res.data ?? [];
-  if (!lista.length) {
-    clientesTbody.innerHTML =
-      '<tr><td colspan="5" class="text-muted">No hay clientes registrados.</td></tr>';
-    return;
-  }
-
-  clientesTbody.innerHTML = lista
-    .map(
-      (c) => `
+  clientesTbody.innerHTML = `
     <tr>
-      <td>${c.clientId}</td>
-      <td>${c.name}</td>
-      <td>${c.phone ?? "-"}</td>
-      <td>${c.email ?? "-"}</td>
-      <td>
-        <button class="btn btn-secondary btn-sm"
-          data-client-id="${c.clientId}"
-          data-client-name="${c.name}">
-          Ver vehículos
-        </button>
-      </td>
+      <td colspan="5" class="text-muted">Cargando clientes...</td>
     </tr>
-  `,
-    )
-    .join("");
+  `;
+
+  try {
+    const res = await getClients();
+    if (!res.success) {
+      throw new Error(res.error?.message || "No se pudieron cargar los clientes.");
+    }
+
+    const clientes = normalizeList(res.data, "clients");
+
+    if (!clientes.length) {
+      clientesTbody.innerHTML = `
+        <tr>
+          <td colspan="5" class="text-muted">No hay clientes cargados.</td>
+        </tr>
+      `;
+      return;
+    }
+
+    clientesTbody.innerHTML = clientes
+      .map(
+        (cliente) => `
+          <tr>
+            <td>${escapeHtml(getField(cliente, "id_cliente", "clienteId", "clientId", "id", "ClientId"))}</td>
+            <td>${escapeHtml(getField(cliente, "nombre", "name", "fullName", "Name"))}</td>
+            <td>${escapeHtml(getField(cliente, "telefono", "phone", "Phone"))}</td>
+            <td>${escapeHtml(getField(cliente, "email", "Email"))}</td>
+            <td>
+              <button
+                class="btn btn-secondary btn-sm"
+                data-cliente-id="${escapeHtml(getField(cliente, "id_cliente", "clienteId", "clientId", "id", "ClientId"))}"
+                data-cliente-nombre="${escapeHtml(getField(cliente, "nombre", "name", "fullName", "Name"))}"
+              >
+                Ver vehiculos
+              </button>
+            </td>
+          </tr>
+        `
+      )
+      .join("");
+  } catch (error) {
+    showError(clientesTbody, 5, error.message);
+  }
 }
 
-// ── Cargar vehículos del cliente ───────────────────────
-async function cargarVehiculos(clientId, clientName) {
-  vehiculosSubtitle.textContent = `Vehículos de ${clientName}`;
-  vehiculosTbody.innerHTML =
-    '<tr><td colspan="6" class="text-muted">Cargando...</td></tr>';
-
-  const res = await getClientVehicles(clientId);
-
-  if (!res.success) {
-    vehiculosTbody.innerHTML = `<tr><td colspan="6" class="text-muted">Error: ${res.error.message}</td></tr>`;
-    return;
-  }
-
-  const lista = res.data ?? [];
-  if (!lista.length) {
-    vehiculosTbody.innerHTML =
-      '<tr><td colspan="6" class="text-muted">Este cliente no tiene vehículos registrados.</td></tr>';
-    return;
-  }
-
-  vehiculosTbody.innerHTML = lista
-    .map(
-      (v) => `
+async function cargarVehiculos(clienteId, clienteNombre) {
+  vehiculosSubtitle.textContent = `Vehiculos asociados a ${clienteNombre}`;
+  vehiculosTbody.innerHTML = `
     <tr>
-      <td>${v.vehicleId}</td>
-      <td class="text-accent">${v.plate}</td>
-      <td>${v.brand}</td>
-      <td>${v.model}</td>
-      <td>${v.year ?? "-"}</td>
-      <td>${v.mileage ?? "-"}</td>
+      <td colspan="6" class="text-muted">Cargando vehiculos...</td>
     </tr>
-  `,
-    )
-    .join("");
+  `;
+
+  try {
+    const res = await getClientVehicles(clienteId);
+    if (!res.success) {
+      throw new Error(res.error?.message || "No se pudieron cargar los vehiculos.");
+    }
+
+    const vehiculos = normalizeList(res.data, "vehicles");
+
+    if (!vehiculos.length) {
+      vehiculosTbody.innerHTML = `
+        <tr>
+          <td colspan="6" class="text-muted">Este cliente no tiene vehiculos asociados todavia.</td>
+        </tr>
+      `;
+      return;
+    }
+
+    vehiculosTbody.innerHTML = vehiculos
+      .map(
+        (vehiculo) => `
+          <tr>
+            <td>${escapeHtml(getField(vehiculo, "id_vehiculo", "vehiculoId", "vehicleId", "id"))}</td>
+            <td>${escapeHtml(getField(vehiculo, "patente", "placa", "plate", "Plate"))}</td>
+            <td>${escapeHtml(getField(vehiculo, "marca", "brand", "Brand"))}</td>
+            <td>${escapeHtml(getField(vehiculo, "modelo", "model", "Model"))}</td>
+            <td>${escapeHtml(getField(vehiculo, "anio", "ano", "year", "Year"))}</td>
+            <td>${escapeHtml(getField(vehiculo, "kilometraje_actual", "kilometraje", "kilometrajeActual", "mileage"))}</td>
+          </tr>
+        `
+      )
+      .join("");
+  } catch (error) {
+    showError(vehiculosTbody, 6, error.message);
+  }
 }
 
-// ── Formulario nuevo cliente ───────────────────────────
 clienteForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
-  const btn = clienteForm.querySelector('button[type="submit"]');
-  const fd = new FormData(clienteForm);
-
+  const formData = new FormData(clienteForm);
   const payload = {
-    name: fd.get("nombre").trim(),
-    phone: fd.get("telefono").trim(),
-    email: fd.get("email").trim(),
+    nombre: formData.get("nombre"),
+    telefono: formData.get("telefono"),
+    email: formData.get("email"),
   };
 
-  setLoading(btn, true);
-  const res = await createClient(payload);
-  setLoading(btn, false);
+  formFeedback.textContent = "Guardando cliente...";
+  formFeedback.dataset.state = "loading";
 
-  if (!res.success) {
-    showAlert(res.error.message);
-    return;
+  try {
+    const res = await createClient(payload);
+    if (!res.success) {
+      throw new Error(res.error?.message || "No se pudo crear el cliente.");
+    }
+
+    const cliente = res.data;
+    const id = getField(cliente, "id_cliente", "clienteId", "clientId", "id", "ClientId");
+    formFeedback.textContent = id ? `Cliente creado con ID ${id}` : "Cliente creado correctamente.";
+    formFeedback.dataset.state = "success";
+    clienteForm.reset();
+    await cargarClientes();
+  } catch (error) {
+    formFeedback.textContent = error.message;
+    formFeedback.dataset.state = "error";
   }
+});
 
-  showAlert(`Cliente creado con ID ${res.data.clientId}`, "ok");
-  clienteForm.reset();
+refreshButton.addEventListener("click", () => {
   cargarClientes();
 });
 
-// ── Botón ver vehículos ────────────────────────────────
 clientesTbody.addEventListener("click", (event) => {
-  const btn = event.target.closest("[data-client-id]");
-  if (!btn) return;
-  cargarVehiculos(btn.dataset.clientId, btn.dataset.clientName);
+  const button = event.target.closest("[data-cliente-id]");
+  if (!button) {
+    return;
+  }
+
+  cargarVehiculos(button.dataset.clienteId, button.dataset.clienteNombre);
 });
 
-// ── Botón actualizar ───────────────────────────────────
-document
-  .getElementById("refresh-clientes")
-  ?.addEventListener("click", cargarClientes);
-
-// ── Init ───────────────────────────────────────────────
-document.addEventListener("DOMContentLoaded", cargarClientes);
+cargarClientes();

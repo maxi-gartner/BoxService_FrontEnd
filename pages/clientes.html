@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BoxService — Clientes</title>
+    <title>BoxService - Clientes</title>
     <link rel="stylesheet" href="../css/main.css" />
     <link rel="stylesheet" href="../css/clientes.css" />
   </head>
@@ -12,90 +12,93 @@
       <div id="sidebar-container"></div>
 
       <div class="main-content">
-        <div class="container">
-          <h1 class="page-title">Clientes</h1>
+        <main class="container">
+          <h1 class="page-title">Gestion de clientes</h1>
 
-          <div id="alert-box" class="alert"></div>
+          <p class="text-muted mb-6">
+            Alta de clientes, listado general y consulta rapida de vehiculos asociados.
+          </p>
 
           <div class="clientes-layout">
-            <!-- Formulario -->
-            <div class="card mb-6">
-              <p class="card-title">Nuevo cliente</p>
+            <section class="card">
+              <h2 class="card-title">Nuevo cliente</h2>
               <form id="cliente-form">
-                <div class="form-row">
-                  <div class="form-group">
-                    <label class="form-label">Nombre</label>
-                    <input
-                      class="form-control"
-                      type="text"
-                      name="nombre"
-                      placeholder="Juan Pérez"
-                      required
-                    />
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label">Teléfono</label>
-                    <input
-                      class="form-control"
-                      type="text"
-                      name="telefono"
-                      placeholder="3431234567"
-                    />
-                  </div>
+                <div class="form-group">
+                  <label class="form-label" for="nombre">Nombre</label>
+                  <input
+                    class="form-control"
+                    type="text"
+                    id="nombre"
+                    name="nombre"
+                    placeholder="Juan Perez"
+                    required
+                  />
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Email</label>
+                  <label class="form-label" for="telefono">Telefono</label>
+                  <input
+                    class="form-control"
+                    type="text"
+                    id="telefono"
+                    name="telefono"
+                    placeholder="3431234567"
+                    required
+                  />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="email">Email</label>
                   <input
                     class="form-control"
                     type="email"
+                    id="email"
                     name="email"
                     placeholder="juan@email.com"
+                    required
                   />
                 </div>
-                <div class="flex-between mt-4">
-                  <span></span>
-                  <button class="btn btn-primary" type="submit">
-                    Guardar cliente
-                  </button>
-                </div>
+                <button class="btn btn-primary" type="submit">Guardar cliente</button>
               </form>
-            </div>
+              <p id="form-feedback" class="feedback" aria-live="polite"></p>
+            </section>
 
-            <!-- Listado -->
-            <div class="card mb-6">
-              <div class="flex-between mb-4">
-                <p class="card-title" style="margin: 0">Clientes activos</p>
-                <button id="refresh-clientes" class="btn btn-secondary btn-sm">
+            <section class="card">
+              <div class="panel-heading">
+                <div>
+                  <h2 class="card-title">Clientes activos</h2>
+                  <p class="text-muted">Click en "Ver vehiculos" para consultar los asociados.</p>
+                </div>
+                <button id="refresh-clientes" class="btn btn-secondary" type="button">
                   Actualizar
                 </button>
               </div>
+
               <div class="table-wrapper">
                 <table>
                   <thead>
                     <tr>
                       <th>ID</th>
                       <th>Nombre</th>
-                      <th>Teléfono</th>
+                      <th>Telefono</th>
                       <th>Email</th>
                       <th></th>
                     </tr>
                   </thead>
-                  <tbody id="clientes-tbody">
-                    <tr>
-                      <td colspan="5" class="text-muted">Cargando...</td>
-                    </tr>
-                  </tbody>
+                  <tbody id="clientes-tbody"></tbody>
                 </table>
               </div>
-            </div>
+            </section>
           </div>
 
-          <!-- Vehículos del cliente -->
-          <div class="card">
-            <p class="card-title">Vehículos del cliente</p>
-            <p id="vehiculos-subtitle" class="text-muted mb-4">
-              Seleccioná un cliente para ver sus vehículos.
-            </p>
+          <section class="card">
+            <div class="panel-heading">
+              <div>
+                <h2 class="card-title">Vehiculos del cliente</h2>
+                <p id="vehiculos-subtitle" class="text-muted">
+                  Selecciona un cliente para ver el detalle.
+                </p>
+              </div>
+            </div>
+
             <div class="table-wrapper">
               <table>
                 <thead>
@@ -104,21 +107,22 @@
                     <th>Patente</th>
                     <th>Marca</th>
                     <th>Modelo</th>
-                    <th>Año</th>
+                    <th>Anio</th>
                     <th>Kilometraje</th>
                   </tr>
                 </thead>
                 <tbody id="vehiculos-tbody">
                   <tr>
                     <td colspan="6" class="text-muted">
-                      Todavía no hay datos para mostrar.
+                      Todavia no hay datos para mostrar.
                     </td>
                   </tr>
                 </tbody>
               </table>
             </div>
-          </div>
-        </div>
+          </section>
+        </main>
+
         <div id="footer-container"></div>
       </div>
     </div>
