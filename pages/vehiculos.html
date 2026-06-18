@@ -18,8 +18,9 @@
           <div id="page-alert" class="alert"></div>
 
           <div class="vehiculos-grid">
-            <section class="card">
-              <h2 class="card-title">Registrar vehículo</h2>
+            <!-- Registrar -->
+            <div class="card">
+              <p class="card-title">Registrar vehículo</p>
               <form id="vehiculo-form">
                 <div class="form-row">
                   <div class="form-group">
@@ -87,10 +88,11 @@
                   </button>
                 </div>
               </form>
-            </section>
+            </div>
 
-            <section class="card">
-              <h2 class="card-title">Lista de vehículos</h2>
+            <!-- Listado -->
+            <div class="card">
+              <p class="card-title">Lista de vehículos</p>
               <div class="table-wrapper">
                 <table>
                   <thead>
@@ -100,27 +102,20 @@
                       <th>Modelo</th>
                       <th>Año</th>
                       <th>Cliente ID</th>
-                      <th>Kilometraje</th>
-                      <th>Acciones</th>
+                      <th>Km</th>
+                      <th></th>
                     </tr>
                   </thead>
-                  <tbody id="vehiculos-body"></tbody>
+                  <tbody id="vehiculos-body">
+                    <tr>
+                      <td colspan="7" class="text-muted">Cargando...</td>
+                    </tr>
+                  </tbody>
                 </table>
               </div>
-            </section>
+            </div>
           </div>
         </div>
-
-        <div id="footer-container"></div>
-      </div>
-    </div>
-
-    <script type="module" src="../js/components.js"></script>
-    <script type="module" src="../js/vehiculos.js"></script>
-  </body>
-</html>
-        </div>
-
         <div id="footer-container"></div>
       </div>
     </div>

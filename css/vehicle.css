@@ -1,37 +1,24 @@
-.vehiculos-header {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: var(--space-4);
-  align-items: center;
-  margin-bottom: var(--space-6);
-}
+/* =====================================================
+   BoxService — vehicle.css
+   Estilos exclusivos de Vehículos
+   ===================================================== */
 
 .vehiculos-grid {
   display: grid;
-  grid-template-columns: 1.2fr 1fr;
+  grid-template-columns: 360px minmax(0, 1fr);
   gap: var(--space-6);
-}
-
-.vehiculos-grid .card {
-  min-height: 420px;
 }
 
 .vehiculos-actions {
   display: flex;
   justify-content: flex-end;
   gap: var(--space-3);
-  margin-top: var(--space-4);
+  margin-top: var(--space-5);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-border);
 }
 
-.table-wrapper {
-  max-height: 580px;
-}
-
-.table-wrapper table {
-  min-width: 700px;
-}
-
-@media (max-width: 900px) {
+@media (max-width: 960px) {
   .vehiculos-grid {
     grid-template-columns: 1fr;
   }

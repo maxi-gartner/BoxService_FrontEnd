@@ -1,0 +1,33 @@
+/* =====================================================
+   BoxService — invoice.css
+   Estilos exclusivos de Facturas
+   ===================================================== */
+
+.invoice-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-6);
+  margin-bottom: var(--space-5);
+}
+
+.invoice-total {
+  font-size: var(--text-3xl);
+  font-weight: 700;
+  color: var(--color-accent);
+  letter-spacing: -0.02em;
+}
+
+.invoice-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-border);
+  margin-top: var(--space-2);
+}
+
+@media (max-width: 768px) {
+  .invoice-form-row { grid-template-columns: 1fr; }
+  .invoice-actions  { flex-direction: column; }
+  .invoice-actions .btn { width: 100%; }
+}
