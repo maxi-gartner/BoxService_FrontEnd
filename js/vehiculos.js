@@ -1,91 +1,77 @@
 // vehiculos.js — lógica de presentación
 // Solo fetch y mostrar. Sin lógica de negocio.
-import { getVehiculos, createVehiculo, deleteVehiculo } from "./api.js";
+import { getVehiculos, createVehiculo } from "./api.js";
 
 const tablaBody = document.getElementById("vehiculos-body");
 const formVehiculo = document.getElementById("vehiculo-form");
 const alertBox = document.getElementById("page-alert");
 
+// ── Helpers ────────────────────────────────────────────
 function showAlert(msg, type = "error") {
   alertBox.textContent = msg;
   alertBox.className = `alert show alert-${type}`;
   setTimeout(() => (alertBox.className = "alert"), 4000);
 }
 
-function obtenerKilometraje(vehiculo) {
-  return (
-    vehiculo.kilometraje ||
-    vehiculo.Kilometraje ||
-    vehiculo.km ||
-    vehiculo.KM ||
-    vehiculo.kms ||
-    vehiculo.KMs ||
-    vehiculo.kilometros ||
-    vehiculo.Kilometros ||
-    "-"
-  );
+function setLoading(btn, loading) {
+  if (loading) {
+    btn.disabled = true;
+    btn.dataset.original = btn.textContent;
+    btn.textContent = "Guardando...";
+    btn.style.opacity = "0.6";
+  } else {
+    btn.disabled = false;
+    btn.textContent = btn.dataset.original;
+    btn.style.opacity = "1";
+  }
 }
 
-function crearFilaVehiculo(vehiculo) {
+// ── Render ─────────────────────────────────────────────
+function crearFila(v) {
   const tr = document.createElement("tr");
   tr.innerHTML = `
-    <td>${vehiculo.placa || vehiculo.Placa || vehiculo.plate || vehiculo.Plate || "-"}</td>
-    <td>${vehiculo.marca || vehiculo.Marca || vehiculo.brand || vehiculo.Brand || "-"}</td>
-    <td>${vehiculo.modelo || vehiculo.Modelo || vehiculo.model || vehiculo.Model || "-"}</td>
-    <td>${vehiculo.ano || vehiculo.Ano || vehiculo.year || vehiculo.Year || "-"}</td>
-    <td>${vehiculo.clienteId || vehiculo.ClienteId || vehiculo.clientId || vehiculo.ClientId || "-"}</td>
-    <td>${obtenerKilometraje(vehiculo)}</td>
-    <td>
-      <button class="btn btn-danger btn-sm" data-action="delete" data-id="${vehiculo.vehiculoId || vehiculo.VehiculoId || vehiculo.id || vehiculo._id || vehiculo.vehicleId || vehiculo.VehicleId || ""}">Eliminar</button>
-    </td>
+    <td class="text-accent">${v.plate ?? "-"}</td>
+    <td>${v.brand ?? "-"}</td>
+    <td>${v.model ?? "-"}</td>
+    <td>${v.year ?? "-"}</td>
+    <td>${v.clientId ?? "-"}</td>
+    <td class="text-muted">—</td>
+    <td></td>
   `;
   return tr;
 }
 
-function renderVehiculos(vehiculos) {
+function renderVehiculos(lista) {
   tablaBody.innerHTML = "";
-
-  if (!vehiculos || vehiculos.length === 0) {
-    tablaBody.innerHTML = `
-      <tr>
-        <td colspan="7" class="text-muted">No hay vehículos registrados.</td>
-      </tr>
-    `;
+  if (!lista.length) {
+    tablaBody.innerHTML =
+      '<tr><td colspan="7" class="text-muted">No hay vehículos registrados.</td></tr>';
     return;
   }
-
-  vehiculos.forEach((vehiculo) => {
-    tablaBody.appendChild(crearFilaVehiculo(vehiculo));
-  });
+  lista.forEach((v) => tablaBody.appendChild(crearFila(v)));
 }
 
-function extraerListaVehiculos(resData) {
-  if (!resData) return [];
-  if (Array.isArray(resData)) return resData;
-  if (Array.isArray(resData.data)) return resData.data;
-  if (Array.isArray(resData.vehiculos)) return resData.vehiculos;
-  if (Array.isArray(resData.data?.vehiculos)) return resData.data.vehiculos;
-  return [];
-}
-
+// ── Cargar ─────────────────────────────────────────────
 async function cargarVehiculos() {
   tablaBody.innerHTML =
     '<tr><td colspan="7" class="text-muted">Cargando...</td></tr>';
 
   const res = await getVehiculos();
   if (!res.success) {
-    showAlert(res.error.message || "Error al cargar vehículos.");
+    showAlert(res.error?.message || "Error al cargar vehículos.");
     tablaBody.innerHTML =
       '<tr><td colspan="7" class="text-muted">Error al cargar.</td></tr>';
     return;
   }
 
-  const lista = extraerListaVehiculos(res.data);
-  renderVehiculos(lista);
+  renderVehiculos(res.data ?? []);
 }
 
-async function manejarEnvioFormulario(event) {
+// ── Formulario ─────────────────────────────────────────
+formVehiculo.addEventListener("submit", async (event) => {
   event.preventDefault();
+
+  const btn = formVehiculo.querySelector('button[type="submit"]');
   const fd = new FormData(formVehiculo);
 
   const payload = {
@@ -96,38 +82,19 @@ async function manejarEnvioFormulario(event) {
     plate: fd.get("patente").trim(),
   };
 
+  setLoading(btn, true);
   const res = await createVehiculo(payload);
+  setLoading(btn, false);
+
   if (!res.success) {
-    showAlert(res.error.message || "No se pudo crear el vehículo.");
+    showAlert(res.error?.message || "No se pudo crear el vehículo.");
     return;
   }
 
   formVehiculo.reset();
   showAlert("Vehículo creado correctamente.", "ok");
   cargarVehiculos();
-}
+});
 
-async function manejarClickTabla(event) {
-  const button = event.target.closest("button[data-action='delete']");
-  if (!button) return;
-
-  const id = button.dataset.id;
-  if (!id) return;
-
-  const confirmacion = window.confirm("¿Eliminar este vehículo?");
-  if (!confirmacion) return;
-
-  const res = await deleteVehiculo(id);
-  if (!res.success) {
-    showAlert(res.error.message || "No se pudo eliminar el vehículo.");
-    return;
-  }
-
-  showAlert("Vehículo eliminado correctamente.", "ok");
-  cargarVehiculos();
-}
-
-formVehiculo.addEventListener("submit", manejarEnvioFormulario);
-tablaBody.addEventListener("click", manejarClickTabla);
-
+// ── Init ───────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", cargarVehiculos);
