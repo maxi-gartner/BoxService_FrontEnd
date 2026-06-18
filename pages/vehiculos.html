@@ -13,18 +13,11 @@
 
       <div class="main-content">
         <div class="container">
-
-          <div class="page-header">
-            <div>
-              <p class="page-eyebrow">Gestión</p>
-              <h1 class="page-title">Vehículos</h1>
-            </div>
-          </div>
+          <h1 class="page-title">Vehículos</h1>
 
           <div id="page-alert" class="alert"></div>
 
           <div class="vehiculos-grid">
-
             <!-- Registrar -->
             <div class="card">
               <p class="card-title">Registrar vehículo</p>
@@ -32,29 +25,67 @@
                 <div class="form-row">
                   <div class="form-group">
                     <label class="form-label" for="patente">Patente</label>
-                    <input class="form-control" type="text" id="patente" name="patente" placeholder="ABC123" required />
+                    <input
+                      class="form-control"
+                      type="text"
+                      id="patente"
+                      name="patente"
+                      placeholder="ABC123"
+                      required
+                    />
                   </div>
                   <div class="form-group">
                     <label class="form-label" for="marca">Marca</label>
-                    <input class="form-control" type="text" id="marca" name="marca" placeholder="Toyota" required />
+                    <input
+                      class="form-control"
+                      type="text"
+                      id="marca"
+                      name="marca"
+                      placeholder="Toyota"
+                      required
+                    />
                   </div>
                 </div>
                 <div class="form-row">
                   <div class="form-group">
                     <label class="form-label" for="modelo">Modelo</label>
-                    <input class="form-control" type="text" id="modelo" name="modelo" placeholder="Corolla" required />
+                    <input
+                      class="form-control"
+                      type="text"
+                      id="modelo"
+                      name="modelo"
+                      placeholder="Corolla"
+                      required
+                    />
                   </div>
                   <div class="form-group">
                     <label class="form-label" for="anio">Año</label>
-                    <input class="form-control" type="number" id="anio" name="anio" placeholder="2022" min="1900" max="2100" />
+                    <input
+                      class="form-control"
+                      type="number"
+                      id="anio"
+                      name="anio"
+                      placeholder="2022"
+                      min="1900"
+                      max="2100"
+                    />
                   </div>
                 </div>
                 <div class="form-group">
                   <label class="form-label" for="cliente">ID Cliente</label>
-                  <input class="form-control" type="number" id="cliente" name="cliente" placeholder="ID del cliente" required />
+                  <input
+                    class="form-control"
+                    type="number"
+                    id="cliente"
+                    name="cliente"
+                    placeholder="ID del cliente"
+                    required
+                  />
                 </div>
                 <div class="vehiculos-actions">
-                  <button class="btn btn-primary" type="submit">Guardar vehículo</button>
+                  <button class="btn btn-primary" type="submit">
+                    Guardar vehículo
+                  </button>
                 </div>
               </form>
             </div>
@@ -76,12 +107,13 @@
                     </tr>
                   </thead>
                   <tbody id="vehiculos-body">
-                    <tr><td colspan="7" class="empty-state">Cargando...</td></tr>
+                    <tr>
+                      <td colspan="7" class="text-muted">Cargando...</td>
+                    </tr>
                   </tbody>
                 </table>
               </div>
             </div>
-
           </div>
         </div>
         <div id="footer-container"></div>
