@@ -13,50 +13,61 @@
 
       <div class="main-content">
         <div class="container">
-
-          <div class="page-header">
-            <div>
-              <p class="page-eyebrow">Gestión</p>
-              <h1 class="page-title">Clientes</h1>
-              <p class="page-subtitle">Alta, listado y consulta rápida de vehículos asociados.</p>
-            </div>
-          </div>
+          <h1 class="page-title">Clientes</h1>
 
           <div id="alert-box" class="alert"></div>
 
           <div class="clientes-layout">
-
             <!-- Formulario -->
-            <div class="card">
+            <div class="card mb-6">
               <p class="card-title">Nuevo cliente</p>
-              <form id="cliente-form" class="form-grid">
-                <label>
-                  Nombre
-                  <input type="text" name="nombre" placeholder="Juan Pérez" required />
-                </label>
-                <label>
-                  Teléfono
-                  <input type="text" name="telefono" placeholder="3431234567" required />
-                </label>
-                <label>
-                  Email
-                  <input type="email" name="email" placeholder="juan@email.com" required />
-                </label>
-                <div class="mt-2">
-                  <button class="btn btn-primary w-full" type="submit">Guardar cliente</button>
+              <form id="cliente-form">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Nombre</label>
+                    <input
+                      class="form-control"
+                      type="text"
+                      name="nombre"
+                      placeholder="Juan Pérez"
+                      required
+                    />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Teléfono</label>
+                    <input
+                      class="form-control"
+                      type="text"
+                      name="telefono"
+                      placeholder="3431234567"
+                    />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Email</label>
+                  <input
+                    class="form-control"
+                    type="email"
+                    name="email"
+                    placeholder="juan@email.com"
+                  />
+                </div>
+                <div class="flex-between mt-4">
+                  <span></span>
+                  <button class="btn btn-primary" type="submit">
+                    Guardar cliente
+                  </button>
                 </div>
               </form>
-              <p id="form-feedback" class="feedback" aria-live="polite"></p>
             </div>
 
             <!-- Listado -->
-            <div class="card">
-              <div class="panel-heading">
-                <div>
-                  <h2>Clientes activos</h2>
-                  <p class="muted mt-2">Hacé clic en "Ver vehículos" para consultar los asociados.</p>
-                </div>
-                <button id="refresh-clientes" class="btn btn-secondary btn-sm" type="button">Actualizar</button>
+            <div class="card mb-6">
+              <div class="flex-between mb-4">
+                <p class="card-title" style="margin: 0">Clientes activos</p>
+                <button id="refresh-clientes" class="btn btn-secondary btn-sm">
+                  Actualizar
+                </button>
               </div>
               <div class="table-wrapper">
                 <table>
@@ -70,22 +81,21 @@
                     </tr>
                   </thead>
                   <tbody id="clientes-tbody">
-                    <tr><td colspan="5" class="empty-state">Cargando...</td></tr>
+                    <tr>
+                      <td colspan="5" class="text-muted">Cargando...</td>
+                    </tr>
                   </tbody>
                 </table>
               </div>
             </div>
-
           </div>
 
           <!-- Vehículos del cliente -->
           <div class="card">
-            <div class="panel-heading">
-              <div>
-                <h2>Vehículos del cliente</h2>
-                <p id="vehiculos-subtitle" class="muted mt-2">Seleccioná un cliente para ver el detalle.</p>
-              </div>
-            </div>
+            <p class="card-title">Vehículos del cliente</p>
+            <p id="vehiculos-subtitle" class="text-muted mb-4">
+              Seleccioná un cliente para ver sus vehículos.
+            </p>
             <div class="table-wrapper">
               <table>
                 <thead>
@@ -99,18 +109,21 @@
                   </tr>
                 </thead>
                 <tbody id="vehiculos-tbody">
-                  <tr><td colspan="6" class="empty-state">Todavía no hay datos para mostrar.</td></tr>
+                  <tr>
+                    <td colspan="6" class="text-muted">
+                      Todavía no hay datos para mostrar.
+                    </td>
+                  </tr>
                 </tbody>
               </table>
             </div>
           </div>
-
         </div>
         <div id="footer-container"></div>
       </div>
     </div>
 
     <script type="module" src="../js/components.js"></script>
-    <script src="../js/clientes.js"></script>
+    <script type="module" src="../js/clientes.js"></script>
   </body>
 </html>
