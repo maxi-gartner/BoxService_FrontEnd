@@ -1,3 +1,5 @@
+import { createClient, getClientVehicles, getClients } from "./api.js";
+
 const clientesTbody = document.querySelector("#clientes-tbody");
 const vehiculosTbody = document.querySelector("#vehiculos-tbody");
 const vehiculosSubtitle = document.querySelector("#vehiculos-subtitle");
@@ -5,32 +7,59 @@ const clienteForm = document.querySelector("#cliente-form");
 const formFeedback = document.querySelector("#form-feedback");
 const refreshButton = document.querySelector("#refresh-clientes");
 
-async function request(path, options = {}) {
-  const response = await fetch(path, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
-    },
-    ...options,
-  });
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
 
-  const payload = await response.json();
-
-  if (!response.ok || !payload.success) {
-    throw new Error(payload.error?.message || "Ocurrio un error inesperado");
+function getField(source, ...keys) {
+  for (const key of keys) {
+    if (source?.[key] !== undefined && source[key] !== null) {
+      return source[key];
+    }
   }
+  return "";
+}
 
-  return payload.data;
+function normalizeList(data, key) {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.[key])) return data[key];
+  if (Array.isArray(data?.data)) return data.data;
+  if (Array.isArray(data?.data?.[key])) return data.data[key];
+  return [];
+}
+
+function showError(tbody, colspan, message) {
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="${colspan}" class="text-muted">${escapeHtml(message)}</td>
+    </tr>
+  `;
 }
 
 async function cargarClientes() {
+  clientesTbody.innerHTML = `
+    <tr>
+      <td colspan="5" class="text-muted">Cargando clientes...</td>
+    </tr>
+  `;
+
   try {
-    const clientes = await request("/api/clientes");
+    const res = await getClients();
+    if (!res.success) {
+      throw new Error(res.error?.message || "No se pudieron cargar los clientes.");
+    }
+
+    const clientes = normalizeList(res.data, "clients");
 
     if (!clientes.length) {
       clientesTbody.innerHTML = `
         <tr>
-          <td colspan="5" class="empty-state">No hay clientes cargados.</td>
+          <td colspan="5" class="text-muted">No hay clientes cargados.</td>
         </tr>
       `;
       return;
@@ -40,12 +69,16 @@ async function cargarClientes() {
       .map(
         (cliente) => `
           <tr>
-            <td>${cliente.id_cliente}</td>
-            <td>${cliente.nombre}</td>
-            <td>${cliente.telefono}</td>
-            <td>${cliente.email}</td>
+            <td>${escapeHtml(getField(cliente, "id_cliente", "clienteId", "clientId", "id", "ClientId"))}</td>
+            <td>${escapeHtml(getField(cliente, "nombre", "name", "fullName", "Name"))}</td>
+            <td>${escapeHtml(getField(cliente, "telefono", "phone", "Phone"))}</td>
+            <td>${escapeHtml(getField(cliente, "email", "Email"))}</td>
             <td>
-              <button class="button-secondary table-action" data-cliente-id="${cliente.id_cliente}" data-cliente-nombre="${cliente.nombre}">
+              <button
+                class="btn btn-secondary btn-sm"
+                data-cliente-id="${escapeHtml(getField(cliente, "id_cliente", "clienteId", "clientId", "id", "ClientId"))}"
+                data-cliente-nombre="${escapeHtml(getField(cliente, "nombre", "name", "fullName", "Name"))}"
+              >
                 Ver vehiculos
               </button>
             </td>
@@ -54,24 +87,30 @@ async function cargarClientes() {
       )
       .join("");
   } catch (error) {
-    clientesTbody.innerHTML = `
-      <tr>
-        <td colspan="5" class="empty-state">${error.message}</td>
-      </tr>
-    `;
+    showError(clientesTbody, 5, error.message);
   }
 }
 
 async function cargarVehiculos(clienteId, clienteNombre) {
   vehiculosSubtitle.textContent = `Vehiculos asociados a ${clienteNombre}`;
+  vehiculosTbody.innerHTML = `
+    <tr>
+      <td colspan="6" class="text-muted">Cargando vehiculos...</td>
+    </tr>
+  `;
 
   try {
-    const vehiculos = await request(`/api/clientes/${clienteId}/vehiculos`);
+    const res = await getClientVehicles(clienteId);
+    if (!res.success) {
+      throw new Error(res.error?.message || "No se pudieron cargar los vehiculos.");
+    }
+
+    const vehiculos = normalizeList(res.data, "vehicles");
 
     if (!vehiculos.length) {
       vehiculosTbody.innerHTML = `
         <tr>
-          <td colspan="6" class="empty-state">Este cliente no tiene vehiculos asociados todavia.</td>
+          <td colspan="6" class="text-muted">Este cliente no tiene vehiculos asociados todavia.</td>
         </tr>
       `;
       return;
@@ -81,22 +120,18 @@ async function cargarVehiculos(clienteId, clienteNombre) {
       .map(
         (vehiculo) => `
           <tr>
-            <td>${vehiculo.id_vehiculo}</td>
-            <td>${vehiculo.patente}</td>
-            <td>${vehiculo.marca}</td>
-            <td>${vehiculo.modelo}</td>
-            <td>${vehiculo.anio}</td>
-            <td>${vehiculo.kilometraje_actual}</td>
+            <td>${escapeHtml(getField(vehiculo, "id_vehiculo", "vehiculoId", "vehicleId", "id"))}</td>
+            <td>${escapeHtml(getField(vehiculo, "patente", "placa", "plate", "Plate"))}</td>
+            <td>${escapeHtml(getField(vehiculo, "marca", "brand", "Brand"))}</td>
+            <td>${escapeHtml(getField(vehiculo, "modelo", "model", "Model"))}</td>
+            <td>${escapeHtml(getField(vehiculo, "anio", "ano", "year", "Year"))}</td>
+            <td>${escapeHtml(getField(vehiculo, "kilometraje_actual", "kilometraje", "kilometrajeActual", "mileage"))}</td>
           </tr>
         `
       )
       .join("");
   } catch (error) {
-    vehiculosTbody.innerHTML = `
-      <tr>
-        <td colspan="6" class="empty-state">${error.message}</td>
-      </tr>
-    `;
+    showError(vehiculosTbody, 6, error.message);
   }
 }
 
@@ -114,11 +149,14 @@ clienteForm.addEventListener("submit", async (event) => {
   formFeedback.dataset.state = "loading";
 
   try {
-    const cliente = await request("/api/clientes", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
-    formFeedback.textContent = `Cliente creado con ID ${cliente.id_cliente}`;
+    const res = await createClient(payload);
+    if (!res.success) {
+      throw new Error(res.error?.message || "No se pudo crear el cliente.");
+    }
+
+    const cliente = res.data;
+    const id = getField(cliente, "id_cliente", "clienteId", "clientId", "id", "ClientId");
+    formFeedback.textContent = id ? `Cliente creado con ID ${id}` : "Cliente creado correctamente.";
     formFeedback.dataset.state = "success";
     clienteForm.reset();
     await cargarClientes();
