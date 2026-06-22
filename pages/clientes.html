@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BoxService — Clientes</title>
+    <title>BoxService - Clientes</title>
     <link rel="stylesheet" href="../css/main.css" />
     <link rel="stylesheet" href="../css/clientes.css" />
   </head>
@@ -12,12 +12,117 @@
       <div id="sidebar-container"></div>
 
       <div class="main-content">
-        <div class="container">
-          <h1 class="page-title">Clientes</h1>
-          <div id="alert-box" class="alert"></div>
-          <!-- TODO: Cristhian (ROL B) — implementar contenido -->
-          <p class="text-muted">Módulo en desarrollo.</p>
-        </div>
+        <main class="container">
+          <h1 class="page-title">Gestion de clientes</h1>
+
+          <p class="text-muted mb-6">
+            Alta de clientes, listado general y consulta rapida de vehiculos asociados.
+          </p>
+
+          <div class="clientes-layout">
+            <section class="card">
+              <h2 class="card-title">Nuevo cliente</h2>
+              <form id="cliente-form">
+                <div class="form-group">
+                  <label class="form-label" for="nombre">Nombre</label>
+                  <input
+                    class="form-control"
+                    type="text"
+                    id="nombre"
+                    name="nombre"
+                    placeholder="Juan Perez"
+                    required
+                  />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="telefono">Telefono</label>
+                  <input
+                    class="form-control"
+                    type="text"
+                    id="telefono"
+                    name="telefono"
+                    placeholder="3431234567"
+                    required
+                  />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="email">Email</label>
+                  <input
+                    class="form-control"
+                    type="email"
+                    id="email"
+                    name="email"
+                    placeholder="juan@email.com"
+                    required
+                  />
+                </div>
+                <button class="btn btn-primary" type="submit">Guardar cliente</button>
+              </form>
+              <p id="form-feedback" class="feedback" aria-live="polite"></p>
+            </section>
+
+            <section class="card">
+              <div class="panel-heading">
+                <div>
+                  <h2 class="card-title">Clientes activos</h2>
+                  <p class="text-muted">Click en "Ver vehiculos" para consultar los asociados.</p>
+                </div>
+                <button id="refresh-clientes" class="btn btn-secondary" type="button">
+                  Actualizar
+                </button>
+              </div>
+
+              <div class="table-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Nombre</th>
+                      <th>Telefono</th>
+                      <th>Email</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="clientes-tbody"></tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+
+          <section class="card">
+            <div class="panel-heading">
+              <div>
+                <h2 class="card-title">Vehiculos del cliente</h2>
+                <p id="vehiculos-subtitle" class="text-muted">
+                  Selecciona un cliente para ver el detalle.
+                </p>
+              </div>
+            </div>
+
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Patente</th>
+                    <th>Marca</th>
+                    <th>Modelo</th>
+                    <th>Anio</th>
+                    <th>Kilometraje</th>
+                  </tr>
+                </thead>
+                <tbody id="vehiculos-tbody">
+                  <tr>
+                    <td colspan="6" class="text-muted">
+                      Todavia no hay datos para mostrar.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </main>
+
         <div id="footer-container"></div>
       </div>
     </div>

@@ -6,6 +6,7 @@ const tablaBody = document.getElementById("vehiculos-body");
 const formVehiculo = document.getElementById("vehiculo-form");
 const alertBox = document.getElementById("page-alert");
 
+// ── Helpers ────────────────────────────────────────────
 function showAlert(msg, type = "error") {
   alertBox.textContent = msg;
   alertBox.className = `alert show alert-${type}`;
@@ -83,16 +84,33 @@ async function cargarVehiculos() {
   const lista = res.data ?? [];
   if (!lista.length) {
     tablaBody.innerHTML =
-      '<tr><td colspan="6" class="text-muted">No hay vehículos registrados.</td></tr>';
+      '<tr><td colspan="7" class="text-muted">No hay vehículos registrados.</td></tr>';
+    return;
+  }
+  lista.forEach((v) => tablaBody.appendChild(crearFila(v)));
+}
+
+// ── Cargar ─────────────────────────────────────────────
+async function cargarVehiculos() {
+  tablaBody.innerHTML =
+    '<tr><td colspan="7" class="text-muted">Cargando...</td></tr>';
+
+  const res = await getVehiculos();
+  if (!res.success) {
+    showAlert(res.error?.message || "Error al cargar vehículos.");
+    tablaBody.innerHTML =
+      '<tr><td colspan="7" class="text-muted">Error al cargar.</td></tr>';
     return;
   }
 
-  tablaBody.innerHTML = "";
-  lista.forEach((v) => tablaBody.appendChild(renderRow(v)));
+  renderVehiculos(res.data ?? []);
 }
 
-formVehiculo.addEventListener("submit", async (e) => {
-  e.preventDefault();
+// ── Formulario ─────────────────────────────────────────
+formVehiculo.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  const btn = formVehiculo.querySelector('button[type="submit"]');
   const fd = new FormData(formVehiculo);
 
   const kilometrajeActual = fd.get("kilometrajeActual");
@@ -121,12 +139,12 @@ formVehiculo.addEventListener("submit", async (e) => {
   setLoading(btn, false);
 
   if (!res.success) {
-    showAlert(res.error.message);
+    showAlert(res.error?.message || "No se pudo crear el vehículo.");
     return;
   }
 
-  showAlert("Vehículo creado correctamente.", "ok");
   formVehiculo.reset();
+  showAlert("Vehículo creado correctamente.", "ok");
   cargarVehiculos();
 });
 

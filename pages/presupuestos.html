@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>BoxService — Presupuestos</title>
     <link rel="stylesheet" href="../css/main.css" />
-    <link rel="stylesheet" href="../css/presupuestos.css" />
+    <link rel="stylesheet" href="../css/budget.css" />
   </head>
   <body data-page="presupuestos">
     <div class="app-wrapper">
@@ -13,16 +13,76 @@
 
       <div class="main-content">
         <div class="container">
-          <h1 class="page-title">Presupuestos</h1>
+
+          <div class="page-header">
+            <div>
+              <p class="page-eyebrow">Gestión</p>
+              <h1 class="page-title">Presupuestos</h1>
+            </div>
+            <button class="btn btn-primary" id="btn-new">+ Nuevo presupuesto</button>
+          </div>
+
           <div id="alert-box" class="alert"></div>
-          <!-- TODO: Maxi (ROL A) — implementar contenido -->
-          <p class="text-muted">Módulo en desarrollo.</p>
+
+          <!-- Formulario nuevo presupuesto -->
+          <div id="form-container" class="card mb-6 hidden">
+            <p class="card-title">Nuevo Presupuesto</p>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">ID Vehículo</label>
+                <input type="number" id="inp-vehicle" class="form-control" placeholder="ID del vehículo" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Notas</label>
+                <input type="text" id="inp-notes" class="form-control" placeholder="Opcional" />
+              </div>
+            </div>
+
+            <div class="budget-items-header mt-4">
+              <span class="form-label">Ítems</span>
+              <button class="btn btn-secondary btn-sm" id="btn-add-item">+ Agregar ítem</button>
+            </div>
+            <div id="items-container"></div>
+
+            <div class="budget-total">
+              <span class="budget-total-label">Total estimado</span>
+              <span class="budget-total-value" id="total-display">$0</span>
+            </div>
+
+            <div class="budget-actions">
+              <button class="btn btn-secondary" id="btn-cancel">Cancelar</button>
+              <button class="btn btn-primary"   id="btn-save">Guardar presupuesto</button>
+            </div>
+          </div>
+
+          <!-- Listado -->
+          <div class="card">
+            <p class="card-title">Listado</p>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Número</th>
+                    <th>Fecha</th>
+                    <th>Vehículo ID</th>
+                    <th>Estado</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="table-body">
+                  <tr><td colspan="5" class="empty-state">Cargando...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
         </div>
         <div id="footer-container"></div>
       </div>
     </div>
 
     <script type="module" src="../js/components.js"></script>
-    <script type="module" src="../js/presupuestos.js"></script>
+    <script type="module" src="../js/budget.js"></script>
   </body>
 </html>
