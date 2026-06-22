@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="../css/main.css" />
     <link rel="stylesheet" href="../css/vehicle.css" />
   </head>
+
   <body data-page="vehiculos">
     <div class="app-wrapper">
       <div id="sidebar-container"></div>
@@ -18,8 +19,10 @@
           <div id="page-alert" class="alert"></div>
 
           <div class="vehiculos-grid">
-            <section class="card">
-              <h2 class="card-title">Registrar vehículo</h2>
+            <!-- Registrar -->
+            <div class="card">
+              <p class="card-title">Registrar vehículo</p>
+
               <form id="vehiculo-form">
                 <div class="form-row">
                   <div class="form-group">
@@ -33,6 +36,7 @@
                       required
                     />
                   </div>
+
                   <div class="form-group">
                     <label class="form-label" for="marca">Marca</label>
                     <input
@@ -45,6 +49,7 @@
                     />
                   </div>
                 </div>
+
                 <div class="form-row">
                   <div class="form-group">
                     <label class="form-label" for="modelo">Modelo</label>
@@ -57,6 +62,7 @@
                       required
                     />
                   </div>
+
                   <div class="form-group">
                     <label class="form-label" for="anio">Año</label>
                     <input
@@ -70,17 +76,36 @@
                     />
                   </div>
                 </div>
-                <div class="form-group">
-                  <label class="form-label" for="cliente">ID Cliente</label>
-                  <input
-                    class="form-control"
-                    type="number"
-                    id="cliente"
-                    name="cliente"
-                    placeholder="ID del cliente"
-                    required
-                  />
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label" for="cliente">ID Cliente</label>
+                    <input
+                      class="form-control"
+                      type="number"
+                      id="cliente"
+                      name="cliente"
+                      placeholder="ID del cliente"
+                      required
+                    />
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label" for="kilometrajeActual">
+                      Kilometraje actual
+                    </label>
+                    <input
+                      class="form-control"
+                      type="number"
+                      id="kilometrajeActual"
+                      name="kilometrajeActual"
+                      placeholder="Ej: 55000"
+                      min="0"
+                      required
+                    />
+                  </div>
                 </div>
+
                 <div class="vehiculos-actions">
                   <button class="btn btn-primary" type="submit">
                     Guardar vehículo
@@ -89,8 +114,10 @@
               </form>
             </section>
 
-            <section class="card">
-              <h2 class="card-title">Lista de vehículos</h2>
+            <!-- Listado -->
+            <div class="card">
+              <p class="card-title">Lista de vehículos</p>
+
               <div class="table-wrapper">
                 <table>
                   <thead>
@@ -100,10 +127,15 @@
                       <th>Modelo</th>
                       <th>Año</th>
                       <th>Cliente ID</th>
-                      <th>Acciones</th>
+                      <th>Km actual</th>
                     </tr>
                   </thead>
-                  <tbody id="vehiculos-body"></tbody>
+
+                  <tbody id="vehiculos-body">
+                    <tr>
+                      <td colspan="6" class="text-muted">Cargando...</td>
+                    </tr>
+                  </tbody>
                 </table>
               </div>
             </section>

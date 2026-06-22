@@ -24,12 +24,22 @@
             <h2>Buscar cliente / vehículo</h2>
 
             <div class="form-group">
-              <label>Buscar por cliente, teléfono o patente</label>
-              <input
-                type="text"
-                id="searchInput"
-                placeholder="Ej: Juan, 343..., ABC123"
-              />
+              <label class="form-label">Cliente, Vehículo, Teléfono o patente</label>
+              <input type="text" id="searchInput" class="form-control" placeholder="Ej: Juan, Toyota Corolla, 343..., ABC123" />
+            </div>
+            <div class="table-wrapper mt-4">
+              <table id="searchResults">
+                <thead>
+                  <tr>
+                    <th>Cliente</th>
+                    <th>Vehículo</th>
+                    <th>Patente</th>
+                    <th>KM actual</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
             </div>
 
             <table id="searchResults">
