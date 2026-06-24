@@ -5,11 +5,19 @@
 const API_URL = "http://localhost:5001";
 
 async function request(method, endpoint, body = null) {
-  const options = { method, headers: { "Content-Type": "application/json" } };
-  if (body) options.body = JSON.stringify(body);
+  const options = {
+    method,
+    headers: { "Content-Type": "application/json" }
+  };
+
+  if (body) {
+    options.body = JSON.stringify(body);
+  }
+
   try {
     const res = await fetch(`${API_URL}${endpoint}`, options);
     const json = await res.json();
+
     return json; // siempre devuelve { success, data, error }
   } catch (err) {
     return {
@@ -24,43 +32,85 @@ async function request(method, endpoint, body = null) {
 }
 
 // ── Health ──────────────────────────────────────────
-export const getHealth = () => request("GET", "/health");
+export const getHealth = () =>
+  request("GET", "/health");
 
 // ── Clients (Cristhian) ─────────────────────────────
-export const getClients = () => request("GET", "/api/clients");
-export const getClientById = (id) => request("GET", `/api/clients/${id}`);
+export const getClients = () =>
+  request("GET", "/api/clients");
+
+export const getClientById = (id) =>
+  request("GET", `/api/clients/${id}`);
+
 export const getClientVehicles = (id) =>
   request("GET", `/api/clients/${id}/vehicles`);
-export const createClient = (data) => request("POST", "/api/clients", data);
+
+export const createClient = (data) =>
+  request("POST", "/api/clients", data);
 
 // ── Vehicles (Leo) ──────────────────────────────────
-export const getVehiculos = () => request("GET", "/api/vehiculos");
-export const getVehiculoById = (id) => request("GET", `/api/vehiculos/${id}`);
+export const getVehiculos = () =>
+  request("GET", "/api/vehiculos");
+
+export const getVehiculoById = (id) =>
+  request("GET", `/api/vehiculos/${id}`);
+
 export const searchVehiculoByPlate = (plate) =>
   request("GET", `/api/vehiculos/buscar?plate=${plate}`);
+
 export const getVehiculoHistory = (id) =>
   request("GET", `/api/vehiculos/${id}/historial`);
-export const createVehiculo = (data) => request("POST", "/api/vehiculos", data);
+
+export const createVehiculo = (data) =>
+  request("POST", "/api/vehiculos", data);
 
 // ── Services (Oscar) ────────────────────────────────
-export const getServices = () => request("GET", "/api/services");
-export const getServiceById = (id) => request("GET", `/api/services/${id}`);
-export const createService = (data) => request("POST", "/api/services", data);
-export const createServiceDetail = (serviceId, data) => 
+export const getServices = () =>
+  request("GET", "/api/services");
+
+export const getServiceById = (id) =>
+  request("GET", `/api/services/${id}`);
+
+export const createService = (data) =>
+  request("POST", "/api/services", data);
+
+export const createServiceDetail = (serviceId, data) =>
   request("POST", `/api/services/${serviceId}/details`, data);
 
 // ── Budgets / Presupuestos (Maxi) ───────────────────
-export const getBudgets = () => request("GET", "/api/budgets");
-export const getBudgetById = (id) => request("GET", `/api/budgets/${id}`);
-export const createBudget = (data) => request("POST", "/api/budgets", data);
+export const getBudgets = () =>
+  request("GET", "/api/budgets");
+
+// NUEVO:
+// Trae un presupuesto puntual con sus detalles.
+// Esto se usa en Services para copiar detalle_presupuesto a detalle_service.
+export const getBudgetById = (id) =>
+  request("GET", `/api/budgets/${id}`);
+
+export const createBudget = (data) =>
+  request("POST", "/api/budgets", data);
+
 export const updateBudgetStatus = (id, status) =>
   request("PUT", `/api/budgets/${id}/status`, { status });
+
 export const approveBudget = (id) =>
   request("POST", `/api/budgets/${id}/approve`);
 
+// NUEVO:
+// Vincula el presupuesto aprobado con el service creado.
+// Actualiza presupuestos.id_service.
+export const assignServiceToBudget = (budgetId, serviceId) =>
+  request("PUT", `/api/budgets/${budgetId}/service`, { serviceId });
+
 // ── Invoices / Facturas (Maxi) ──────────────────────
-export const getInvoices = () => request("GET", "/api/invoices");
-export const getInvoiceById = (id) => request("GET", `/api/invoices/${id}`);
-export const createInvoice = (data) => request("POST", "/api/invoices", data);
+export const getInvoices = () =>
+  request("GET", "/api/invoices");
+
+export const getInvoiceById = (id) =>
+  request("GET", `/api/invoices/${id}`);
+
+export const createInvoice = (data) =>
+  request("POST", "/api/invoices", data);
+
 export const updateInvoiceStatus = (id, status) =>
   request("PUT", `/api/invoices/${id}/status`, { status });
