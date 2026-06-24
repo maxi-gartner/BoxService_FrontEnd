@@ -51,19 +51,19 @@ El frontend se comunica con el backend mediante `fetch()` y muestra los datos al
 ```
 BoxService-FrontEnd/
 ├── css/
-│   ├── main.css          ← variables de diseño y componentes base (NO TOCAR sin avisar)
+│   ├── Main.css          ← variables de diseño y componentes base (NO TOCAR sin avisar)
 │   ├── clientes.css      ← estilos exclusivos de la página clientes
-│   ├── vehiculos.css     ← estilos exclusivos de la página vehículos
+│   ├── vehicle.css       ← estilos exclusivos de la página vehículos
 │   ├── services.css      ← estilos exclusivos de la página services
-│   ├── presupuestos.css  ← estilos exclusivos de la página presupuestos
-│   └── facturas.css      ← estilos exclusivos de la página facturas
+│   ├── budget.css        ← estilos exclusivos de la página presupuestos
+│   └── invoice.css       ← estilos exclusivos de la página facturas
 ├── js/
 │   ├── api.js            ← todos los fetch centralizados (NO TOCAR sin avisar)
 │   ├── clientes.js       ← lógica de presentación de clientes
 │   ├── vehiculos.js      ← lógica de presentación de vehículos
 │   ├── services.js       ← lógica de presentación de services
-│   ├── presupuestos.js   ← lógica de presentación de presupuestos
-│   └── facturas.js       ← lógica de presentación de facturas
+│   ├── budget.js         ← lógica de presentación de presupuestos
+│   └── invoice.js        ← lógica de presentación de facturas
 ├── pages/
 │   ├── clientes.html
 │   ├── vehiculos.html
@@ -77,7 +77,7 @@ BoxService-FrontEnd/
 
 ## Archivos clave
 
-### `css/main.css`
+### `css/Main.css`
 
 Contiene todas las variables CSS del sistema de diseño: colores, tipografía, espaciado, bordes y componentes base (botones, inputs, cards, tablas, badges). Todos los demás archivos CSS lo importan. **No modificar sin avisar al grupo.**
 
