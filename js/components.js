@@ -1,11 +1,9 @@
 // components.js — carga los componentes compartidos (sidebar, footer)
 // Importar en cada página ANTES que el JS propio de la página.
-// Detecta automáticamente qué página es y marca el link activo en el sidebar.
 
 const ROOT = getRootPath();
 
 function getRootPath() {
-  // Si estamos en /pages/*.html necesitamos subir un nivel
   return window.location.pathname.includes("/pages/") ? ".." : ".";
 }
 
@@ -24,7 +22,7 @@ function setActiveLink() {
   const page = document.body.dataset.page;
   if (!page) return;
   document.querySelectorAll(".sidebar-link").forEach((link) => {
-    if (link.dataset.page === page) link.classList.add("active");
+    link.classList.toggle("active", link.dataset.page === page);
   });
 }
 
@@ -36,14 +34,14 @@ async function checkHealth() {
     const json = await res.json();
     if (json.success && json.data.status === "healthy") {
       indicator.textContent = "● Online";
-      indicator.style.color = "#6EE7B7";
+      indicator.style.color = "#3fb950";
     } else {
-      indicator.textContent = "● Degraded";
-      indicator.style.color = "#F59E0B";
+      indicator.textContent = "● Degradado";
+      indicator.style.color = "#f59e0b";
     }
   } catch {
     indicator.textContent = "● Offline";
-    indicator.style.color = "#EF4444";
+    indicator.style.color = "#f85149";
   }
 }
 
@@ -66,11 +64,52 @@ function initTabs() {
   });
 }
 
-// Carga todo al arrancar
+// ── Menú hamburguesa ─────────────────────────────────
+function initHamburger() {
+  const hamburger = document.getElementById("hamburger-btn");
+  const sidebar = document.getElementById("sidebar");
+  const overlay = document.getElementById("sidebar-overlay");
+
+  if (!hamburger || !sidebar || !overlay) return;
+
+  function openMenu() {
+    sidebar.classList.add("open");
+    overlay.classList.add("active");
+    hamburger.classList.add("open");
+    document.body.style.overflow = "hidden"; // evita scroll del fondo
+  }
+
+  function closeMenu() {
+    sidebar.classList.remove("open");
+    overlay.classList.remove("active");
+    hamburger.classList.remove("open");
+    document.body.style.overflow = "";
+  }
+
+  hamburger.addEventListener("click", () => {
+    sidebar.classList.contains("open") ? closeMenu() : openMenu();
+  });
+
+  // Cerrar al tocar el overlay
+  overlay.addEventListener("click", closeMenu);
+
+  // Cerrar al tocar un link del sidebar
+  sidebar.querySelectorAll(".sidebar-link").forEach((link) => {
+    link.addEventListener("click", closeMenu);
+  });
+
+  // Cerrar con Escape
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeMenu();
+  });
+}
+
+// ── Init ─────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", async () => {
   await loadComponent("#sidebar-container", "sidebar.html");
   await loadComponent("#footer-container", "footer.html");
   setActiveLink();
   checkHealth();
   initTabs();
+  initHamburger();
 });
