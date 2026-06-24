@@ -1,10 +1,12 @@
 <aside class="sidebar">
   <div class="sidebar-brand">
     <span class="sidebar-icon">⚙</span>
-    <span class="sidebar-title">BoxService</span>
+    <div>
+      <span class="sidebar-title">BoxService</span>
+    </div>
   </div>
 
-  <nav class="sidebar-nav">
+  <nav class="sidebar-nav" style="position: relative">
     <a href="/index.html" class="sidebar-link" data-page="dashboard">
       <span class="sidebar-link-icon">🏠</span>
       <span>Dashboard</span>
@@ -21,7 +23,11 @@
       <span class="sidebar-link-icon">🔧</span>
       <span>Services</span>
     </a>
-    <a href="/pages/presupuestos.html" class="sidebar-link" data-page="presupuestos">
+    <a
+      href="/pages/presupuestos.html"
+      class="sidebar-link"
+      data-page="presupuestos"
+    >
       <span class="sidebar-link-icon">📋</span>
       <span>Presupuestos</span>
     </a>
@@ -29,9 +35,12 @@
       <span class="sidebar-link-icon">🧾</span>
       <span>Facturas</span>
     </a>
+    <div
+      id="sidebar-health"
+      class="sidebar-status"
+      style="margin-top: 4px; position: absolute; bottom: 16px; left: 16px"
+    >
+      ● Verificando...
+    </div>
   </nav>
-
-  <div class="sidebar-footer">
-    <span id="sidebar-health" class="sidebar-status">● Verificando...</span>
-  </div>
 </aside>
