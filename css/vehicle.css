@@ -3,140 +3,21 @@
    Estilos exclusivos de Vehículos
    ===================================================== */
 
-/* Ajuste visual superior de la pantalla Vehículos */
-body[data-page="vehiculos"] .page-title {
-  margin-bottom: 0;
-}
-
-body[data-page="vehiculos"] .card {
-  padding-top: 34px;
-}
-
 .vehiculos-grid {
   display: grid;
-  grid-template-columns: 390px minmax(0, 1fr);
+  grid-template-columns: 400px minmax(0, 1fr);
   gap: var(--space-6);
   align-items: start;
-  margin-top: 26px;
-}
-
-/* =========================
-   Formulario registrar vehículo
-   ========================= */
-
-#vehiculo-form {
-  display: flex;
-  flex-direction: column;
-  gap: 22px;
-}
-
-#vehiculo-form .form-row {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 22px;
-  margin: 0;
-}
-
-#vehiculo-form .form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin: 0;
-}
-
-#vehiculo-form .form-label {
-  display: block;
-  margin: 0;
-  line-height: 1.2;
-  letter-spacing: 0.08em;
-}
-
-#vehiculo-form .form-control {
-  width: 100%;
-  height: 48px;
-  box-sizing: border-box;
 }
 
 .vehiculos-actions {
-  display: flex;
+  display:         flex;
   justify-content: flex-end;
-  gap: var(--space-3);
-  margin-top: 6px;
-  padding-top: var(--space-5);
-  border-top: 1px solid var(--color-border);
-}
-
-/* =========================
-   Tabla vehículos
-   ========================= */
-
-.table-wrapper {
-  width: 100%;
-  overflow-x: hidden;
-}
-
-.table-wrapper table {
-  width: 100%;
-  table-layout: fixed;
-}
-
-.table-wrapper table th,
-.table-wrapper table td {
-  white-space: nowrap;
-  overflow-wrap: normal;
-  word-break: keep-all;
-  padding-left: 8px;
-  padding-right: 8px;
-  font-size: 0.9rem;
-}
-
-.table-wrapper table th {
-  font-size: 0.76rem;
-  letter-spacing: 0.04em;
-  text-align: left;
-}
-
-/* Anchos de columnas para que no se encimen Cliente ID y Km actual */
-.table-wrapper table th:nth-child(1),
-.table-wrapper table td:nth-child(1) {
-  width: 15%;
-}
-
-.table-wrapper table th:nth-child(2),
-.table-wrapper table td:nth-child(2) {
-  width: 18%;
-}
-
-.table-wrapper table th:nth-child(3),
-.table-wrapper table td:nth-child(3) {
-  width: 20%;
-}
-
-.table-wrapper table th:nth-child(4),
-.table-wrapper table td:nth-child(4) {
-  width: 9%;
-}
-
-.table-wrapper table th:nth-child(5),
-.table-wrapper table td:nth-child(5) {
-  width: 17%;
-}
-
-.table-wrapper table th:nth-child(6),
-.table-wrapper table td:nth-child(6) {
-  width: 21%;
+  margin-top:      var(--space-5);
+  padding-top:     var(--space-5);
+  border-top:      1px solid var(--color-border);
 }
 
 @media (max-width: 960px) {
-  .vehiculos-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .table-wrapper {
-    overflow-x: auto;
-  }
-
-  .table-wrapper table {
-    min-width: 650px;
-  }
+  .vehiculos-grid { grid-template-columns: 1fr; }
 }

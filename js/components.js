@@ -47,10 +47,30 @@ async function checkHealth() {
   }
 }
 
+// ── Sistema de tabs ──────────────────────────────────
+function initTabs() {
+  const tabBtns = document.querySelectorAll(".tab-btn");
+  if (!tabBtns.length) return;
+
+  tabBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const target = btn.dataset.tab;
+
+      tabBtns.forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      document.querySelectorAll(".tab-panel").forEach((panel) => {
+        panel.classList.toggle("active", panel.id === `tab-${target}`);
+      });
+    });
+  });
+}
+
 // Carga todo al arrancar
 document.addEventListener("DOMContentLoaded", async () => {
   await loadComponent("#sidebar-container", "sidebar.html");
   await loadComponent("#footer-container", "footer.html");
   setActiveLink();
   checkHealth();
+  initTabs();
 });

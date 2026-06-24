@@ -1,87 +1,308 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BoxService — Dashboard</title>
-    <link rel="stylesheet" href="css/Main.css" />
-  </head>
-  <body data-page="dashboard">
-    <div class="app-wrapper">
-      <div id="sidebar-container"></div>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BoxService — Dashboard</title>
+  <link rel="stylesheet" href="css/main.css">
+  <style>
+    .dash-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: var(--space-4);
+      margin-bottom: var(--space-6);
+    }
 
-      <div class="main-content">
-        <div class="container">
-          <div class="page-header">
-            <div>
-              <p class="page-eyebrow">BoxService</p>
-              <h1 class="page-title">Dashboard</h1>
-            </div>
+    .stat-card {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      cursor: default;
+      transition: border-color var(--transition);
+    }
+
+    .stat-card:hover { border-color: var(--color-accent); }
+
+    .stat-number {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--color-light);
+      letter-spacing: -0.04em;
+      line-height: 1;
+    }
+
+    .stat-sub {
+      font-size: var(--text-xs);
+      color: var(--color-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+    }
+
+    .accesos {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-3);
+    }
+
+    .acceso-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-6) var(--space-4);
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      color: var(--color-light);
+      text-decoration: none;
+      font-family: var(--font);
+      font-size: var(--text-base);
+      font-weight: 500;
+      transition: all var(--transition);
+      cursor: pointer;
+      min-height: 100px;
+    }
+
+    .acceso-btn:hover {
+      border-color: var(--color-accent);
+      background: var(--color-accent-dim);
+      color: var(--color-accent);
+      text-decoration: none;
+      transform: translateY(-2px);
+    }
+
+    .acceso-btn.primary {
+      border-color: var(--color-accent);
+      background: var(--color-accent-dim);
+    }
+
+    .acceso-icon { font-size: 2rem; }
+
+    .dash-bottom {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-4);
+    }
+
+    .list-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--space-3) 0;
+      border-bottom: 1px solid var(--color-border-light);
+      font-size: var(--text-sm);
+    }
+
+    .list-item:last-child { border-bottom: none; }
+
+    .list-item-label { color: var(--color-light); }
+    .list-item-meta  { color: var(--color-muted); font-size: var(--text-xs); }
+
+    .status-dot {
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      margin-right: var(--space-2);
+    }
+    .dot-green  { background: var(--color-success); box-shadow: 0 0 6px var(--color-success); }
+    .dot-red    { background: var(--color-danger); }
+    .dot-yellow { background: var(--color-accent); }
+
+    @media (max-width: 900px) {
+      .dash-grid { grid-template-columns: 1fr 1fr; }
+      .accesos { grid-template-columns: 1fr 1fr; }
+      .dash-bottom { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body data-page="dashboard">
+  <div class="app-wrapper">
+    <div id="sidebar-container"></div>
+
+    <div class="main-content">
+      <div class="container">
+
+        <div class="flex-between mb-6">
+          <h1 class="page-title" style="margin:0">Dashboard</h1>
+          <div class="flex gap-3 align-items-center">
+            <span id="sys-status" style="font-size:var(--text-sm);color:var(--color-muted)">
+              <span class="status-dot dot-yellow"></span>Conectando...
+            </span>
           </div>
+        </div>
 
-          <div id="alert-box" class="alert"></div>
-
-          <!-- Estado del sistema -->
-          <div class="stat-grid mb-6">
-            <div class="stat-card">
-              <p class="stat-label">Servidor</p>
-              <p class="stat-value" id="status-server">—</p>
-            </div>
-            <div class="stat-card">
-              <p class="stat-label">Base de datos</p>
-              <p class="stat-value" id="status-db">—</p>
-            </div>
-            <div class="stat-card">
-              <p class="stat-label">Versión</p>
-              <p class="stat-value" id="status-version">—</p>
-            </div>
+        <!-- Stats -->
+        <div class="dash-grid mb-6" id="stats-grid">
+          <div class="stat-card card">
+            <span class="stat-sub">Presupuestos pendientes</span>
+            <span class="stat-number accent" id="stat-presupuestos">—</span>
           </div>
+          <div class="stat-card card">
+            <span class="stat-sub">Facturas por cobrar</span>
+            <span class="stat-number" id="stat-facturas" style="color:var(--color-accent)">—</span>
+          </div>
+          <div class="stat-card card">
+            <span class="stat-sub">Services este mes</span>
+            <span class="stat-number" id="stat-services" style="color:var(--color-info)">—</span>
+          </div>
+          <div class="stat-card card">
+            <span class="stat-sub">Clientes registrados</span>
+            <span class="stat-number" id="stat-clientes">—</span>
+          </div>
+          <div class="stat-card card">
+            <span class="stat-sub">Vehículos activos</span>
+            <span class="stat-number" id="stat-vehiculos">—</span>
+          </div>
+          <div class="stat-card card">
+            <span class="stat-sub">Facturación del mes</span>
+            <span class="stat-number" id="stat-facturacion" style="color:var(--color-success)">—</span>
+          </div>
+        </div>
 
-          <!-- Accesos rápidos -->
+        <!-- Accesos rápidos -->
+        <div class="card mb-6">
+          <p class="card-title">Accesos rápidos</p>
+          <div class="accesos">
+            <a href="pages/presupuestos.html" class="acceso-btn primary">
+              <span class="acceso-icon">📋</span>
+              <span>Nuevo presupuesto</span>
+            </a>
+            <a href="pages/services.html" class="acceso-btn">
+              <span class="acceso-icon">🔧</span>
+              <span>Nuevo service</span>
+            </a>
+            <a href="pages/facturas.html" class="acceso-btn">
+              <span class="acceso-icon">🧾</span>
+              <span>Emitir factura</span>
+            </a>
+            <a href="pages/clientes.html" class="acceso-btn">
+              <span class="acceso-icon">👤</span>
+              <span>Clientes</span>
+            </a>
+            <a href="pages/vehiculos.html" class="acceso-btn">
+              <span class="acceso-icon">🚗</span>
+              <span>Vehículos</span>
+            </a>
+            <a href="pages/presupuestos.html" class="acceso-btn">
+              <span class="acceso-icon">✅</span>
+              <span>Ver presupuestos</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Últimas actividades -->
+        <div class="dash-bottom">
           <div class="card">
-            <p class="card-title">Accesos rápidos</p>
-            <div class="flex flex-wrap gap-3">
-              <a href="pages/clientes.html" class="btn btn-secondary"
-                >👤 Clientes</a
-              >
-              <a href="pages/vehiculos.html" class="btn btn-secondary"
-                >🚗 Vehículos</a
-              >
-              <a href="pages/services.html" class="btn btn-secondary"
-                >🔧 Services</a
-              >
-              <a href="pages/presupuestos.html" class="btn btn-primary"
-                >📋 Nuevo presupuesto</a
-              >
-              <a href="pages/facturas.html" class="btn btn-secondary"
-                >🧾 Facturas</a
-              >
+            <p class="card-title">Últimos presupuestos</p>
+            <div id="list-presupuestos">
+              <p class="text-muted">Cargando...</p>
+            </div>
+          </div>
+          <div class="card">
+            <p class="card-title">Últimas facturas</p>
+            <div id="list-facturas">
+              <p class="text-muted">Cargando...</p>
             </div>
           </div>
         </div>
-        <div id="footer-container"></div>
-      </div>
-    </div>
 
-    <script type="module" src="js/components.js"></script>
-    <script type="module">
-      import { getHealth } from "./js/api.js";
-      async function checkHealth() {
-        const res = await getHealth();
-        if (res.success) {
-          const srv = document.getElementById("status-server");
-          const db = document.getElementById("status-db");
-          const ver = document.getElementById("status-version");
-          srv.textContent = res.data.status;
-          srv.classList.add("success");
-          db.textContent = res.data.database;
-          db.classList.add(
-            res.data.database === "connected" ? "success" : "danger",
-          );
-          ver.textContent = res.data.version;
-        }
+      </div>
+      <div id="footer-container"></div>
+    </div>
+  </div>
+
+  <script type="module" src="js/components.js"></script>
+  <script type="module">
+    import { getHealth, getBudgets, getInvoices, getClients, getVehiculos, getServices } from './js/api.js';
+
+    function formatMoney(n) {
+      return '$' + parseFloat(n).toLocaleString('es-AR', { minimumFractionDigits: 0 });
+    }
+
+    function badgeHtml(status) {
+      const labels = { draft:'Borrador', sent:'Enviado', approved:'Aprobado', rejected:'Rechazado', issued:'Emitida', paid:'Cobrada', cancelled:'Anulada' };
+      return `<span class="badge badge-${status}">${labels[status] ?? status}</span>`;
+    }
+
+    async function loadDashboard() {
+      // Health
+      const health = await getHealth();
+      const sysEl  = document.getElementById('sys-status');
+      if (health.success && health.data.status === 'healthy') {
+        sysEl.innerHTML = '<span class="status-dot dot-green"></span>Sistema online';
+        sysEl.style.color = 'var(--color-success)';
+      } else {
+        sysEl.innerHTML = '<span class="status-dot dot-red"></span>Sin conexión';
+        sysEl.style.color = 'var(--color-danger)';
       }
-      document.addEventListener("DOMContentLoaded", checkHealth);
-    </script>
-  </body>
+
+      // Stats en paralelo
+      const [budgetsRes, invoicesRes, clientsRes, vehiculosRes, servicesRes] = await Promise.all([
+        getBudgets(), getInvoices(), getClients(), getVehiculos(), getServices()
+      ]);
+
+      // Presupuestos pendientes (draft + sent)
+      if (budgetsRes.success) {
+        const pending = (budgetsRes.data ?? []).filter(b => b.status === 'draft' || b.status === 'sent');
+        document.getElementById('stat-presupuestos').textContent = pending.length;
+
+        // Lista últimos 5
+        const last5 = (budgetsRes.data ?? []).slice(0, 5);
+        document.getElementById('list-presupuestos').innerHTML = last5.length
+          ? last5.map(b => `
+            <div class="list-item">
+              <div>
+                <span class="list-item-label text-accent">${b.number}</span>
+                <span class="list-item-meta" style="margin-left:8px">Veh. #${b.vehicleId}</span>
+              </div>
+              ${badgeHtml(b.status)}
+            </div>`).join('')
+          : '<p class="text-muted">Sin presupuestos.</p>';
+      }
+
+      // Facturas por cobrar
+      if (invoicesRes.success) {
+        const issued = (invoicesRes.data ?? []).filter(i => i.status === 'issued');
+        document.getElementById('stat-facturas').textContent = issued.length;
+
+        // Facturación del mes
+        const now   = new Date();
+        const month = now.getMonth();
+        const year  = now.getFullYear();
+        const mesTotal = (invoicesRes.data ?? [])
+          .filter(i => { const d = new Date(i.date); return d.getMonth() === month && d.getFullYear() === year; })
+          .reduce((acc, i) => acc + parseFloat(i.total), 0);
+        document.getElementById('stat-facturacion').textContent = formatMoney(mesTotal);
+
+        // Lista últimas 5
+        const last5 = (invoicesRes.data ?? []).slice(0, 5);
+        document.getElementById('list-facturas').innerHTML = last5.length
+          ? last5.map(i => `
+            <div class="list-item">
+              <div>
+                <span class="list-item-label text-accent">${i.number}</span>
+                <span class="list-item-meta" style="margin-left:8px">${formatMoney(i.total)}</span>
+              </div>
+              ${badgeHtml(i.status)}
+            </div>`).join('')
+          : '<p class="text-muted">Sin facturas.</p>';
+      }
+
+      // Services este mes
+      if (servicesRes.success) {
+        const now   = new Date();
+        const mes   = (servicesRes.data ?? []).filter(s => {
+          const d = new Date(s.date); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+        });
+        document.getElementById('stat-services').textContent = mes.length;
+      }
+
+      if (clientsRes.success)   document.getElementById('stat-clientes').textContent  = (clientsRes.data ?? []).length;
+      if (vehiculosRes.success) document.getElementById('stat-vehiculos').textContent = (vehiculosRes.data ?? []).length;
+    }
+
+    document.addEventListener('DOMContentLoaded', loadDashboard);
+  </script>
+</body>
 </html>
