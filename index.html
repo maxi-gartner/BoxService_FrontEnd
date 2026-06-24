@@ -4,7 +4,71 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>BoxService — Dashboard</title>
-    <link rel="stylesheet" href="css/Main.css" />
+    <link rel="stylesheet" href="css/main.css" />
+    <style>
+      .dash-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: var(--space-4);
+        margin-bottom: var(--space-6);
+      }
+
+      .stat-card {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+        cursor: default;
+        transition: border-color var(--transition);
+      }
+
+      .stat-card:hover {
+        border-color: var(--color-accent);
+      }
+
+      .stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--color-light);
+        letter-spacing: -0.04em;
+        line-height: 1;
+      }
+
+      .stat-sub {
+        font-size: var(--text-xs);
+        color: var(--color-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-weight: 700;
+      }
+
+      .dash-bottom {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-4);
+      }
+
+      .list-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--space-3) 0;
+        border-bottom: 1px solid var(--color-border-light);
+        font-size: var(--text-sm);
+      }
+
+      .list-item:last-child {
+        border-bottom: none;
+      }
+
+      @media (max-width: 900px) {
+        .dash-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+        .dash-bottom {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
   </head>
   <body data-page="dashboard">
     <div class="app-wrapper">
@@ -12,50 +76,67 @@
 
       <div class="main-content">
         <div class="container">
-          <div class="page-header">
-            <div>
-              <p class="page-eyebrow">BoxService</p>
-              <h1 class="page-title">Dashboard</h1>
+          <!-- Stats -->
+          <div class="dash-grid" id="stats-grid">
+            <div class="stat-card card">
+              <span class="stat-sub">Presupuestos pendientes</span>
+              <span
+                class="stat-number"
+                id="stat-presupuestos"
+                style="color: var(--color-accent)"
+                >—</span
+              >
+            </div>
+            <div class="stat-card card">
+              <span class="stat-sub">Facturas por cobrar</span>
+              <span
+                class="stat-number"
+                id="stat-facturas"
+                style="color: var(--color-accent)"
+                >—</span
+              >
+            </div>
+            <div class="stat-card card">
+              <span class="stat-sub">Services este mes</span>
+              <span
+                class="stat-number"
+                id="stat-services"
+                style="color: var(--color-info)"
+                >—</span
+              >
+            </div>
+            <div class="stat-card card">
+              <span class="stat-sub">Clientes registrados</span>
+              <span class="stat-number" id="stat-clientes">—</span>
+            </div>
+            <div class="stat-card card">
+              <span class="stat-sub">Vehículos activos</span>
+              <span class="stat-number" id="stat-vehiculos">—</span>
+            </div>
+            <div class="stat-card card">
+              <span class="stat-sub">Facturación del mes</span>
+              <span
+                class="stat-number"
+                id="stat-facturacion"
+                style="color: var(--color-success)"
+                >—</span
+              >
             </div>
           </div>
 
-          <div id="alert-box" class="alert"></div>
-
-          <!-- Estado del sistema -->
-          <div class="stat-grid mb-6">
-            <div class="stat-card">
-              <p class="stat-label">Servidor</p>
-              <p class="stat-value" id="status-server">—</p>
+          <!-- Últimas actividades -->
+          <div class="dash-bottom mt-6">
+            <div class="card">
+              <p class="card-title">Últimos presupuestos</p>
+              <div id="list-presupuestos">
+                <p class="text-muted">Cargando...</p>
+              </div>
             </div>
-            <div class="stat-card">
-              <p class="stat-label">Base de datos</p>
-              <p class="stat-value" id="status-db">—</p>
-            </div>
-            <div class="stat-card">
-              <p class="stat-label">Versión</p>
-              <p class="stat-value" id="status-version">—</p>
-            </div>
-          </div>
-
-          <!-- Accesos rápidos -->
-          <div class="card">
-            <p class="card-title">Accesos rápidos</p>
-            <div class="flex flex-wrap gap-3">
-              <a href="pages/clientes.html" class="btn btn-secondary"
-                >👤 Clientes</a
-              >
-              <a href="pages/vehiculos.html" class="btn btn-secondary"
-                >🚗 Vehículos</a
-              >
-              <a href="pages/services.html" class="btn btn-secondary"
-                >🔧 Services</a
-              >
-              <a href="pages/presupuestos.html" class="btn btn-primary"
-                >📋 Nuevo presupuesto</a
-              >
-              <a href="pages/facturas.html" class="btn btn-secondary"
-                >🧾 Facturas</a
-              >
+            <div class="card">
+              <p class="card-title">Últimas facturas</p>
+              <div id="list-facturas">
+                <p class="text-muted">Cargando...</p>
+              </div>
             </div>
           </div>
         </div>
@@ -65,23 +146,145 @@
 
     <script type="module" src="js/components.js"></script>
     <script type="module">
-      import { getHealth } from "./js/api.js";
-      async function checkHealth() {
-        const res = await getHealth();
-        if (res.success) {
-          const srv = document.getElementById("status-server");
-          const db = document.getElementById("status-db");
-          const ver = document.getElementById("status-version");
-          srv.textContent = res.data.status;
-          srv.classList.add("success");
-          db.textContent = res.data.database;
-          db.classList.add(
-            res.data.database === "connected" ? "success" : "danger",
-          );
-          ver.textContent = res.data.version;
-        }
+      import {
+        getHealth,
+        getBudgets,
+        getInvoices,
+        getClients,
+        getVehiculos,
+        getServices,
+      } from "./js/api.js";
+
+      function formatMoney(n) {
+        return (
+          "$" +
+          parseFloat(n).toLocaleString("es-AR", { minimumFractionDigits: 0 })
+        );
       }
-      document.addEventListener("DOMContentLoaded", checkHealth);
+
+      function badgeHtml(status) {
+        const labels = {
+          draft: "Borrador",
+          sent: "Enviado",
+          approved: "Aprobado",
+          rejected: "Rechazado",
+          issued: "Emitida",
+          paid: "Cobrada",
+          cancelled: "Anulada",
+        };
+        return `<span class="badge badge-${status}">${labels[status] ?? status}</span>`;
+      }
+
+      async function loadDashboard() {
+        // Health — va al sidebar
+        const health = await getHealth();
+        const indicator = document.getElementById("sidebar-health");
+        if (indicator) {
+          if (health.success && health.data.status === "healthy") {
+            indicator.textContent = "● Online";
+            indicator.style.color = "var(--color-success)";
+          } else {
+            indicator.textContent = "● Sin conexión";
+            indicator.style.color = "var(--color-danger)";
+          }
+        }
+
+        // Stats en paralelo
+        const [budgetsRes, invoicesRes, clientsRes, vehiculosRes, servicesRes] =
+          await Promise.all([
+            getBudgets(),
+            getInvoices(),
+            getClients(),
+            getVehiculos(),
+            getServices(),
+          ]);
+
+        // Presupuestos pendientes
+        if (budgetsRes.success) {
+          const pending = (budgetsRes.data ?? []).filter(
+            (b) => b.status === "draft" || b.status === "sent",
+          );
+          document.getElementById("stat-presupuestos").textContent =
+            pending.length;
+
+          const last5 = (budgetsRes.data ?? []).slice(0, 5);
+          document.getElementById("list-presupuestos").innerHTML = last5.length
+            ? last5
+                .map(
+                  (b) => `
+                <div class="list-item">
+                  <div>
+                    <span class="text-accent">${b.number}</span>
+                    <span class="text-muted" style="margin-left:8px">Veh. #${b.vehicleId}</span>
+                  </div>
+                  ${badgeHtml(b.status)}
+                </div>`,
+                )
+                .join("")
+            : '<p class="text-muted">Sin presupuestos.</p>';
+        }
+
+        // Facturas
+        if (invoicesRes.success) {
+          const issued = (invoicesRes.data ?? []).filter(
+            (i) => i.status === "issued",
+          );
+          document.getElementById("stat-facturas").textContent = issued.length;
+
+          const now = new Date();
+          const mesTotal = (invoicesRes.data ?? [])
+            .filter((i) => {
+              const d = new Date(i.date);
+              return (
+                d.getMonth() === now.getMonth() &&
+                d.getFullYear() === now.getFullYear()
+              );
+            })
+            .reduce((acc, i) => acc + parseFloat(i.total), 0);
+          document.getElementById("stat-facturacion").textContent =
+            formatMoney(mesTotal);
+
+          const last5 = (invoicesRes.data ?? []).slice(0, 5);
+          document.getElementById("list-facturas").innerHTML = last5.length
+            ? last5
+                .map(
+                  (i) => `
+                <div class="list-item">
+                  <div>
+                    <span class="text-accent">${i.number}</span>
+                    <span class="text-muted" style="margin-left:8px">${formatMoney(i.total)}</span>
+                  </div>
+                  ${badgeHtml(i.status)}
+                </div>`,
+                )
+                .join("")
+            : '<p class="text-muted">Sin facturas.</p>';
+        }
+
+        // Services este mes
+        if (servicesRes.success) {
+          const now = new Date();
+          const mes = (servicesRes.data ?? []).filter((s) => {
+            const d = new Date(s.date);
+            return (
+              d.getMonth() === now.getMonth() &&
+              d.getFullYear() === now.getFullYear()
+            );
+          });
+          document.getElementById("stat-services").textContent = mes.length;
+        }
+
+        if (clientsRes.success)
+          document.getElementById("stat-clientes").textContent = (
+            clientsRes.data ?? []
+          ).length;
+        if (vehiculosRes.success)
+          document.getElementById("stat-vehiculos").textContent = (
+            vehiculosRes.data ?? []
+          ).length;
+      }
+
+      document.addEventListener("DOMContentLoaded", loadDashboard);
     </script>
   </body>
 </html>
