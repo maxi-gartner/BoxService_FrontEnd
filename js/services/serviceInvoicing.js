@@ -60,7 +60,7 @@ export async function cargarFacturacionVehiculo(vehicleId) {
       }
 
       return `
-        <tr>
+        <tr data-service-id="${service.serviceId}">
           <td>${escapeHtml(service.serviceType ?? "-")}</td>
           <td class="text-muted">${escapeHtml(formatearFecha(service.date))}</td>
           <td style="font-weight:700">${totalHtml}</td>

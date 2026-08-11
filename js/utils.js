@@ -41,6 +41,7 @@ const STATUS_LABELS = {
   draft: "Borrador",
   sent: "Enviado",
   approved: "Aprobado",
+  completed: "Finalizado",
   rejected: "Rechazado",
   issued: "Emitida",
   paid: "Cobrada",

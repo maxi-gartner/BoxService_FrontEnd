@@ -53,6 +53,11 @@
 
 #modoCreacion { max-width: 320px; }
 
+.fila-destacada {
+  background: var(--color-accent-dim) !important;
+  transition: background 0.3s ease;
+}
+
 @media (max-width: 768px) {
   .checkbox-group { grid-template-columns: 1fr; }
 }

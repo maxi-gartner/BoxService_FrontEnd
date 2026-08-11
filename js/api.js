@@ -86,6 +86,9 @@ export const createService = (data) =>
 export const createServiceDetail = (serviceId, data) =>
   request("POST", `/api/services/${serviceId}/details`, data);
 
+export const getServiceDetails = (serviceId) =>
+  request("GET", `/api/services/${serviceId}/details`);
+
 // ── Budgets / Presupuestos (Maxi) ───────────────────
 export const getBudgets = () =>
   request("GET", "/api/budgets");
