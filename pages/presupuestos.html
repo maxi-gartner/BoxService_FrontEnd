@@ -15,57 +15,14 @@
         <div class="container">
           <div class="page-header-actions mb-6">
             <h1 class="page-title" style="margin: 0">Presupuestos</h1>
-            <button class="btn btn-primary btn-sm" id="btn-new">+ Nuevo</button>
+            <a href="taller.html" class="btn btn-primary btn-sm">+ Nuevo (en Taller)</a>
           </div>
+          <p class="text-muted mb-6">
+            Panel de gestión: aprobá o rechazá desde acá. Para crear un presupuesto nuevo o
+            generar el service de uno aprobado, andá al Taller y elegí el vehículo.
+          </p>
 
           <div id="alert-box" class="alert"></div>
-
-          <!-- Formulario -->
-          <div id="form-container" class="card mb-6 hidden">
-            <p class="card-title">Nuevo Presupuesto</p>
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">ID Vehículo</label>
-                <input
-                  type="number"
-                  id="inp-vehicle"
-                  class="form-control"
-                  placeholder="ID del vehículo"
-                />
-              </div>
-              <div class="form-group">
-                <label class="form-label">Notas</label>
-                <input
-                  type="text"
-                  id="inp-notes"
-                  class="form-control"
-                  placeholder="Opcional"
-                />
-              </div>
-            </div>
-
-            <div class="budget-items-header mt-4">
-              <span class="form-label">Ítems del presupuesto</span>
-              <button class="btn btn-secondary btn-sm" id="btn-add-item">
-                + Agregar ítem
-              </button>
-            </div>
-            <div id="items-container"></div>
-
-            <div class="budget-total">
-              <span class="budget-total-label">Total estimado</span>
-              <span class="budget-total-value" id="total-display">$0</span>
-            </div>
-
-            <div class="budget-actions">
-              <button class="btn btn-secondary" id="btn-cancel">
-                Cancelar
-              </button>
-              <button class="btn btn-primary" id="btn-save">
-                Guardar presupuesto
-              </button>
-            </div>
-          </div>
 
           <!-- Listado -->
           <div class="card">

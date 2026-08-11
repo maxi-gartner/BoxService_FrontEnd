@@ -109,18 +109,19 @@ async function cargarVehiculos(clienteId, clienteNombre) {
     }
 
     vehiculosTbody.innerHTML = vehiculos
-      .map(
-        (vehiculo) => `
-          <tr>
-            <td>${escapeHtml(getField(vehiculo, "id_vehiculo", "vehiculoId", "vehicleId", "id"))}</td>
+      .map((vehiculo) => {
+        const id = getField(vehiculo, "id_vehiculo", "vehiculoId", "vehicleId", "id");
+        return `
+          <tr data-vehicle-id="${escapeHtml(id)}" class="clickable-row">
+            <td>${escapeHtml(id)}</td>
             <td>${escapeHtml(getField(vehiculo, "patente", "placa", "plate", "Plate"))}</td>
             <td>${escapeHtml(getField(vehiculo, "marca", "brand", "Brand"))}</td>
             <td>${escapeHtml(getField(vehiculo, "modelo", "model", "Model"))}</td>
             <td>${escapeHtml(getField(vehiculo, "anio", "ano", "year", "Year"))}</td>
             <td>${escapeHtml(getField(vehiculo, "kilometraje_actual", "kilometraje", "kilometrajeActual", "mileage"))}</td>
           </tr>
-        `
-      )
+        `;
+      })
       .join("");
   } catch (error) {
     showError(vehiculosTbody, 6, error.message);
@@ -169,6 +170,13 @@ clientesTbody.addEventListener("click", (event) => {
   }
 
   cargarVehiculos(button.dataset.clienteId, button.dataset.clienteNombre);
+});
+
+vehiculosTbody.addEventListener("click", (event) => {
+  const row = event.target.closest("[data-vehicle-id]");
+  if (!row) return;
+
+  window.location.href = `taller.html?id=${row.dataset.vehicleId}`;
 });
 
 cargarClientes();

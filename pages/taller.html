@@ -3,27 +3,28 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BoxService — Services</title>
+  <title>BoxService — Taller</title>
   <link rel="stylesheet" href="../css/main.css">
   <link rel="stylesheet" href="../css/services.css">
+  <link rel="stylesheet" href="../css/budget.css">
 </head>
-<body data-page="services">
+<body data-page="taller">
   <div class="app-wrapper">
     <div id="sidebar-container"></div>
 
     <div class="main-content">
       <div class="container">
 
-        <h1 class="page-title">Services <span id="health-indicator" class="text-muted" style="font-size:var(--text-sm)"></span></h1>
+        <h1 class="page-title">Taller <span id="health-indicator" class="text-muted" style="font-size:var(--text-sm)"></span></h1>
 
         <div id="alert-box" class="alert"></div>
 
         <!-- Tabs -->
         <div class="tabs">
           <button class="tab-btn active" data-tab="buscar">🔍 Buscar vehículo</button>
-          <button class="tab-btn" data-tab="historial">📋 Historial</button>
+          <button class="tab-btn" data-tab="resumen">📋 Resumen</button>
+          <button class="tab-btn" data-tab="nuevo-presupuesto">📝 Nuevo presupuesto</button>
           <button class="tab-btn" data-tab="nuevo">🔧 Nuevo service</button>
-          <button class="tab-btn" data-tab="listado">📄 Todos los services</button>
         </div>
 
         <!-- Tab: Buscar -->
@@ -53,8 +54,8 @@
           </div>
         </div>
 
-        <!-- Tab: Historial -->
-        <div class="tab-panel" id="tab-historial">
+        <!-- Tab: Resumen -->
+        <div class="tab-panel" id="tab-resumen">
           <div class="card" id="vehiculo-info" style="display:none;margin-bottom:var(--space-4);border-left:3px solid var(--color-accent)">
             <div class="form-row">
               <div><span class="form-label">Cliente</span><p id="info-cliente" class="text-accent" style="font-size:var(--text-lg);font-weight:700;margin-top:4px">—</p></div>
@@ -63,7 +64,28 @@
               <div><span class="form-label">KM actual</span><p id="info-km" style="font-size:var(--text-lg);font-weight:700;margin-top:4px">—</p></div>
             </div>
           </div>
-          <div class="card">
+
+          <div class="card" style="margin-bottom:var(--space-4)">
+            <p class="card-title">Presupuestos</p>
+            <div id="presupuestosVehiculoMensaje" class="alert"></div>
+            <div class="table-wrapper mt-4">
+              <table id="presupuestosVehiculoTable">
+                <thead>
+                  <tr>
+                    <th>Número</th>
+                    <th>Fecha</th>
+                    <th>Estado</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="presupuestos-vehiculo-body">
+                  <tr><td colspan="4" class="text-muted">Seleccioná un vehículo en la pestaña "Buscar" para ver sus presupuestos.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card" style="margin-bottom:var(--space-4)">
             <p class="card-title">Historial de services</p>
             <p class="text-muted" id="historial-msg">Seleccioná un vehículo en la pestaña "Buscar" para ver su historial.</p>
             <div class="table-wrapper" id="historial-table-wrapper" style="display:none">
@@ -80,6 +102,69 @@
                 </thead>
                 <tbody id="historial-body"></tbody>
               </table>
+            </div>
+          </div>
+
+          <div class="card">
+            <p class="card-title">Facturación</p>
+            <div id="facturacionVehiculoMensaje" class="alert"></div>
+            <div class="table-wrapper mt-4">
+              <table id="facturacionVehiculoTable">
+                <thead>
+                  <tr>
+                    <th>Service</th>
+                    <th>Fecha</th>
+                    <th>Total</th>
+                    <th>Estado</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="facturacion-vehiculo-body">
+                  <tr><td colspan="5" class="text-muted">Seleccioná un vehículo en la pestaña "Buscar" para ver su facturación.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: Nuevo presupuesto -->
+        <div class="tab-panel" id="tab-nuevo-presupuesto">
+          <p class="text-muted" id="nuevoPresupuestoVehiculoInfo">Ningún vehículo seleccionado. Elegilo en la pestaña "Buscar vehículo".</p>
+
+          <div class="card">
+            <p class="card-title">Nuevo presupuesto</p>
+            <div id="nuevoPresupuestoMensaje" class="alert"></div>
+
+            <div class="form-group">
+              <label class="form-label">Notas <span class="text-muted">(opcional)</span></label>
+              <input type="text" id="presupuesto-inp-notes" class="form-control" placeholder="Ej: Cliente pide revisar suspensión también">
+            </div>
+
+            <div class="budget-items-header mt-4">
+              <span class="form-label">Ítems del presupuesto</span>
+              <div class="flex gap-2">
+                <select id="presupuesto-catalogo-select" class="form-control" style="max-width:260px">
+                  <option value="">Elegir del catálogo...</option>
+                </select>
+                <button class="btn btn-secondary btn-sm" id="presupuesto-btn-add-catalogo" type="button">
+                  Agregar
+                </button>
+                <button class="btn btn-secondary btn-sm" id="presupuesto-btn-add-item" type="button">
+                  + Ítem manual
+                </button>
+              </div>
+            </div>
+            <div id="presupuesto-items-container"></div>
+
+            <div class="budget-total">
+              <span class="budget-total-label">Total estimado</span>
+              <span class="budget-total-value" id="presupuesto-total-display">$0</span>
+            </div>
+
+            <div class="budget-actions">
+              <button class="btn btn-primary" id="presupuesto-btn-save" type="button">
+                Guardar presupuesto
+              </button>
             </div>
           </div>
         </div>
@@ -165,36 +250,12 @@
           </div>
         </div>
 
-        <!-- Tab: Listado -->
-        <div class="tab-panel" id="tab-listado">
-          <div class="card">
-            <p class="card-title">Todos los services</p>
-            <div class="table-wrapper">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Fecha</th>
-                    <th>Vehículo</th>
-                    <th>Tipo</th>
-                    <th>KM</th>
-                    <th>Próx. KM</th>
-                    <th>Próx. Fecha</th>
-                  </tr>
-                </thead>
-                <tbody id="services-body">
-                  <tr><td colspan="6" class="text-muted">Cargando...</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
       </div>
       <div id="footer-container"></div>
     </div>
   </div>
 
   <script type="module" src="../js/components.js"></script>
-  <script type="module" src="../js/services.js"></script>
+  <script type="module" src="../js/taller.js"></script>
 </body>
 </html>

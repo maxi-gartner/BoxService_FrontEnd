@@ -72,36 +72,3 @@ export async function cargarHistorialVehiculo(vehicleId) {
     servicesTableBody.appendChild(row);
   });
 }
-
-// Tab "Todos los services" — listado completo, sin filtrar por vehículo.
-export async function cargarListadoCompleto() {
-  const tbody = document.getElementById("services-body");
-  if (!tbody) return;
-
-  const res = await getServices();
-
-  if (!res.success || !Array.isArray(res.data)) {
-    tbody.innerHTML = `<tr><td colspan="6" class="text-muted">No se pudo cargar el listado de services.</td></tr>`;
-    return;
-  }
-
-  if (res.data.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" class="text-muted">No hay services registrados.</td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = res.data
-    .map(
-      (service) => `
-    <tr>
-      <td>${escapeHtml(formatearFecha(service.date))}</td>
-      <td>${escapeHtml(service.vehicleId ?? "-")}</td>
-      <td>${escapeHtml(service.serviceType ?? "-")}</td>
-      <td>${escapeHtml(service.mileage ?? "-")}</td>
-      <td>${escapeHtml(service.nextMileage ?? "-")}</td>
-      <td>${escapeHtml(formatearFecha(service.nextDate))}</td>
-    </tr>
-  `,
-    )
-    .join("");
-}

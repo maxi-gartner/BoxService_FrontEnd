@@ -14,27 +14,16 @@
     <div class="main-content">
       <div class="container">
 
-        <h1 class="page-title">Facturas</h1>
+        <div class="page-header-actions mb-6">
+          <h1 class="page-title" style="margin: 0">Facturas</h1>
+          <a href="taller.html" class="btn btn-primary btn-sm">+ Emitir (en Taller)</a>
+        </div>
+        <p class="text-muted mb-6">
+          Panel de gestión: marcá cobradas o anulá desde acá. Para emitir una factura nueva,
+          andá al Taller, elegí el vehículo y facturá el service ya terminado.
+        </p>
 
         <div id="alert-box" class="alert"></div>
-
-        <!-- Emitir -->
-        <div class="card mb-6">
-          <p class="card-title">Emitir Factura</p>
-          <div class="invoice-form-row">
-            <div class="form-group">
-              <label class="form-label">ID Service</label>
-              <input type="number" id="inp-service" class="form-control" placeholder="ID del service finalizado">
-            </div>
-            <div class="form-group">
-              <label class="form-label">ID Presupuesto <span class="text-muted">(opcional)</span></label>
-              <input type="number" id="inp-budget" class="form-control" placeholder="Para calcular el total automáticamente">
-            </div>
-          </div>
-          <div class="invoice-actions">
-            <button class="btn btn-primary" id="btn-emit">Emitir factura</button>
-          </div>
-        </div>
 
         <!-- Listado -->
         <div class="card">

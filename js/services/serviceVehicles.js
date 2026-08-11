@@ -4,6 +4,8 @@ import { getClients, getVehiculos } from "../api.js";
 import { state } from "./serviceState.js";
 import { cargarHistorialVehiculo } from "./serviceHistory.js";
 import { cargarPresupuestosAprobadosVehiculo } from "./serviceBudgets.js";
+import { cargarPresupuestosVehiculo } from "./serviceBudgetsList.js";
+import { cargarFacturacionVehiculo } from "./serviceInvoicing.js";
 import { escapeHtml } from "../utils.js";
 
 export async function cargarVehiculos() {
@@ -173,13 +175,18 @@ export function seleccionarVehiculo(v, rowSeleccionada = null) {
   const vehiculoInfoCard = document.getElementById("vehiculo-info");
   if (vehiculoInfoCard) vehiculoInfoCard.style.display = "block";
 
-  // Resumen corto en la pestaña "Nuevo service".
+  // Resumen corto en las pestañas "Nuevo service" y "Nuevo presupuesto".
+  const resumenVehiculo = `Vehículo seleccionado: ${v.plate ?? "-"} — ${getClienteVehiculo(v)}`;
+
   const nuevoServiceInfo = document.getElementById("nuevoServiceVehiculoInfo");
-  if (nuevoServiceInfo) {
-    nuevoServiceInfo.textContent = `Vehículo seleccionado: ${v.plate ?? "-"} — ${getClienteVehiculo(v)}`;
-  }
+  if (nuevoServiceInfo) nuevoServiceInfo.textContent = resumenVehiculo;
+
+  const nuevoPresupuestoInfo = document.getElementById("nuevoPresupuestoVehiculoInfo");
+  if (nuevoPresupuestoInfo) nuevoPresupuestoInfo.textContent = resumenVehiculo;
 
   cargarHistorialVehiculo(v.vehicleId);
+  cargarPresupuestosVehiculo(v.vehicleId);
+  cargarFacturacionVehiculo(v.vehicleId);
 
   const modoCreacion = document.getElementById("modoCreacion");
 

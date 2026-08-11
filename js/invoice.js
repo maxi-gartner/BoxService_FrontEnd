@@ -1,16 +1,39 @@
-// invoice.js — lógica de presentación de facturas
-// Solo fetch y mostrar. Sin lógica de negocio.
-import { getInvoices, createInvoice, updateInvoiceStatus } from "./api.js";
+// invoice.js — panel de gestión de facturas
+// Solo lectura + cobrar/anular. La emisión vive en Taller, donde el service
+// ya está elegido (sin tipear IDs).
+import { getInvoices, getServices, getVehiculos, updateInvoiceStatus } from "./api.js";
 import { escapeHtml, showAlert, setLoading, formatMoney, badgeHtml } from "./utils.js";
 
 const tableBody = document.getElementById("table-body");
 const alertBox = document.getElementById("alert-box");
 
+let vehicleIdPorService = {};
+let vehiculosPorId = {};
+
 // ── Cargar tabla ───────────────────────────────────────
 async function loadInvoices() {
   tableBody.innerHTML =
     '<tr><td colspan="5" class="text-muted">Cargando...</td></tr>';
-  const res = await getInvoices();
+
+  const [resServices, resVehiculos, res] = await Promise.all([
+    getServices(),
+    getVehiculos(),
+    getInvoices(),
+  ]);
+
+  if (resServices.success && Array.isArray(resServices.data)) {
+    vehicleIdPorService = {};
+    resServices.data.forEach((s) => {
+      vehicleIdPorService[String(s.serviceId)] = s.vehicleId;
+    });
+  }
+
+  if (resVehiculos.success && Array.isArray(resVehiculos.data)) {
+    vehiculosPorId = {};
+    resVehiculos.data.forEach((v) => {
+      vehiculosPorId[String(v.vehicleId)] = v;
+    });
+  }
 
   if (!res.success) {
     tableBody.innerHTML = `<tr><td colspan="5" class="text-muted">Error: ${escapeHtml(res.error?.message)}</td></tr>`;
@@ -25,26 +48,36 @@ async function loadInvoices() {
   }
 
   tableBody.innerHTML = list
-    .map(
-      (inv) => `
+    .map((inv) => {
+      const vehicleId = vehicleIdPorService[String(inv.serviceId)];
+      const vehiculo = vehicleId ? vehiculosPorId[String(vehicleId)] : null;
+      const vehiculoLabel = vehiculo
+        ? `${vehiculo.plate ?? "-"} — ${vehiculo.brand ?? ""} ${vehiculo.model ?? ""}`
+        : `Service #${inv.serviceId}`;
+      const vehiculoLink = vehicleId
+        ? `<a href="taller.html?id=${vehicleId}">${escapeHtml(vehiculoLabel)}</a>`
+        : escapeHtml(vehiculoLabel);
+
+      return `
     <tr>
       <td class="text-accent">${escapeHtml(inv.number)}</td>
       <td class="text-muted">${escapeHtml(inv.date)}</td>
       <td style="font-weight:700">${formatMoney(inv.total)}</td>
       <td>${badgeHtml(inv.status)}</td>
       <td class="flex gap-2">
+        ${vehiculoLink}
         ${
           inv.status === "issued"
             ? `
           <button class="btn btn-primary btn-sm" id="btn-paid-${inv.invoiceId}"   onclick="markPaid(${inv.invoiceId})">Cobrada</button>
           <button class="btn btn-danger btn-sm"  id="btn-cancel-${inv.invoiceId}" onclick="cancelInvoice(${inv.invoiceId})">Anular</button>
         `
-            : "—"
+            : ""
         }
       </td>
     </tr>
-  `,
-    )
+  `;
+    })
     .join("");
 }
 
@@ -82,42 +115,6 @@ window.cancelInvoice = async (id) => {
   showAlert(alertBox, "Factura anulada", "ok");
   loadInvoices();
 };
-
-// ── Emitir ─────────────────────────────────────────────
-document.getElementById("btn-emit").addEventListener("click", async () => {
-  const btn = document.getElementById("btn-emit");
-  const serviceId = parseInt(document.getElementById("inp-service").value);
-  const budgetId =
-    parseInt(document.getElementById("inp-budget").value) || null;
-
-  if (!serviceId) {
-    showAlert(alertBox, "Ingresá el ID del service");
-    return;
-  }
-
-  setLoading(btn, true);
-
-  const res = await createInvoice({
-    serviceId,
-    budgetId,
-  });
-
-  setLoading(btn, false);
-
-  if (!res.success) {
-    showAlert(alertBox, res.error?.message);
-    return;
-  }
-
-  showAlert(
-    alertBox,
-    `Factura ${res.data.number} emitida por ${formatMoney(res.data.total)}`,
-    "ok",
-  );
-  document.getElementById("inp-service").value = "";
-  document.getElementById("inp-budget").value = "";
-  loadInvoices();
-});
 
 // ── Init ───────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", loadInvoices);

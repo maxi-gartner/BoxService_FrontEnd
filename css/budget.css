@@ -81,21 +81,3 @@
     flex-direction: column;
   }
 }
-.page-header-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--space-4);
-}
-
-@media (max-width: 900px) {
-  .page-header-actions {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-3);
-  }
-
-  .page-header-actions .btn {
-    width: 100%;
-  }
-}

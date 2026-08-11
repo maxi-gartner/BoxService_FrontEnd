@@ -124,3 +124,16 @@ export const createInvoice = (data) =>
 
 export const updateInvoiceStatus = (id, status) =>
   request("PATCH", `/api/invoices/${id}`, { status });
+
+// ── Catálogo de precios (Maxi) ──────────────────────
+export const getCatalog = () =>
+  request("GET", "/api/catalogo");
+
+export const createCatalogItem = (data) =>
+  request("POST", "/api/catalogo", data);
+
+export const updateCatalogItem = (id, data) =>
+  request("PATCH", `/api/catalogo/${id}`, data);
+
+export const deleteCatalogItem = (id) =>
+  request("DELETE", `/api/catalogo/${id}`);

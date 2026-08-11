@@ -51,33 +51,44 @@ El frontend se comunica con el backend mediante `fetch()` y muestra los datos al
 ```
 BoxService-FrontEnd/
 ├── css/
-│   ├── Main.css          ← variables de diseño y componentes base (NO TOCAR sin avisar)
+│   ├── main.css          ← variables de diseño y componentes base (NO TOCAR sin avisar)
 │   ├── clientes.css      ← estilos exclusivos de la página clientes
 │   ├── vehicle.css       ← estilos exclusivos de la página vehículos
-│   ├── services.css      ← estilos exclusivos de la página services
-│   ├── budget.css        ← estilos exclusivos de la página presupuestos
-│   └── invoice.css       ← estilos exclusivos de la página facturas
+│   ├── services.css      ← estilos exclusivos de Taller (buscar/resumen/nuevo service)
+│   ├── budget.css        ← estilos de ítems de presupuesto (los usa Taller)
+│   ├── invoice.css       ← vacío a propósito, ver nota abajo
+│   └── catalogo.css      ← estilos exclusivos del catálogo de precios
 ├── js/
 │   ├── api.js            ← todos los fetch centralizados (NO TOCAR sin avisar)
+│   ├── utils.js           ← helpers compartidos (escapeHtml, showAlert, setLoading, formatMoney, badgeHtml)
 │   ├── clientes.js       ← lógica de presentación de clientes
 │   ├── vehiculos.js      ← lógica de presentación de vehículos
-│   ├── services.js       ← lógica de presentación de services
-│   ├── budget.js         ← lógica de presentación de presupuestos
-│   └── invoice.js        ← lógica de presentación de facturas
+│   ├── taller.js         ← orquesta la pantalla Taller (ver services/*.js)
+│   ├── services/         ← submódulos de Taller: buscar vehículo, historial, presupuestos, facturación, alta de service
+│   ├── budget.js         ← panel de gestión de presupuestos (solo lectura + aprobar/rechazar)
+│   ├── invoice.js        ← panel de gestión de facturas (solo lectura + cobrar/anular)
+│   └── catalogo.js       ← alta/edición/borrado del catálogo de precios
 ├── pages/
 │   ├── clientes.html
 │   ├── vehiculos.html
-│   ├── services.html
+│   ├── taller.html       ← ficha completa del vehículo: buscar, presupuestar, aprobar, cargar service, facturar
 │   ├── presupuestos.html
-│   └── facturas.html
+│   ├── facturas.html
+│   └── catalogo.html
 └── index.html            ← dashboard principal con navegación
 ```
+
+**Taller es el flujo de trabajo real.** Se busca el vehículo una sola vez (por patente,
+cliente, marca o modelo — nunca por ID) y desde ahí se hace todo: presupuestar,
+aprobar, generar el service, facturar y cobrar. Clientes, Vehículos, Presupuestos
+y Facturas son paneles de consulta/gestión rápida — cada fila que representa un
+vehículo enlaza a `taller.html?id={vehicleId}` para actuar sobre él.
 
 ---
 
 ## Archivos clave
 
-### `css/Main.css`
+### `css/main.css`
 
 Contiene todas las variables CSS del sistema de diseño: colores, tipografía, espaciado, bordes y componentes base (botones, inputs, cards, tablas, badges). Todos los demás archivos CSS lo importan. **No modificar sin avisar al grupo.**
 

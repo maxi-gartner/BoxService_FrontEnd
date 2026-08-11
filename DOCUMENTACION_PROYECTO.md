@@ -28,27 +28,30 @@ La estructura principal es esta:
 Contiene una página HTML por cada módulo del sistema.
 
 - clientes.html: pantalla para ver, crear y consultar clientes.
-- vehiculos.html: pantalla para registrar y listar vehículos.
-- services.html: pantalla para crear services y ver historial.
-- presupuestos.html: pantalla para crear y gestionar presupuestos.
-- facturas.html: pantalla para emitir y gestionar facturas.
+- vehiculos.html: pantalla para buscar (por patente/marca/modelo/cliente, nunca por ID), registrar y listar vehículos.
+- taller.html: **la pantalla principal del flujo de trabajo.** Se busca un vehículo una sola vez y desde ahí se hace todo — presupuestar, aprobar, cargar el service, facturar y cobrar — sin volver a tipear un ID en ningún lado. Antes se llamaba services.html y solo cubría la parte de services; ahora es el hub completo.
+- presupuestos.html: panel de gestión (aprobar/rechazar). La creación de presupuestos vive en Taller.
+- facturas.html: panel de gestión (cobrar/anular). La emisión de facturas vive en Taller.
+- catalogo.html: ítems reutilizables con precio (mano de obra, revisiones frecuentes, etc.) para armar presupuestos más rápido en Taller — el precio se puede editar igual al presupuestar.
 
 ### js/
 Contiene toda la lógica que hace que las páginas funcionen.
 
 - api.js: centraliza las llamadas al backend.
+- utils.js: helpers compartidos entre páginas (escapar HTML, alertas, formatear moneda, badges de estado).
 - components.js: carga elementos compartidos como el sidebar y el footer.
 - clientes.js: controla la pantalla de clientes.
 - vehiculos.js: controla la pantalla de vehículos.
-- services.js: controla la pantalla de services.
-- budget.js: controla la pantalla de presupuestos.
-- invoice.js: controla la pantalla de facturas.
+- taller.js: orquesta la pantalla Taller — la lógica en sí está repartida en js/services/ (buscar vehículo, historial, presupuestos del vehículo, facturación, alta de service).
+- budget.js: panel de gestión de presupuestos (solo lectura + aprobar/rechazar).
+- invoice.js: panel de gestión de facturas (solo lectura + cobrar/anular).
+- catalogo.js: alta, edición de precio y borrado de ítems del catálogo.
 
 ### css/
 Contiene los estilos visuales.
 
-- Main.css: estilos globales del sistema.
-- clientes.css, vehicle.css, services.css, budget.css, invoice.css: estilos específicos de cada pantalla.
+- main.css: estilos globales del sistema.
+- clientes.css, vehicle.css, services.css, budget.css, catalogo.css: estilos específicos de cada pantalla (budget.css lo usa Taller, para los ítems de presupuesto).
 
 ### components/
 Archivos HTML reutilizables.
@@ -204,29 +207,30 @@ Funciones principales:
 
 ---
 
-### js/services.js
-Es el módulo más completo del frontend.
+### js/taller.js (antes js/services.js)
+Es el módulo más completo del frontend — orquesta la pantalla Taller, que es
+el flujo de trabajo real de punta a punta. Su lógica está repartida en
+js/services/ para que sea más fácil de mantener:
 
-Qué hace:
-- permite buscar un vehículo o cliente;
-- muestra el historial de services de un vehículo;
-- permite crear un service manual;
-- permite crear un service a partir de un presupuesto aprobado;
-- muestra mensajes de éxito o error.
+- serviceVehicles.js: buscar vehículo (por patente/cliente/marca/modelo, nunca
+  por ID), seleccionarlo, y disparar la carga del resto del resumen.
+- serviceHistory.js: historial de services del vehículo elegido.
+- serviceBudgetsList.js: **nuevo** — todos los presupuestos del vehículo (no
+  solo los aprobados), con Aprobar/Rechazar/Generar service según el estado.
+- serviceInvoicing.js: **nuevo** — facturación del vehículo: Facturar los
+  services sin factura, Cobrar/Anular las que ya se emitieron.
+- serviceBudgetForm.js: **nuevo** — alta de un presupuesto para el vehículo
+  ya elegido (sin tipear el ID), con opción de prellenar ítems desde el
+  Catálogo de precios.
+- serviceBudgets.js: presupuestos aprobados listos para generar un service
+  (pestaña "Nuevo service → desde presupuesto").
+- serviceManual.js: alta de un service manual, sin presupuesto de por medio.
+- serviceUI.js / serviceState.js: helpers visuales y el estado compartido
+  (qué vehículo está seleccionado ahora mismo).
 
-Rol general:
-- interfaz de usuario.
-- lógica de flujo de trabajo del módulo services.
-
-Funciones principales:
-- checkHealth(): revisa si el backend está online.
-- cargarVehiculos(): carga vehículos y clientes para la búsqueda.
-- renderVehiculos(): muestra los resultados de búsqueda.
-- seleccionarVehiculo(): marca un vehículo como seleccionado y muestra detalle.
-- cargarHistorialVehiculo(): muestra el historial de services.
-- cargarPresupuestosAprobadosVehiculo(): muestra presupuestos aprobados pendientes.
-- crearServiceDesdePresupuesto(): crea un service desde un presupuesto ya aprobado.
-- serviceForm.addEventListener("submit"): crea un service manual.
+taller.js además lee `?id=` de la URL al cargar — así, un link desde
+Vehículos, Clientes, Presupuestos o Facturas cae directo en el resumen de
+ese vehículo, sin tener que buscarlo de nuevo.
 - mostrarAlerta() y mostrarMensajeFormulario(): muestran mensajes al usuario.
 
 Importante:

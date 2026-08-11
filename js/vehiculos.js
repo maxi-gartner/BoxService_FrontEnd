@@ -1,11 +1,19 @@
 // vehiculos.js — lógica de presentación
 // Solo fetch y mostrar. Sin lógica de negocio.
-import { getVehiculos, createVehiculo } from "./api.js";
+import { getVehiculos, getClients, createVehiculo } from "./api.js";
 import { escapeHtml } from "./utils.js";
 
 const tablaBody = document.getElementById("vehiculos-body");
 const formVehiculo = document.getElementById("vehiculo-form");
 const alertBox = document.getElementById("page-alert");
+const buscadorTabla = document.getElementById("vehiculos-buscador");
+const clienteBuscador = document.getElementById("cliente-buscador");
+const clienteIdInput = document.getElementById("cliente-id-seleccionado");
+const clienteSugerencias = document.getElementById("cliente-sugerencias");
+
+let vehiculosCargados = [];
+let clientesPorId = {};
+let clientesLista = [];
 
 // ── Helpers ────────────────────────────────────────────
 function showAlert(msg, type = "error") {
@@ -39,7 +47,11 @@ function getKilometrajeActual(v) {
   );
 }
 
-// ── Render ─────────────────────────────────────────────
+function getNombreCliente(clientId) {
+  return clientesPorId[String(clientId)] ?? `Cliente #${clientId}`;
+}
+
+// ── Render tabla ───────────────────────────────────────
 function crearFila(v) {
   const tr = document.createElement("tr");
 
@@ -48,9 +60,13 @@ function crearFila(v) {
     <td>${escapeHtml(v.brand ?? "-")}</td>
     <td>${escapeHtml(v.model ?? "-")}</td>
     <td>${escapeHtml(v.year ?? "-")}</td>
-    <td>${escapeHtml(v.clientId ?? "-")}</td>
+    <td>${escapeHtml(getNombreCliente(v.clientId))}</td>
     <td>${escapeHtml(getKilometrajeActual(v))}</td>
   `;
+
+  tr.addEventListener("click", () => {
+    window.location.href = `taller.html?id=${v.vehicleId}`;
+  });
 
   return tr;
 }
@@ -60,28 +76,108 @@ function renderVehiculos(lista) {
 
   if (!lista.length) {
     tablaBody.innerHTML =
-      '<tr><td colspan="6" class="text-muted">No hay vehículos registrados.</td></tr>';
+      '<tr><td colspan="6" class="text-muted">No hay vehículos que coincidan con la búsqueda.</td></tr>';
     return;
   }
 
   lista.forEach((v) => tablaBody.appendChild(crearFila(v)));
 }
 
+function filtrarYRenderizar() {
+  const texto = buscadorTabla.value.toLowerCase().trim();
+
+  if (!texto) {
+    renderVehiculos(vehiculosCargados);
+    return;
+  }
+
+  const filtrados = vehiculosCargados.filter((v) => {
+    const campos = [
+      v.plate,
+      v.brand,
+      v.model,
+      getNombreCliente(v.clientId),
+    ]
+      .map((c) => String(c ?? "").toLowerCase())
+      .join(" ");
+
+    return campos.includes(texto);
+  });
+
+  renderVehiculos(filtrados);
+}
+
+buscadorTabla.addEventListener("input", filtrarYRenderizar);
+
 // ── Cargar ─────────────────────────────────────────────
 async function cargarVehiculos() {
   tablaBody.innerHTML =
     '<tr><td colspan="6" class="text-muted">Cargando...</td></tr>';
 
-  const res = await getVehiculos();
-  if (!res.success) {
-    showAlert(res.error?.message || "Error al cargar vehículos.");
+  const [resClientes, resVehiculos] = await Promise.all([getClients(), getVehiculos()]);
+
+  if (resClientes.success && Array.isArray(resClientes.data)) {
+    clientesLista = resClientes.data;
+    clientesPorId = {};
+    resClientes.data.forEach((c) => {
+      clientesPorId[String(c.clientId)] = c.nombre ?? c.name ?? `Cliente #${c.clientId}`;
+    });
+  }
+
+  if (!resVehiculos.success) {
+    showAlert(resVehiculos.error?.message || "Error al cargar vehículos.");
     tablaBody.innerHTML =
       '<tr><td colspan="6" class="text-muted">Error al cargar.</td></tr>';
     return;
   }
 
-  renderVehiculos(res.data ?? []);
+  vehiculosCargados = resVehiculos.data ?? [];
+  renderVehiculos(vehiculosCargados);
 }
+
+// ── Buscador de cliente para el alta de vehículo ───────
+clienteBuscador.addEventListener("input", () => {
+  clienteIdInput.value = "";
+  const texto = clienteBuscador.value.toLowerCase().trim();
+
+  if (!texto) {
+    clienteSugerencias.classList.remove("show");
+    return;
+  }
+
+  const coincidencias = clientesLista
+    .filter((c) => (c.nombre ?? c.name ?? "").toLowerCase().includes(texto))
+    .slice(0, 8);
+
+  if (!coincidencias.length) {
+    clienteSugerencias.innerHTML = '<div class="text-muted">Sin coincidencias.</div>';
+    clienteSugerencias.classList.add("show");
+    return;
+  }
+
+  clienteSugerencias.innerHTML = coincidencias
+    .map(
+      (c) =>
+        `<div data-cliente-id="${c.clientId}">${escapeHtml(c.nombre ?? c.name)}</div>`,
+    )
+    .join("");
+  clienteSugerencias.classList.add("show");
+});
+
+clienteSugerencias.addEventListener("click", (event) => {
+  const item = event.target.closest("[data-cliente-id]");
+  if (!item) return;
+
+  clienteIdInput.value = item.dataset.clienteId;
+  clienteBuscador.value = item.textContent;
+  clienteSugerencias.classList.remove("show");
+});
+
+document.addEventListener("click", (event) => {
+  if (!clienteSugerencias.contains(event.target) && event.target !== clienteBuscador) {
+    clienteSugerencias.classList.remove("show");
+  }
+});
 
 // ── Formulario ─────────────────────────────────────────
 formVehiculo.addEventListener("submit", async (event) => {
@@ -90,10 +186,15 @@ formVehiculo.addEventListener("submit", async (event) => {
   const btn = formVehiculo.querySelector('button[type="submit"]');
   const fd = new FormData(formVehiculo);
 
+  if (!clienteIdInput.value) {
+    showAlert("Elegí un cliente de la lista de sugerencias.");
+    return;
+  }
+
   const kilometrajeActual = fd.get("kilometrajeActual");
 
   const payload = {
-    clientId: parseInt(fd.get("cliente")) || 0,
+    clientId: parseInt(clienteIdInput.value),
     brand: fd.get("marca").trim(),
     model: fd.get("modelo").trim(),
     year: fd.get("anio") ? parseInt(fd.get("anio")) : null,
@@ -121,6 +222,7 @@ formVehiculo.addEventListener("submit", async (event) => {
   }
 
   formVehiculo.reset();
+  clienteIdInput.value = "";
   showAlert("Vehículo creado correctamente.", "ok");
   cargarVehiculos();
 });
