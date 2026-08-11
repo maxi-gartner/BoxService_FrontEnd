@@ -1,4 +1,5 @@
 import { createClient, getClientVehicles, getClients } from "./api.js";
+import { escapeHtml } from "./utils.js";
 
 const clientesTbody = document.querySelector("#clientes-tbody");
 const vehiculosTbody = document.querySelector("#vehiculos-tbody");
@@ -6,15 +7,6 @@ const vehiculosSubtitle = document.querySelector("#vehiculos-subtitle");
 const clienteForm = document.querySelector("#cliente-form");
 const formFeedback = document.querySelector("#form-feedback");
 const refreshButton = document.querySelector("#refresh-clientes");
-
-function escapeHtml(value) {
-  return String(value ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
 
 function getField(source, ...keys) {
   for (const key of keys) {

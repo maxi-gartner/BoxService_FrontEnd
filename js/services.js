@@ -5,6 +5,7 @@ import { checkHealth, inicializarMensajes } from "./services/serviceUI.js";
 import { cargarVehiculos, configurarBuscador } from "./services/serviceVehicles.js";
 import { configurarModoCreacion } from "./services/serviceBudgets.js";
 import { configurarFormularioManual } from "./services/serviceManual.js";
+import { cargarListadoCompleto } from "./services/serviceHistory.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   checkHealth();
@@ -15,4 +16,5 @@ document.addEventListener("DOMContentLoaded", () => {
 
   cargarVehiculos();
   inicializarMensajes();
+  cargarListadoCompleto();
 });

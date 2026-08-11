@@ -4,10 +4,17 @@
 
 const API_URL = "http://localhost:5001";
 
+// Tiene que coincidir con "ApiKey" en appsettings.json del backend.
+// Es un candado simple (no un sistema de auth completo).
+const API_KEY = "boxservice-dev-key";
+
 async function request(method, endpoint, body = null) {
   const options = {
     method,
-    headers: { "Content-Type": "application/json" }
+    headers: {
+      "Content-Type": "application/json",
+      "X-Api-Key": API_KEY,
+    },
   };
 
   if (body) {
@@ -55,8 +62,10 @@ export const getVehiculos = () =>
 export const getVehiculoById = (id) =>
   request("GET", `/api/vehiculos/${id}`);
 
+// Antes era GET /api/vehiculos/buscar?plate=X (verbo en la URL).
+// Ahora es un filtro sobre la misma colección: GET /api/vehiculos?plate=X.
 export const searchVehiculoByPlate = (plate) =>
-  request("GET", `/api/vehiculos/buscar?plate=${plate}`);
+  request("GET", `/api/vehiculos?plate=${encodeURIComponent(plate)}`);
 
 export const getVehiculoHistory = (id) =>
   request("GET", `/api/vehiculos/${id}/historial`);
@@ -90,11 +99,12 @@ export const getBudgetById = (id) =>
 export const createBudget = (data) =>
   request("POST", "/api/budgets", data);
 
+// Antes eran dos endpoints (PUT .../status y POST .../approve) con un verbo
+// en la URL. Ahora es una sola transición de estado sobre el recurso.
 export const updateBudgetStatus = (id, status) =>
-  request("PUT", `/api/budgets/${id}/status`, { status });
+  request("PATCH", `/api/budgets/${id}`, { status });
 
-export const approveBudget = (id) =>
-  request("POST", `/api/budgets/${id}/approve`);
+export const approveBudget = (id) => updateBudgetStatus(id, "approved");
 
 // NUEVO:
 // Vincula el presupuesto aprobado con el service creado.
@@ -113,4 +123,4 @@ export const createInvoice = (data) =>
   request("POST", "/api/invoices", data);
 
 export const updateInvoiceStatus = (id, status) =>
-  request("PUT", `/api/invoices/${id}/status`, { status });
+  request("PATCH", `/api/invoices/${id}`, { status });

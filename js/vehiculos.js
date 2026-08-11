@@ -1,6 +1,7 @@
 // vehiculos.js — lógica de presentación
 // Solo fetch y mostrar. Sin lógica de negocio.
 import { getVehiculos, createVehiculo } from "./api.js";
+import { escapeHtml } from "./utils.js";
 
 const tablaBody = document.getElementById("vehiculos-body");
 const formVehiculo = document.getElementById("vehiculo-form");
@@ -26,7 +27,6 @@ function setLoading(btn, loading) {
   }
 }
 
-// NUEVO:
 // El backend devuelve currentMileage.
 // Dejamos varios nombres por si en algún momento cambia el nombre del campo.
 function getKilometrajeActual(v) {
@@ -44,12 +44,12 @@ function crearFila(v) {
   const tr = document.createElement("tr");
 
   tr.innerHTML = `
-    <td class="text-accent">${v.plate ?? "-"}</td>
-    <td>${v.brand ?? "-"}</td>
-    <td>${v.model ?? "-"}</td>
-    <td>${v.year ?? "-"}</td>
-    <td>${v.clientId ?? "-"}</td>
-    <td>${getKilometrajeActual(v)}</td>
+    <td class="text-accent">${escapeHtml(v.plate ?? "-")}</td>
+    <td>${escapeHtml(v.brand ?? "-")}</td>
+    <td>${escapeHtml(v.model ?? "-")}</td>
+    <td>${escapeHtml(v.year ?? "-")}</td>
+    <td>${escapeHtml(v.clientId ?? "-")}</td>
+    <td>${escapeHtml(getKilometrajeActual(v))}</td>
   `;
 
   return tr;
@@ -73,33 +73,10 @@ async function cargarVehiculos() {
     '<tr><td colspan="6" class="text-muted">Cargando...</td></tr>';
 
   const res = await getVehiculos();
-
-  if (!res.success) {
-    showAlert(res.error.message);
-    tablaBody.innerHTML =
-      '<tr><td colspan="6" class="text-muted">Error al cargar.</td></tr>';
-    return;
-  }
-
-  const lista = res.data ?? [];
-  if (!lista.length) {
-    tablaBody.innerHTML =
-      '<tr><td colspan="7" class="text-muted">No hay vehículos registrados.</td></tr>';
-    return;
-  }
-  lista.forEach((v) => tablaBody.appendChild(crearFila(v)));
-}
-
-// ── Cargar ─────────────────────────────────────────────
-async function cargarVehiculos() {
-  tablaBody.innerHTML =
-    '<tr><td colspan="7" class="text-muted">Cargando...</td></tr>';
-
-  const res = await getVehiculos();
   if (!res.success) {
     showAlert(res.error?.message || "Error al cargar vehículos.");
     tablaBody.innerHTML =
-      '<tr><td colspan="7" class="text-muted">Error al cargar.</td></tr>';
+      '<tr><td colspan="6" class="text-muted">Error al cargar.</td></tr>';
     return;
   }
 

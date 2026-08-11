@@ -14,7 +14,7 @@
     <div class="main-content">
       <div class="container">
 
-        <h1 class="page-title">Services</h1>
+        <h1 class="page-title">Services <span id="health-indicator" class="text-muted" style="font-size:var(--text-sm)"></span></h1>
 
         <div id="alert-box" class="alert"></div>
 
@@ -86,24 +86,33 @@
 
         <!-- Tab: Nuevo service -->
         <div class="tab-panel" id="tab-nuevo">
+          <p class="text-muted" id="nuevoServiceVehiculoInfo">Ningún vehículo seleccionado. Elegilo en la pestaña "Buscar vehículo".</p>
+
           <div class="card">
-            <p class="card-title">Registrar nuevo service</p>
-            <form id="serviceForm">
-              <input type="hidden" id="idVehiculo">
-              <div class="form-row">
-                <div class="form-group">
-                  <label class="form-label">ID Vehículo</label>
-                  <input type="number" id="inp-vehiculo-id" class="form-control" placeholder="ID del vehículo" required>
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Fecha</label>
-                  <input type="date" id="fecha" class="form-control" required>
-                </div>
-              </div>
-              <div class="form-row">
-                <div class="form-group">
-                  <label class="form-label">Kilometraje</label>
-                  <input type="number" id="kilometraje" class="form-control" placeholder="Ej: 85000" required>
+            <div class="form-group">
+              <label class="form-label">¿Cómo querés generar el service?</label>
+              <select id="modoCreacion" class="form-control">
+                <option value="manual">Carga manual</option>
+                <option value="presupuesto">Desde presupuesto aprobado</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="bloqueServiceManual">
+            <div class="card">
+              <p class="card-title">Registrar nuevo service</p>
+              <div id="serviceFormMensaje" class="alert"></div>
+              <form id="serviceForm">
+                <input type="hidden" id="idVehiculo">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Fecha</label>
+                    <input type="date" id="fecha" class="form-control" required>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Kilometraje</label>
+                    <input type="number" id="kilometraje" class="form-control" placeholder="Ej: 85000" required>
+                  </div>
                 </div>
                 <div class="form-group">
                   <label class="form-label">Tipo de service</label>
@@ -117,19 +126,42 @@
                     <option>Otro</option>
                   </select>
                 </div>
+                <div class="form-group">
+                  <label class="form-label">Observaciones</label>
+                  <input type="text" id="observaciones" class="form-control" placeholder="Ej: Cliente viaja a Córdoba, revisar antes de salir">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Detalle del trabajo realizado</label>
+                  <input type="text" id="detalleService" class="form-control" placeholder="Ej: Cambio de aceite, filtro de aire, revisión de frenos">
+                </div>
+                <div class="flex-end mt-4">
+                  <button type="submit" class="btn btn-primary" id="btn-crear-service">Crear service</button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div id="bloquePresupuestoAprobado" style="display:none">
+            <div class="card">
+              <p class="card-title">Presupuestos aprobados pendientes de service</p>
+              <div id="presupuestosMensaje" class="alert"></div>
+              <div class="table-wrapper mt-4">
+                <table id="presupuestosAprobadosTable">
+                  <thead>
+                    <tr>
+                      <th>Número</th>
+                      <th>Fecha</th>
+                      <th>Estado</th>
+                      <th>Trabajo</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td colspan="5" class="text-muted">Seleccioná un vehículo para ver sus presupuestos aprobados.</td></tr>
+                  </tbody>
+                </table>
               </div>
-              <div class="form-group">
-                <label class="form-label">Observaciones</label>
-                <input type="text" id="observaciones" class="form-control" placeholder="Ej: Cliente viaja a Córdoba, revisar antes de salir">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Detalle del trabajo realizado</label>
-                <input type="text" id="detalleService" class="form-control" placeholder="Ej: Cambio de aceite, filtro de aire, revisión de frenos">
-              </div>
-              <div class="flex-end mt-4">
-                <button type="submit" class="btn btn-primary" id="btn-crear-service">Crear service</button>
-              </div>
-            </form>
+            </div>
           </div>
         </div>
 

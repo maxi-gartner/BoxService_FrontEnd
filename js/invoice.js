@@ -1,43 +1,10 @@
 // invoice.js — lógica de presentación de facturas
 // Solo fetch y mostrar. Sin lógica de negocio.
 import { getInvoices, createInvoice, updateInvoiceStatus } from "./api.js";
+import { escapeHtml, showAlert, setLoading, formatMoney, badgeHtml } from "./utils.js";
 
 const tableBody = document.getElementById("table-body");
 const alertBox = document.getElementById("alert-box");
-
-// ── Helpers ────────────────────────────────────────────
-function showAlert(msg, type = "error") {
-  alertBox.textContent = msg;
-  alertBox.className = `alert show alert-${type}`;
-  setTimeout(() => (alertBox.className = "alert"), 5000);
-}
-
-function setLoading(btn, loading) {
-  if (loading) {
-    btn.disabled = true;
-    btn.dataset.original = btn.textContent;
-    btn.textContent = "Cargando...";
-    btn.style.opacity = "0.6";
-  } else {
-    btn.disabled = false;
-    btn.textContent = btn.dataset.original;
-    btn.style.opacity = "1";
-  }
-}
-
-function badgeHtml(status) {
-  const labels = {
-    issued: "Emitida",
-    paid: "Cobrada",
-    cancelled: "Anulada",
-  };
-  const label = labels[status] ?? status;
-  return `<span class="badge badge-${status}">${label}</span>`;
-}
-
-function formatMoney(amount) {
-  return `$${parseFloat(amount).toLocaleString("es-AR", { minimumFractionDigits: 2 })}`;
-}
 
 // ── Cargar tabla ───────────────────────────────────────
 async function loadInvoices() {
@@ -46,7 +13,7 @@ async function loadInvoices() {
   const res = await getInvoices();
 
   if (!res.success) {
-    tableBody.innerHTML = `<tr><td colspan="5" class="text-muted">Error: ${res.error.message}</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="5" class="text-muted">Error: ${escapeHtml(res.error?.message)}</td></tr>`;
     return;
   }
 
@@ -61,8 +28,8 @@ async function loadInvoices() {
     .map(
       (inv) => `
     <tr>
-      <td class="text-accent">${inv.number}</td>
-      <td class="text-muted">${inv.date}</td>
+      <td class="text-accent">${escapeHtml(inv.number)}</td>
+      <td class="text-muted">${escapeHtml(inv.date)}</td>
       <td style="font-weight:700">${formatMoney(inv.total)}</td>
       <td>${badgeHtml(inv.status)}</td>
       <td class="flex gap-2">
@@ -90,11 +57,11 @@ window.markPaid = async (id) => {
 
   if (!res.success) {
     setLoading(btn, false);
-    showAlert(res.error.message);
+    showAlert(alertBox, res.error?.message);
     return;
   }
 
-  showAlert("Factura marcada como cobrada", "ok");
+  showAlert(alertBox, "Factura marcada como cobrada", "ok");
   loadInvoices();
 };
 
@@ -108,11 +75,11 @@ window.cancelInvoice = async (id) => {
 
   if (!res.success) {
     setLoading(btn, false);
-    showAlert(res.error.message);
+    showAlert(alertBox, res.error?.message);
     return;
   }
 
-  showAlert("Factura anulada", "ok");
+  showAlert(alertBox, "Factura anulada", "ok");
   loadInvoices();
 };
 
@@ -124,25 +91,26 @@ document.getElementById("btn-emit").addEventListener("click", async () => {
     parseInt(document.getElementById("inp-budget").value) || null;
 
   if (!serviceId) {
-    showAlert("Ingresá el ID del service");
+    showAlert(alertBox, "Ingresá el ID del service");
     return;
   }
 
   setLoading(btn, true);
 
   const res = await createInvoice({
-    service_id: serviceId,
-    budget_id: budgetId,
+    serviceId,
+    budgetId,
   });
 
   setLoading(btn, false);
 
   if (!res.success) {
-    showAlert(res.error.message);
+    showAlert(alertBox, res.error?.message);
     return;
   }
 
   showAlert(
+    alertBox,
     `Factura ${res.data.number} emitida por ${formatMoney(res.data.total)}`,
     "ok",
   );

@@ -4,6 +4,7 @@ import { getClients, getVehiculos } from "../api.js";
 import { state } from "./serviceState.js";
 import { cargarHistorialVehiculo } from "./serviceHistory.js";
 import { cargarPresupuestosAprobadosVehiculo } from "./serviceBudgets.js";
+import { escapeHtml } from "../utils.js";
 
 export async function cargarVehiculos() {
   const resClientes = await getClients();
@@ -104,10 +105,10 @@ export function renderVehiculos(lista) {
     }
 
     row.innerHTML = `
-      <td>${getClienteVehiculo(v)}</td>
-      <td>${v.brand ?? "-"} ${v.model ?? ""}</td>
-      <td>${v.plate ?? "-"}</td>
-      <td>${v.currentMileage ?? "-"}</td>
+      <td>${escapeHtml(getClienteVehiculo(v))}</td>
+      <td>${escapeHtml(v.brand ?? "-")} ${escapeHtml(v.model ?? "")}</td>
+      <td>${escapeHtml(v.plate ?? "-")}</td>
+      <td>${escapeHtml(v.currentMileage ?? "-")}</td>
       <td>
         <button class="btn ${estaSeleccionado ? "btn-selected" : "btn-secondary"} btn-sm" data-id="${v.vehicleId}">
           ${estaSeleccionado ? "Seleccionado" : "Elegir"}
@@ -152,21 +153,30 @@ export function seleccionarVehiculo(v, rowSeleccionada = null) {
 
   state.vehiculoSeleccionadoId = v.vehicleId;
 
-  document.getElementById("idVehiculo").value = v.vehicleId;
-  document.getElementById("clienteNombre").textContent = getClienteVehiculo(v);
-  document.getElementById("vehiculoNombre").textContent = `${v.brand ?? "-"} ${v.model ?? ""}`;
-  document.getElementById("patente").textContent = v.plate ?? "-";
-  document.getElementById("kmActual").textContent = v.currentMileage ?? "-";
+  const idVehiculoInput = document.getElementById("idVehiculo");
+  if (idVehiculoInput) idVehiculoInput.value = v.vehicleId;
 
-  const bloqueSeleccionado = document.getElementById("vehiculoSeleccionado");
+  // Resumen del vehículo elegido — vive en la pestaña Historial, pero el
+  // elemento sigue existiendo en el DOM aunque esa pestaña no esté activa.
+  const infoCliente = document.getElementById("info-cliente");
+  if (infoCliente) infoCliente.textContent = getClienteVehiculo(v);
 
-  if (bloqueSeleccionado) {
-    bloqueSeleccionado.style.display = "block";
+  const infoVehiculo = document.getElementById("info-vehiculo");
+  if (infoVehiculo) infoVehiculo.textContent = `${v.brand ?? "-"} ${v.model ?? ""}`;
 
-    bloqueSeleccionado.scrollIntoView({
-      behavior: "smooth",
-      block: "start"
-    });
+  const infoPatente = document.getElementById("info-patente");
+  if (infoPatente) infoPatente.textContent = v.plate ?? "-";
+
+  const infoKm = document.getElementById("info-km");
+  if (infoKm) infoKm.textContent = v.currentMileage ?? "-";
+
+  const vehiculoInfoCard = document.getElementById("vehiculo-info");
+  if (vehiculoInfoCard) vehiculoInfoCard.style.display = "block";
+
+  // Resumen corto en la pestaña "Nuevo service".
+  const nuevoServiceInfo = document.getElementById("nuevoServiceVehiculoInfo");
+  if (nuevoServiceInfo) {
+    nuevoServiceInfo.textContent = `Vehículo seleccionado: ${v.plate ?? "-"} — ${getClienteVehiculo(v)}`;
   }
 
   cargarHistorialVehiculo(v.vehicleId);
