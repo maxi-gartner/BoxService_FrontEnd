@@ -490,6 +490,10 @@ tbody td {
   background: rgba(63, 185, 80, 0.15);
   color: #3fb950;
 }
+.badge-completed {
+  background: rgba(163, 113, 247, 0.15);
+  color: #a371f7;
+}
 .badge-rejected {
   background: rgba(248, 81, 73, 0.15);
   color: #f85149;
@@ -558,6 +562,22 @@ tbody td {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+.page-header-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-4);
+}
+@media (max-width: 900px) {
+  .page-header-actions {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+  }
+  .page-header-actions .btn {
+    width: 100%;
+  }
 }
 .flex-end {
   display: flex;

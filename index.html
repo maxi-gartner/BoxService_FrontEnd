@@ -154,26 +154,7 @@
         getVehiculos,
         getServices,
       } from "./js/api.js";
-
-      function formatMoney(n) {
-        return (
-          "$" +
-          parseFloat(n).toLocaleString("es-AR", { minimumFractionDigits: 0 })
-        );
-      }
-
-      function badgeHtml(status) {
-        const labels = {
-          draft: "Borrador",
-          sent: "Enviado",
-          approved: "Aprobado",
-          rejected: "Rechazado",
-          issued: "Emitida",
-          paid: "Cobrada",
-          cancelled: "Anulada",
-        };
-        return `<span class="badge badge-${status}">${labels[status] ?? status}</span>`;
-      }
+      import { escapeHtml, formatMoney, badgeHtml } from "./js/utils.js";
 
       async function loadDashboard() {
         // Health — va al sidebar
@@ -214,8 +195,8 @@
                   (b) => `
                 <div class="list-item">
                   <div>
-                    <span class="text-accent">${b.number}</span>
-                    <span class="text-muted" style="margin-left:8px">Veh. #${b.vehicleId}</span>
+                    <span class="text-accent">${escapeHtml(b.number)}</span>
+                    <span class="text-muted" style="margin-left:8px">Veh. #${escapeHtml(b.vehicleId)}</span>
                   </div>
                   ${badgeHtml(b.status)}
                 </div>`,
@@ -251,7 +232,7 @@
                   (i) => `
                 <div class="list-item">
                   <div>
-                    <span class="text-accent">${i.number}</span>
+                    <span class="text-accent">${escapeHtml(i.number)}</span>
                     <span class="text-muted" style="margin-left:8px">${formatMoney(i.total)}</span>
                   </div>
                   ${badgeHtml(i.status)}

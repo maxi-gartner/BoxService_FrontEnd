@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BoxService — Ticket</title>
+    <link rel="stylesheet" href="../css/main.css" />
+    <link rel="stylesheet" href="../css/ticket.css" />
+  </head>
+  <body data-page="ticket" class="ticket-body">
+    <div class="ticket-wrapper">
+      <div class="ticket-actions no-print">
+        <button class="btn btn-secondary btn-sm" id="btn-cerrar">Cerrar</button>
+        <button class="btn btn-primary btn-sm" id="btn-imprimir">Imprimir</button>
+      </div>
+
+      <div class="card ticket-card" id="ticket-root">
+        <p class="text-muted">Cargando...</p>
+      </div>
+    </div>
+
+    <script type="module" src="../js/ticket.js"></script>
+  </body>
+</html>

@@ -16,6 +16,7 @@ import {
   mostrarMensajeFormulario,
   mostrarMensajePresupuestos
 } from "./serviceUI.js";
+import { escapeHtml } from "../utils.js";
 
 export function configurarModoCreacion() {
   const modoCreacion = document.getElementById("modoCreacion");
@@ -144,10 +145,10 @@ export async function cargarPresupuestosAprobadosVehiculo(vehicleId) {
     const row = document.createElement("tr");
 
     row.innerHTML = `
-      <td>${numero}</td>
-      <td>${formatearFecha(p.date)}</td>
-      <td><span class="badge badge-aprobado">${p.status ?? "-"}</span></td>
-      <td>${trabajoAprobado}</td>
+      <td>${escapeHtml(numero)}</td>
+      <td>${escapeHtml(formatearFecha(p.date))}</td>
+      <td><span class="badge badge-aprobado">${escapeHtml(p.status ?? "-")}</span></td>
+      <td>${escapeHtml(trabajoAprobado)}</td>
       <td>
         <button class="btn btn-primary btn-sm">
           Crear service
@@ -329,7 +330,7 @@ export async function crearServiceDesdePresupuesto(presupuesto, boton = null) {
     "ok"
   );
 
-  const historialMensaje = document.getElementById("historialMensaje");
+  const historialMensaje = document.getElementById("historial-msg");
 
   if (historialMensaje) {
     historialMensaje.scrollIntoView({

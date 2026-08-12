@@ -45,9 +45,11 @@
                 </div>
               </div>
               <div class="form-row">
-                <div class="form-group">
-                  <label class="form-label">ID Cliente</label>
-                  <input class="form-control" type="number" name="cliente" placeholder="ID del cliente" required>
+                <div class="form-group" style="position:relative">
+                  <label class="form-label">Cliente</label>
+                  <input class="form-control" type="text" id="cliente-buscador" placeholder="Escribí el nombre del cliente" autocomplete="off" required>
+                  <input type="hidden" id="cliente-id-seleccionado">
+                  <div id="cliente-sugerencias" class="cliente-sugerencias"></div>
                 </div>
                 <div class="form-group">
                   <label class="form-label">Kilometraje actual</label>
@@ -63,6 +65,10 @@
           <!-- Listado -->
           <div class="card">
             <p class="card-title">Lista de vehículos</p>
+            <div class="form-group">
+              <input type="text" id="vehiculos-buscador" class="form-control" placeholder="Buscar por patente, marca, modelo o cliente...">
+            </div>
+            <p class="text-muted" style="margin: -8px 0 var(--space-3)">Hacé click en una fila para ver la ficha completa del vehículo en Taller.</p>
             <div class="table-wrapper">
               <table>
                 <thead>

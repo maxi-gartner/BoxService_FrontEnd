@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BoxService — Taller</title>
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/services.css">
+  <link rel="stylesheet" href="../css/budget.css">
+</head>
+<body data-page="taller">
+  <div class="app-wrapper">
+    <div id="sidebar-container"></div>
+
+    <div class="main-content">
+      <div class="container">
+
+        <h1 class="page-title">Taller <span id="health-indicator" class="text-muted" style="font-size:var(--text-sm)"></span></h1>
+
+        <div id="alert-box" class="alert"></div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="buscar">🔍 Buscar vehículo</button>
+          <button class="tab-btn" data-tab="resumen">📋 Resumen</button>
+          <button class="tab-btn" data-tab="nuevo-presupuesto">📝 Nuevo presupuesto</button>
+          <button class="tab-btn" data-tab="nuevo">🔧 Nuevo service</button>
+        </div>
+
+        <!-- Tab: Buscar -->
+        <div class="tab-panel active" id="tab-buscar">
+          <div class="card">
+            <p class="card-title">Buscar cliente / vehículo</p>
+            <div class="form-group">
+              <label class="form-label">Patente, cliente o teléfono</label>
+              <input type="text" id="searchInput" class="form-control" placeholder="Ej: ABC123 · Juan Pérez · 3624...">
+            </div>
+            <div class="table-wrapper mt-4">
+              <table id="searchResults">
+                <thead>
+                  <tr>
+                    <th>Cliente</th>
+                    <th>Marca / Modelo</th>
+                    <th>Patente</th>
+                    <th>KM actual</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td colspan="5" class="text-muted">Ingresá un término para buscar.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: Resumen -->
+        <div class="tab-panel" id="tab-resumen">
+          <div class="card" id="vehiculo-info" style="display:none;margin-bottom:var(--space-4);border-left:3px solid var(--color-accent)">
+            <div class="form-row">
+              <div><span class="form-label">Cliente</span><p id="info-cliente" class="text-accent" style="font-size:var(--text-lg);font-weight:700;margin-top:4px">—</p></div>
+              <div><span class="form-label">Vehículo</span><p id="info-vehiculo" style="font-size:var(--text-lg);font-weight:700;margin-top:4px">—</p></div>
+              <div><span class="form-label">Patente</span><p id="info-patente" class="text-accent" style="font-size:var(--text-lg);font-weight:700;margin-top:4px">—</p></div>
+              <div><span class="form-label">KM actual</span><p id="info-km" style="font-size:var(--text-lg);font-weight:700;margin-top:4px">—</p></div>
+            </div>
+          </div>
+
+          <div class="card" style="margin-bottom:var(--space-4)">
+            <p class="card-title">Presupuestos</p>
+            <div id="presupuestosVehiculoMensaje" class="alert"></div>
+            <div class="table-wrapper mt-4">
+              <table id="presupuestosVehiculoTable">
+                <thead>
+                  <tr>
+                    <th>Número</th>
+                    <th>Fecha</th>
+                    <th>Estado</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="presupuestos-vehiculo-body">
+                  <tr><td colspan="4" class="text-muted">Seleccioná un vehículo en la pestaña "Buscar" para ver sus presupuestos.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card" style="margin-bottom:var(--space-4)">
+            <p class="card-title">Historial de services</p>
+            <p class="text-muted" id="historial-msg">Seleccioná un vehículo en la pestaña "Buscar" para ver su historial.</p>
+            <div class="table-wrapper" id="historial-table-wrapper" style="display:none">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>KM</th>
+                    <th>Tipo</th>
+                    <th>Observaciones</th>
+                    <th>Próx. KM</th>
+                    <th>Próx. Fecha</th>
+                  </tr>
+                </thead>
+                <tbody id="historial-body"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card">
+            <p class="card-title">Facturación</p>
+            <div id="facturacionVehiculoMensaje" class="alert"></div>
+            <div class="table-wrapper mt-4">
+              <table id="facturacionVehiculoTable">
+                <thead>
+                  <tr>
+                    <th>Service</th>
+                    <th>Fecha</th>
+                    <th>Total</th>
+                    <th>Estado</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="facturacion-vehiculo-body">
+                  <tr><td colspan="5" class="text-muted">Seleccioná un vehículo en la pestaña "Buscar" para ver su facturación.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: Nuevo presupuesto -->
+        <div class="tab-panel" id="tab-nuevo-presupuesto">
+          <p class="text-muted" id="nuevoPresupuestoVehiculoInfo">Ningún vehículo seleccionado. Elegilo en la pestaña "Buscar vehículo".</p>
+
+          <div class="card">
+            <p class="card-title">Nuevo presupuesto</p>
+            <div id="nuevoPresupuestoMensaje" class="alert"></div>
+
+            <div class="form-group">
+              <label class="form-label">Notas <span class="text-muted">(opcional)</span></label>
+              <input type="text" id="presupuesto-inp-notes" class="form-control" placeholder="Ej: Cliente pide revisar suspensión también">
+            </div>
+
+            <div class="budget-items-header mt-4">
+              <span class="form-label">Ítems del presupuesto</span>
+              <div class="flex gap-2">
+                <select id="presupuesto-catalogo-select" class="form-control" style="max-width:260px">
+                  <option value="">Elegir del catálogo...</option>
+                </select>
+                <button class="btn btn-secondary btn-sm" id="presupuesto-btn-add-catalogo" type="button">
+                  Agregar
+                </button>
+                <button class="btn btn-secondary btn-sm" id="presupuesto-btn-add-item" type="button">
+                  + Ítem manual
+                </button>
+              </div>
+            </div>
+            <div id="presupuesto-items-container"></div>
+
+            <div class="budget-total">
+              <span class="budget-total-label">Total estimado</span>
+              <span class="budget-total-value" id="presupuesto-total-display">$0</span>
+            </div>
+
+            <div class="budget-actions">
+              <button class="btn btn-primary" id="presupuesto-btn-save" type="button">
+                Guardar presupuesto
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: Nuevo service -->
+        <div class="tab-panel" id="tab-nuevo">
+          <p class="text-muted" id="nuevoServiceVehiculoInfo">Ningún vehículo seleccionado. Elegilo en la pestaña "Buscar vehículo".</p>
+
+          <div class="card">
+            <div class="form-group">
+              <label class="form-label">¿Cómo querés generar el service?</label>
+              <select id="modoCreacion" class="form-control">
+                <option value="manual">Carga manual</option>
+                <option value="presupuesto">Desde presupuesto aprobado</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="bloqueServiceManual">
+            <div class="card">
+              <p class="card-title">Registrar nuevo service</p>
+              <div id="serviceFormMensaje" class="alert"></div>
+              <form id="serviceForm">
+                <input type="hidden" id="idVehiculo">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Fecha</label>
+                    <input type="date" id="fecha" class="form-control" required>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Kilometraje</label>
+                    <input type="number" id="kilometraje" class="form-control" placeholder="Ej: 85000" required>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Tipo de service</label>
+                  <select id="tipoService" class="form-control" required>
+                    <option value="">Seleccionar tipo</option>
+                    <option>Service completo</option>
+                    <option>Cambio de aceite</option>
+                    <option>Revisión general</option>
+                    <option>Pre-viaje</option>
+                    <option>Mantenimiento preventivo</option>
+                    <option>Otro</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Observaciones</label>
+                  <input type="text" id="observaciones" class="form-control" placeholder="Ej: Cliente viaja a Córdoba, revisar antes de salir">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Detalle del trabajo realizado</label>
+                  <input type="text" id="detalleService" class="form-control" placeholder="Ej: Cambio de aceite, filtro de aire, revisión de frenos">
+                </div>
+                <div class="flex-end mt-4">
+                  <button type="submit" class="btn btn-primary" id="btn-crear-service">Crear service</button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div id="bloquePresupuestoAprobado" style="display:none">
+            <div class="card">
+              <p class="card-title">Presupuestos aprobados pendientes de service</p>
+              <div id="presupuestosMensaje" class="alert"></div>
+              <div class="table-wrapper mt-4">
+                <table id="presupuestosAprobadosTable">
+                  <thead>
+                    <tr>
+                      <th>Número</th>
+                      <th>Fecha</th>
+                      <th>Estado</th>
+                      <th>Trabajo</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td colspan="5" class="text-muted">Seleccioná un vehículo para ver sus presupuestos aprobados.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div id="footer-container"></div>
+    </div>
+  </div>
+
+  <script type="module" src="../js/components.js"></script>
+  <script type="module" src="../js/taller.js"></script>
+</body>
+</html>

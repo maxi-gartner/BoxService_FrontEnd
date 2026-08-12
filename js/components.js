@@ -1,6 +1,8 @@
 // components.js — carga los componentes compartidos (sidebar, footer)
 // Importar en cada página ANTES que el JS propio de la página.
 
+import { getHealth } from "./api.js";
+
 const ROOT = getRootPath();
 
 function getRootPath() {
@@ -29,17 +31,16 @@ function setActiveLink() {
 async function checkHealth() {
   const indicator = document.getElementById("sidebar-health");
   if (!indicator) return;
-  try {
-    const res = await fetch("http://localhost:5001/health");
-    const json = await res.json();
-    if (json.success && json.data.status === "healthy") {
-      indicator.textContent = "● Online";
-      indicator.style.color = "#3fb950";
-    } else {
-      indicator.textContent = "● Degradado";
-      indicator.style.color = "#f59e0b";
-    }
-  } catch {
+
+  const res = await getHealth();
+
+  if (res.success && res.data.status === "healthy") {
+    indicator.textContent = "● Online";
+    indicator.style.color = "#3fb950";
+  } else if (res.success) {
+    indicator.textContent = "● Degradado";
+    indicator.style.color = "#f59e0b";
+  } else {
     indicator.textContent = "● Offline";
     indicator.style.color = "#f85149";
   }

@@ -1,24 +1,6 @@
 /* =====================================================
    BoxService — invoice.css
    Estilos exclusivos de Facturas
+   La emisión de facturas se mudó a Taller — este archivo queda vacío
+   a propósito (el listado usa clases genéricas de main.css).
    ===================================================== */
-
-.invoice-form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-6);
-  margin-bottom: var(--space-5);
-}
-
-.invoice-actions {
-  display:         flex;
-  justify-content: flex-end;
-  gap:             var(--space-3);
-  padding-top:     var(--space-5);
-  border-top:      1px solid var(--color-border);
-}
-
-@media (max-width: 768px) {
-  .invoice-form-row { grid-template-columns: 1fr; }
-  .invoice-actions  { flex-direction: column; }
-}

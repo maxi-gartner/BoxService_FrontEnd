@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BoxService — Catálogo</title>
+    <link rel="stylesheet" href="../css/main.css" />
+    <link rel="stylesheet" href="../css/catalogo.css" />
+  </head>
+  <body data-page="catalogo">
+    <div class="app-wrapper">
+      <div id="sidebar-container"></div>
+
+      <div class="main-content">
+        <div class="container">
+          <h1 class="page-title">Catálogo de precios</h1>
+          <p class="text-muted mb-6">
+            Ítems reutilizables (mano de obra, revisiones, checkeos, repuestos frecuentes) para
+            armar presupuestos más rápido. El precio es solo un valor de partida — se puede
+            editar en el momento de presupuestar.
+          </p>
+
+          <div id="alert-box" class="alert"></div>
+
+          <div class="catalogo-layout">
+            <!-- Formulario -->
+            <div class="card">
+              <p class="card-title">Nuevo ítem</p>
+              <form id="catalogo-form">
+                <div class="form-group">
+                  <label class="form-label">Nombre</label>
+                  <input
+                    class="form-control"
+                    type="text"
+                    name="nombre"
+                    placeholder="Ej: Checkeo con scanner"
+                    required
+                  />
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Tipo</label>
+                    <select class="form-control" name="tipo">
+                      <option value="labor">Mano de obra</option>
+                      <option value="part">Repuesto</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Precio</label>
+                    <input
+                      class="form-control"
+                      type="number"
+                      name="precio"
+                      placeholder="0"
+                      min="0"
+                      step="0.01"
+                      required
+                    />
+                  </div>
+                </div>
+                <div class="flex-end mt-4">
+                  <button class="btn btn-primary" type="submit">Agregar al catálogo</button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Listado -->
+            <div class="card">
+              <p class="card-title">Ítems del catálogo</p>
+              <div class="table-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Nombre</th>
+                      <th>Tipo</th>
+                      <th>Precio</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="catalogo-body">
+                    <tr><td colspan="4" class="text-muted">Cargando...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="footer-container"></div>
+      </div>
+    </div>
+
+    <script type="module" src="../js/components.js"></script>
+    <script type="module" src="../js/catalogo.js"></script>
+  </body>
+</html>
