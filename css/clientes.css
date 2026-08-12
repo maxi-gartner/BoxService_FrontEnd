@@ -1,0 +1,63 @@
+/* =====================================================
+   BoxService — clientes.css
+   Estilos exclusivos de Clientes
+   ===================================================== */
+
+.clientes-layout {
+  display: grid;
+  grid-template-columns: 380px minmax(0, 1fr);
+  gap: var(--space-6);
+  margin-bottom: var(--space-6);
+}
+
+.clickable-row {
+  cursor: pointer;
+}
+
+.clickable-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.panel-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+@media (max-width: 900px) {
+  .clientes-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .panel-heading {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .panel-heading .btn {
+    width: 100%;
+  }
+}
+@media (max-width: 900px) {
+  .clientes-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .card {
+    overflow: hidden; /* ← evita que los inputs rompan el card */
+  }
+
+  .form-control {
+    max-width: 100%;
+  }
+
+  .flex-end {
+    width: 100%;
+  }
+
+  .flex-end .btn {
+    width: 100%;
+  }
+}

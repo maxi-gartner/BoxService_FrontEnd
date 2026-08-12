@@ -1,0 +1,63 @@
+/* =====================================================
+   BoxService — services.css
+   Estilos exclusivos de Services
+   ===================================================== */
+
+#vehiculoSeleccionado p {
+  color:         var(--color-muted);
+  margin-bottom: var(--space-2);
+  font-size:     var(--text-sm);
+}
+
+#vehiculoSeleccionado strong { color: var(--color-light); }
+
+.selected-vehicle-row { background: var(--color-accent-dim); }
+.selected-vehicle-row td { color: var(--color-light); }
+
+.btn-selected {
+  background:   var(--color-accent);
+  color:        var(--color-bg);
+  border-color: var(--color-accent);
+}
+
+.info-text {
+  color:       var(--color-muted);
+  font-size:   var(--text-sm);
+  line-height: 1.6;
+  padding:     var(--space-4) 0;
+}
+
+.checkbox-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.checkbox-group label {
+  display:     flex;
+  align-items: center;
+  gap:         var(--space-2);
+  background:  rgba(255,255,255,0.02);
+  border:      1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding:     var(--space-3);
+  color:       var(--color-light);
+  font-size:   var(--text-sm);
+  cursor:      pointer;
+  transition:  border-color var(--transition);
+}
+
+.checkbox-group label:hover { border-color: var(--color-accent); }
+.checkbox-group input[type="checkbox"] { width: 16px; accent-color: var(--color-accent); flex-shrink: 0; }
+
+#modoCreacion { max-width: 320px; }
+
+.fila-destacada {
+  background: var(--color-accent-dim) !important;
+  transition: background 0.3s ease;
+}
+
+@media (max-width: 768px) {
+  .checkbox-group { grid-template-columns: 1fr; }
+}

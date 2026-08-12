@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BoxService — Vehículos</title>
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/vehicle.css">
+</head>
+<body data-page="vehiculos">
+  <div class="app-wrapper">
+    <div id="sidebar-container"></div>
+
+    <div class="main-content">
+      <div class="container">
+
+        <h1 class="page-title">Vehículos</h1>
+
+        <div id="page-alert" class="alert"></div>
+
+        <div class="vehiculos-grid">
+
+          <!-- Formulario -->
+          <div class="card">
+            <p class="card-title">Registrar vehículo</p>
+            <form id="vehiculo-form">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Patente</label>
+                  <input class="form-control" type="text" name="patente" placeholder="ABC123" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Marca</label>
+                  <input class="form-control" type="text" name="marca" placeholder="Toyota" required>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Modelo</label>
+                  <input class="form-control" type="text" name="modelo" placeholder="Corolla" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Año</label>
+                  <input class="form-control" type="number" name="anio" placeholder="2022" min="1900" max="2100">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group" style="position:relative">
+                  <label class="form-label">Cliente</label>
+                  <input class="form-control" type="text" id="cliente-buscador" placeholder="Escribí el nombre del cliente" autocomplete="off" required>
+                  <input type="hidden" id="cliente-id-seleccionado">
+                  <div id="cliente-sugerencias" class="cliente-sugerencias"></div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Kilometraje actual</label>
+                  <input class="form-control" type="number" name="kilometrajeActual" placeholder="Ej: 55000" min="0">
+                </div>
+              </div>
+              <div class="vehiculos-actions">
+                <button class="btn btn-primary" type="submit">Guardar vehículo</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Listado -->
+          <div class="card">
+            <p class="card-title">Lista de vehículos</p>
+            <div class="form-group">
+              <input type="text" id="vehiculos-buscador" class="form-control" placeholder="Buscar por patente, marca, modelo o cliente...">
+            </div>
+            <p class="text-muted" style="margin: -8px 0 var(--space-3)">Hacé click en una fila para ver la ficha completa del vehículo en Taller.</p>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Patente</th>
+                    <th>Marca</th>
+                    <th>Modelo</th>
+                    <th>Año</th>
+                    <th>Cliente</th>
+                    <th>KM actual</th>
+                  </tr>
+                </thead>
+                <tbody id="vehiculos-body">
+                  <tr><td colspan="6" class="text-muted">Cargando...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      <div id="footer-container"></div>
+    </div>
+  </div>
+
+  <script type="module" src="../js/components.js"></script>
+  <script type="module" src="../js/vehiculos.js"></script>
+</body>
+</html>
