@@ -24,6 +24,9 @@ logs/
 # =========================
 node_modules/
 package-lock.json
+# web/ es la app Next.js de verdad — su lockfile sí se versiona
+# (reproducibilidad de instalación, no es un lockfile "suelto").
+!web/package-lock.json
 
 # =========================
 # Env / config sensible
