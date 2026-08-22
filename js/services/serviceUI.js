@@ -29,7 +29,7 @@ export async function checkHealth() {
 // Inicializa los mensajes de las tablas cuando todavía no se eligió vehículo.
 export function inicializarMensajes() {
   // Busca el body de la tabla de historial de services.
-  const servicesTableBody = document.querySelector("#servicesTable tbody");
+  const servicesTableBody = document.getElementById("historial-body");
 
   // Busca el body de la tabla de presupuestos aprobados.
   const presupuestosTableBody = document.querySelector("#presupuestosAprobadosTable tbody");

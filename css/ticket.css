@@ -1,0 +1,97 @@
+/* =====================================================
+   BoxService — ticket.css
+   Comprobante de trabajo imprimible (no válido como factura)
+   ===================================================== */
+
+.ticket-body {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-6) var(--space-4);
+}
+
+.ticket-wrapper {
+  width: 100%;
+  max-width: 480px;
+}
+
+.ticket-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.ticket-card {
+  font-size: var(--text-sm);
+}
+
+.ticket-header {
+  text-align: center;
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px dashed var(--color-border);
+}
+
+.ticket-header h1 {
+  font-size: var(--text-xl);
+  color: var(--color-accent);
+  margin-bottom: var(--space-2);
+}
+
+.ticket-disclaimer {
+  color: var(--color-muted);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ticket-row {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.ticket-row span:first-child {
+  color: var(--color-muted);
+}
+
+.ticket-detalle-titulo {
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-2);
+  font-weight: 700;
+  color: var(--color-light);
+}
+
+.ticket-detalle-item {
+  padding: var(--space-1) 0;
+}
+
+.ticket-detalle-item::before {
+  content: "• ";
+  color: var(--color-accent);
+}
+
+.ticket-footer {
+  margin-top: var(--space-6);
+  padding-top: var(--space-4);
+  border-top: 1px dashed var(--color-border);
+  text-align: center;
+  color: var(--color-muted);
+  font-size: var(--text-xs);
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .ticket-body {
+    padding: 0;
+  }
+
+  .ticket-card {
+    border: none;
+    box-shadow: none;
+  }
+}

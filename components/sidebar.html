@@ -1,41 +1,67 @@
-<aside class="sidebar">
+<aside class="sidebar" id="sidebar">
   <div class="sidebar-brand">
     <span class="sidebar-icon">⚙</span>
-    <span class="sidebar-title">BoxService</span>
+    <div>
+      <span class="sidebar-title">BoxService</span>
+    </div>
   </div>
 
-  <nav class="sidebar-nav">
+  <nav class="sidebar-nav" style="position: relative">
     <a href="/index.html" class="sidebar-link" data-page="dashboard">
-      <span class="sidebar-link-icon">▪</span>
+      <span class="sidebar-link-icon">🏠</span>
       <span>Dashboard</span>
     </a>
     <a href="/pages/clientes.html" class="sidebar-link" data-page="clientes">
-      <span class="sidebar-link-icon">▪</span>
+      <span class="sidebar-link-icon">👤</span>
       <span>Clientes</span>
     </a>
     <a href="/pages/vehiculos.html" class="sidebar-link" data-page="vehiculos">
-      <span class="sidebar-link-icon">▪</span>
+      <span class="sidebar-link-icon">🚗</span>
       <span>Vehículos</span>
     </a>
-    <a href="/pages/services.html" class="sidebar-link" data-page="services">
-      <span class="sidebar-link-icon">▪</span>
-      <span>Services</span>
+    <a href="/pages/taller.html" class="sidebar-link" data-page="taller">
+      <span class="sidebar-link-icon">🔧</span>
+      <span>Taller</span>
     </a>
     <a
       href="/pages/presupuestos.html"
       class="sidebar-link"
       data-page="presupuestos"
     >
-      <span class="sidebar-link-icon">▪</span>
+      <span class="sidebar-link-icon">📋</span>
       <span>Presupuestos</span>
     </a>
     <a href="/pages/facturas.html" class="sidebar-link" data-page="facturas">
-      <span class="sidebar-link-icon">▪</span>
+      <span class="sidebar-link-icon">🧾</span>
       <span>Facturas</span>
     </a>
-  </nav>
+    <a href="/pages/catalogo.html" class="sidebar-link" data-page="catalogo">
+      <span class="sidebar-link-icon">💲</span>
+      <span>Catálogo</span>
+    </a>
 
-  <div class="sidebar-footer">
-    <span id="sidebar-health" class="sidebar-status">● Verificando...</span>
-  </div>
+    <div
+      id="sidebar-health"
+      class="sidebar-status"
+      style="position: absolute; bottom: 16px; left: 16px; margin-top: 4px"
+    >
+      ● Verificando...
+    </div>
+  </nav>
 </aside>
+
+<!-- Header mobile — solo visible en pantallas chicas -->
+<header class="mobile-header" id="mobile-header">
+  <div class="mobile-header-brand">
+    <span class="sidebar-icon">⚙</span>
+    <span class="sidebar-title">BoxService</span>
+  </div>
+  <button class="hamburger" id="hamburger-btn" aria-label="Menú">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+</header>
+
+<!-- Overlay para cerrar el menú al tocar afuera -->
+<div class="sidebar-overlay" id="sidebar-overlay"></div>

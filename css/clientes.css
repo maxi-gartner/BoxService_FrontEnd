@@ -1,13 +1,21 @@
+/* =====================================================
+   BoxService — clientes.css
+   Estilos exclusivos de Clientes
+   ===================================================== */
+
 .clientes-layout {
   display: grid;
-  grid-template-columns: 360px minmax(0, 1fr);
+  grid-template-columns: 380px minmax(0, 1fr);
   gap: var(--space-6);
   margin-bottom: var(--space-6);
 }
 
-.form-grid {
-  display: grid;
-  gap: var(--space-4);
+.clickable-row {
+  cursor: pointer;
+}
+
+.clickable-row:hover {
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .panel-heading {
@@ -18,37 +26,38 @@
   margin-bottom: var(--space-4);
 }
 
-.feedback {
-  min-height: 24px;
-  margin: var(--space-4) 0 0;
-  font-size: var(--text-sm);
-}
-
-.feedback[data-state="success"] {
-  color: var(--color-accent);
-}
-
-.feedback[data-state="error"] {
-  color: var(--color-danger);
-}
-
-.feedback[data-state="loading"] {
-  color: var(--color-accent);
-}
-
-@media (max-width: 920px) {
+@media (max-width: 900px) {
   .clientes-layout {
     grid-template-columns: 1fr;
   }
-}
 
-@media (max-width: 720px) {
   .panel-heading {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .btn {
+  .panel-heading .btn {
+    width: 100%;
+  }
+}
+@media (max-width: 900px) {
+  .clientes-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .card {
+    overflow: hidden; /* ← evita que los inputs rompan el card */
+  }
+
+  .form-control {
+    max-width: 100%;
+  }
+
+  .flex-end {
+    width: 100%;
+  }
+
+  .flex-end .btn {
     width: 100%;
   }
 }

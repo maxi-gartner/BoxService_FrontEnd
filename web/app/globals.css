@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+/*
+ * Paleta portada de BoxService_FrontEnd/css/main.css — no es un rediseño,
+ * es continuidad visual con lo que el usuario ya validó.
+ */
+:root {
+  --color-bg: #0d1117;
+  --color-surface: #161b22;
+  --color-surface-2: #1c2333;
+  --color-border: #30363d;
+  --color-border-light: #21262d;
+  --color-accent: #f59e0b;
+  --color-accent-hover: #d97706;
+  --color-accent-dim: rgba(245, 158, 11, 0.08);
+  --color-muted: #8b949e;
+  --color-light: #e6edf3;
+  --color-danger: #f85149;
+  --color-success: #3fb950;
+  --color-info: #58a6ff;
+  --color-completed: #a371f7;
+
+  --radius-md: 8px;
+  --radius-lg: 12px;
+}
+
+@theme inline {
+  --color-bg: var(--color-bg);
+  --color-surface: var(--color-surface);
+  --color-surface-2: var(--color-surface-2);
+  --color-border: var(--color-border);
+  --color-border-light: var(--color-border-light);
+  --color-accent: var(--color-accent);
+  --color-accent-hover: var(--color-accent-hover);
+  --color-accent-dim: var(--color-accent-dim);
+  --color-muted: var(--color-muted);
+  --color-light: var(--color-light);
+  --color-danger: var(--color-danger);
+  --color-success: var(--color-success);
+  --color-info: var(--color-info);
+  --color-completed: var(--color-completed);
+
+  --font-sans: var(--font-ibm-plex-mono);
+  --font-mono: var(--font-ibm-plex-mono);
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-light);
+}

@@ -3,46 +3,30 @@
    Estilos exclusivos de Services
    ===================================================== */
 
-/* Vehículo seleccionado con accent border */
-#vehiculoSeleccionado {
-  border-left: 3px solid var(--color-accent);
-}
-
 #vehiculoSeleccionado p {
-  color: var(--color-muted);
+  color:         var(--color-muted);
   margin-bottom: var(--space-2);
-  font-size: var(--text-sm);
+  font-size:     var(--text-sm);
 }
 
-#vehiculoSeleccionado strong {
-  color: var(--color-light);
-}
+#vehiculoSeleccionado strong { color: var(--color-light); }
 
-/* Row destacada en tabla de búsqueda */
-.selected-vehicle-row {
-  background: var(--color-accent-dim) !important;
-  outline: 1px solid var(--color-accent);
-}
-
-.selected-vehicle-row td {
-  color: var(--color-light);
-}
+.selected-vehicle-row { background: var(--color-accent-dim); }
+.selected-vehicle-row td { color: var(--color-light); }
 
 .btn-selected {
-  background: var(--color-accent);
-  color: var(--color-bg);
+  background:   var(--color-accent);
+  color:        var(--color-bg);
   border-color: var(--color-accent);
 }
 
-/* Info text */
 .info-text {
-  color: var(--color-muted);
-  font-size: var(--text-sm);
+  color:       var(--color-muted);
+  font-size:   var(--text-sm);
   line-height: 1.6;
-  padding: var(--space-4) 0;
+  padding:     var(--space-4) 0;
 }
 
-/* Checkboxes */
 .checkbox-group {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -51,37 +35,27 @@
 }
 
 .checkbox-group label {
-  display: flex;
+  display:     flex;
   align-items: center;
-  gap: var(--space-2);
-  background: rgba(255,255,255,0.02);
-  border: 1px solid var(--color-border);
+  gap:         var(--space-2);
+  background:  rgba(255,255,255,0.02);
+  border:      1px solid var(--color-border);
   border-radius: var(--radius-md);
-  padding: var(--space-3);
-  color: var(--color-light);
-  font-size: var(--text-sm);
-  font-weight: 400;
-  text-transform: none;
-  letter-spacing: 0;
-  cursor: pointer;
-  transition: border-color var(--transition), background var(--transition);
+  padding:     var(--space-3);
+  color:       var(--color-light);
+  font-size:   var(--text-sm);
+  cursor:      pointer;
+  transition:  border-color var(--transition);
 }
 
-.checkbox-group label:hover {
-  border-color: var(--color-accent);
-  background: var(--color-accent-dim);
-}
+.checkbox-group label:hover { border-color: var(--color-accent); }
+.checkbox-group input[type="checkbox"] { width: 16px; accent-color: var(--color-accent); flex-shrink: 0; }
 
-.checkbox-group input[type="checkbox"] {
-  width: 16px;
-  min-height: unset;
-  accent-color: var(--color-accent);
-  flex-shrink: 0;
-}
+#modoCreacion { max-width: 320px; }
 
-/* Modo creación select */
-#modoCreacion {
-  max-width: 320px;
+.fila-destacada {
+  background: var(--color-accent-dim) !important;
+  transition: background 0.3s ease;
 }
 
 @media (max-width: 768px) {
