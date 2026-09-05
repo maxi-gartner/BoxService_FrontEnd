@@ -15,8 +15,6 @@ export const state = {
   // }
   clientesPorId: {},
 
-  telefonosClientesPorId: {},
-
   // Guarda el ID del vehículo que el usuario seleccionó.
   // Sirve para saber a qué vehículo cargarle historial, presupuestos o services.
   vehiculoSeleccionadoId: null,
