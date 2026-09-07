@@ -6,11 +6,37 @@
     <title>BoxService — Dashboard</title>
     <link rel="stylesheet" href="css/main.css" />
     <style>
+      /* =====================================================
+         Estilos exclusivos del Dashboard.
+         No se toca css/main.css (compartido por toda la app) ni el
+         sidebar — todo lo de este rediseño vive acá adentro.
+         ===================================================== */
+
+      .dash-section-label {
+        font-size: var(--text-xs);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-weight: 700;
+        color: var(--color-muted);
+        margin-bottom: var(--space-3);
+      }
+
+      .dash-section-label--attention {
+        color: var(--color-accent);
+      }
+
       .dash-grid {
         display: grid;
-        grid-template-columns: 1fr 1fr 1fr;
         gap: var(--space-4);
         margin-bottom: var(--space-6);
+      }
+
+      .dash-grid--attention {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .dash-grid--info {
+        grid-template-columns: repeat(4, 1fr);
       }
 
       .stat-card {
@@ -18,10 +44,35 @@
         flex-direction: column;
         gap: var(--space-2);
         cursor: default;
-        transition: border-color var(--transition);
+        text-decoration: none;
+        /* Sin esto, un grid item no se achica más allá del contenido y
+           puede forzar overflow horizontal en pantallas angostas. */
+        min-width: 0;
+        transition:
+          border-color var(--transition),
+          transform var(--transition),
+          box-shadow var(--transition);
       }
 
       .stat-card:hover {
+        border-color: var(--color-accent);
+      }
+
+      /* Las 2 tarjetas "requieren atención" son además accesos directos a
+         su panel — se distinguen por borde + texto, nunca solo por color. */
+      .stat-card--attention {
+        cursor: pointer;
+        border-left: 3px solid var(--color-accent);
+      }
+
+      .stat-card--attention:hover {
+        transform: translateY(-2px);
+      }
+
+      .stat-card--attention:focus-visible,
+      .list-item--linked:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px var(--color-accent-dim);
         border-color: var(--color-accent);
       }
 
@@ -47,24 +98,78 @@
         gap: var(--space-4);
       }
 
-      .list-item {
+      /* Mismo motivo que en .stat-card: sin min-width:0 el grid item no
+         se achica y las filas con texto largo empujan el ancho de la
+         tarjeta más allá de la pantalla. */
+      .dash-bottom > .card {
+        min-width: 0;
+      }
+
+      /* Fila de "Últimos presupuestos/facturas". Antes era un <div> sin
+         acción real; ahora, cuando se puede resolver a dónde llevar al
+         usuario, es un <a> de verdad — con foco, hover y área clickeable
+         de fila completa. Cuando no se puede resolver el destino, queda
+         como texto plano (sin simular un link que no hace nada). */
+      .list-item,
+      a.list-item {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: var(--space-3) 0;
+        gap: var(--space-3);
+        min-height: 44px;
+        padding: var(--space-2) var(--space-2);
+        margin: 0 calc(var(--space-2) * -1);
+        border-radius: var(--radius-md);
         border-bottom: 1px solid var(--color-border-light);
         font-size: var(--text-sm);
+        color: inherit;
+        text-decoration: none;
       }
 
       .list-item:last-child {
         border-bottom: none;
       }
 
+      .list-item--linked:hover {
+        background: var(--color-accent-dim);
+      }
+
+      .list-item-main {
+        display: flex;
+        align-items: baseline;
+        gap: var(--space-2);
+        min-width: 0;
+      }
+
+      .list-item-code {
+        flex-shrink: 0;
+        white-space: nowrap;
+      }
+
+      .list-item-desc {
+        color: var(--color-muted);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        min-width: 0;
+      }
+
+      .list-item-badge {
+        flex-shrink: 0;
+      }
+
       @media (max-width: 900px) {
-        .dash-grid {
-          grid-template-columns: 1fr 1fr;
+        .dash-grid--info {
+          grid-template-columns: repeat(2, 1fr);
         }
         .dash-bottom {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 560px) {
+        .dash-grid--attention,
+        .dash-grid--info {
           grid-template-columns: 1fr;
         }
       }
@@ -76,26 +181,38 @@
 
       <div class="main-content">
         <div class="container">
-          <!-- Stats -->
-          <div class="dash-grid" id="stats-grid">
-            <div class="stat-card card">
-              <span class="stat-sub">Presupuestos pendientes</span>
+          <!-- Indicadores que requieren acción -->
+          <p class="dash-section-label dash-section-label--attention">Requiere tu atención</p>
+          <div class="dash-grid dash-grid--attention">
+            <a
+              class="stat-card stat-card--attention card"
+              href="/pages/presupuestos.html"
+            >
+              <span class="stat-sub">Presupuestos pendientes →</span>
               <span
                 class="stat-number"
                 id="stat-presupuestos"
                 style="color: var(--color-accent)"
                 >—</span
               >
-            </div>
-            <div class="stat-card card">
-              <span class="stat-sub">Facturas por cobrar</span>
+            </a>
+            <a
+              class="stat-card stat-card--attention card"
+              href="/pages/facturas.html"
+            >
+              <span class="stat-sub">Facturas por cobrar →</span>
               <span
                 class="stat-number"
                 id="stat-facturas"
                 style="color: var(--color-accent)"
                 >—</span
               >
-            </div>
+            </a>
+          </div>
+
+          <!-- Métricas informativas -->
+          <p class="dash-section-label">Resumen general</p>
+          <div class="dash-grid dash-grid--info">
             <div class="stat-card card">
               <span class="stat-sub">Services este mes</span>
               <span
@@ -125,7 +242,7 @@
           </div>
 
           <!-- Últimas actividades -->
-          <div class="dash-bottom mt-6">
+          <div class="dash-bottom">
             <div class="card">
               <p class="card-title">Últimos presupuestos</p>
               <div id="list-presupuestos">
@@ -156,6 +273,61 @@
       } from "./js/api.js";
       import { escapeHtml, formatMoney, badgeHtml } from "./js/utils.js";
 
+      // Arma "patente — cliente" a partir de datos que YA se piden para las
+      // demás estadísticas (no se agrega ningún llamado nuevo a la API).
+      function buildVehicleLabelResolver(vehiculosRes, clientsRes) {
+        const vehiclesById = new Map(
+          (vehiculosRes.success ? vehiculosRes.data : []).map((v) => [v.vehicleId, v]),
+        );
+        const clientNameById = new Map(
+          (clientsRes.success ? clientsRes.data : []).map((c) => [
+            c.clientId,
+            c.nombre ?? c.name ?? null,
+          ]),
+        );
+
+        return function resolveVehicle(vehicleId) {
+          const vehicle = vehiclesById.get(vehicleId);
+          if (!vehicle) return null;
+
+          const clientName = clientNameById.get(vehicle.clientId);
+          const label = clientName ? `${vehicle.plate} — ${clientName}` : vehicle.plate;
+
+          return { label, vehicleId: vehicle.vehicleId };
+        };
+      }
+
+      // Une un service con su vehículo — las facturas no tienen vehicleId
+      // directo, pero sí serviceId, y la lista de services ya se pide para
+      // el KPI "Services este mes".
+      function buildServiceVehicleMap(servicesRes) {
+        return new Map(
+          (servicesRes.success ? servicesRes.data : []).map((s) => [
+            s.serviceId,
+            s.vehicleId,
+          ]),
+        );
+      }
+
+      // Fila de "Últimos presupuestos" / "Últimas facturas". Si se puede
+      // resolver a qué vehículo pertenece, es un link real a su ficha en
+      // Taller; si no, queda como fila estática (nunca un link que no lleva
+      // a ningún lado).
+      function renderRow({ code, description, amountOrBadgeHtml, badge, vehicleMatch }) {
+        const inner = `
+          <span class="list-item-main">
+            <span class="text-accent list-item-code">${escapeHtml(code)}</span>
+            <span class="list-item-desc" title="${escapeHtml(description)}">${escapeHtml(description)}</span>
+          </span>
+          <span class="list-item-badge">${badge}</span>
+        `;
+
+        if (vehicleMatch) {
+          return `<a class="list-item list-item--linked" href="/pages/taller.html?id=${vehicleMatch.vehicleId}">${inner}</a>`;
+        }
+        return `<div class="list-item">${inner}</div>`;
+      }
+
       async function loadDashboard() {
         // Health — va al sidebar
         const health = await getHealth();
@@ -170,7 +342,7 @@
           }
         }
 
-        // Stats en paralelo
+        // Stats en paralelo — mismos 5 llamados que ya existían.
         const [budgetsRes, invoicesRes, clientsRes, vehiculosRes, servicesRes] =
           await Promise.all([
             getBudgets(),
@@ -179,6 +351,9 @@
             getVehiculos(),
             getServices(),
           ]);
+
+        const resolveVehicle = buildVehicleLabelResolver(vehiculosRes, clientsRes);
+        const vehicleIdByService = buildServiceVehicleMap(servicesRes);
 
         // Presupuestos pendientes
         if (budgetsRes.success) {
@@ -191,16 +366,15 @@
           const last5 = (budgetsRes.data ?? []).slice(0, 5);
           document.getElementById("list-presupuestos").innerHTML = last5.length
             ? last5
-                .map(
-                  (b) => `
-                <div class="list-item">
-                  <div>
-                    <span class="text-accent">${escapeHtml(b.number)}</span>
-                    <span class="text-muted" style="margin-left:8px">Veh. #${escapeHtml(b.vehicleId)}</span>
-                  </div>
-                  ${badgeHtml(b.status)}
-                </div>`,
-                )
+                .map((b) => {
+                  const match = resolveVehicle(b.vehicleId);
+                  return renderRow({
+                    code: b.number,
+                    description: match ? match.label : `Vehículo #${b.vehicleId}`,
+                    badge: badgeHtml(b.status),
+                    vehicleMatch: match,
+                  });
+                })
                 .join("")
             : '<p class="text-muted">Sin presupuestos.</p>';
         }
@@ -228,16 +402,16 @@
           const last5 = (invoicesRes.data ?? []).slice(0, 5);
           document.getElementById("list-facturas").innerHTML = last5.length
             ? last5
-                .map(
-                  (i) => `
-                <div class="list-item">
-                  <div>
-                    <span class="text-accent">${escapeHtml(i.number)}</span>
-                    <span class="text-muted" style="margin-left:8px">${formatMoney(i.total)}</span>
-                  </div>
-                  ${badgeHtml(i.status)}
-                </div>`,
-                )
+                .map((i) => {
+                  const vehicleId = vehicleIdByService.get(i.serviceId) ?? null;
+                  const match = vehicleId !== null ? resolveVehicle(vehicleId) : null;
+                  return renderRow({
+                    code: i.number,
+                    description: match ? match.label : formatMoney(i.total),
+                    badge: badgeHtml(i.status),
+                    vehicleMatch: match,
+                  });
+                })
                 .join("")
             : '<p class="text-muted">Sin facturas.</p>';
         }
