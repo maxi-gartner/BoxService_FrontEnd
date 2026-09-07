@@ -29,6 +29,7 @@ function LoginForm() {
   const searchParams = useSearchParams();
 
   const [serverError, setServerError] = useState("");
+  const [infoMessage, setInfoMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -41,6 +42,7 @@ function LoginForm() {
 
   async function onSubmit(values: FormValues) {
     setServerError("");
+    setInfoMessage("");
 
     try {
       await login(values);
@@ -60,9 +62,11 @@ function LoginForm() {
   }
 
   function handleForgotPassword() {
-    setServerError(
-      "La recuperación de contraseña todavía no está disponible.",
-    );
+    // No es un error de login — usa su propio estado y el estilo "ok"
+    // del Alert para no confundirlo con una credencial inválida, y para
+    // no pisar silenciosamente un error real que ya estuviera mostrado.
+    setServerError("");
+    setInfoMessage("La recuperación de contraseña todavía no está disponible.");
   }
 
   return (
@@ -192,6 +196,10 @@ function LoginForm() {
 
                 <Alert type="error">
                   {serverError}
+                </Alert>
+
+                <Alert type="ok">
+                  {infoMessage}
                 </Alert>
 
                 <Button

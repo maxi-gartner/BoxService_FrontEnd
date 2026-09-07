@@ -1,8 +1,13 @@
 import { getCurrentUser } from "@/lib/auth/getCurrentUser";
+import { REAL_BACKEND_RESOURCE_NAMES } from "@/lib/backend-mode";
 import { Card } from "@/components/ui/Card";
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();
+  const backendModeLabel =
+    process.env.BACKEND_MODE === "real"
+      ? `real (${REAL_BACKEND_RESOURCE_NAMES.join(", ")})`
+      : "mock";
 
   return (
     <div>
@@ -16,9 +21,7 @@ export default async function DashboardPage() {
         </Card>
         <Card>
           <p className="text-xs uppercase text-muted mb-1">Modo backend</p>
-          <p className="text-accent font-semibold">
-            {process.env.BACKEND_MODE === "real" ? "real" : "mock"}
-          </p>
+          <p className="text-accent font-semibold">{backendModeLabel}</p>
         </Card>
         <Card>
           <p className="text-xs uppercase text-muted mb-1">Rol</p>

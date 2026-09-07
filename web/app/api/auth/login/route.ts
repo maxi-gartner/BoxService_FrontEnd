@@ -1,32 +1,28 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { handleMockRequest } from "@/lib/mock/router";
 import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE, cookieOptions } from "@/lib/auth/cookies";
+import { isResourceReal, realBackendHeaders } from "@/lib/backend-mode";
 import type { ApiResponse } from "@/types/api";
 import type { LoginResponse } from "@/types/auth";
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const useMock = process.env.BACKEND_MODE !== "real";
 
   let result: ApiResponse<LoginResponse>;
 
-  if (useMock) {
+  // "auth" no está migrado al backend real (no tiene JWT todavía) — esto
+  // siempre da false hoy, pero queda armado igual que el resto para el
+  // día que exista login real, sin duplicar el criterio en otro lado.
+  if (!isResourceReal("auth")) {
     const mockResult = await handleMockRequest("POST", "auth/login", new URLSearchParams(), body, null);
     result = mockResult.body as ApiResponse<LoginResponse>;
     if (!result.success) {
       return NextResponse.json(result, { status: mockResult.status });
     }
   } else {
-    const backendUrl = process.env.BACKEND_URL;
-    if (!backendUrl) {
-      return NextResponse.json(
-        { success: false, data: null, error: { code: 500, message: "BACKEND_URL is not configured" } },
-        { status: 500 },
-      );
-    }
-    const upstream = await fetch(`${backendUrl}/auth/login`, {
+    const upstream = await fetch(`${process.env.BACKEND_URL}/auth/login`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...realBackendHeaders() },
       body: JSON.stringify(body),
     });
     if (!upstream.ok) {
