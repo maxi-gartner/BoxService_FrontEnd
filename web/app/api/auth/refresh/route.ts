@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { handleMockRequest } from "@/lib/mock/router";
 import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE, cookieOptions } from "@/lib/auth/cookies";
+import { isResourceReal, realBackendHeaders } from "@/lib/backend-mode";
 import type { RefreshResponse } from "@/types/auth";
 
 export async function POST(req: NextRequest) {
@@ -9,10 +10,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, data: null, error: { code: 401, message: "No session" } }, { status: 401 });
   }
 
-  const useMock = process.env.BACKEND_MODE !== "real";
   let tokens: RefreshResponse;
 
-  if (useMock) {
+  // Ver login/route.ts: "auth" todavía no está migrado al backend real.
+  if (!isResourceReal("auth")) {
     const result = await handleMockRequest("POST", "auth/refresh", new URLSearchParams(), { refreshToken }, null);
     const parsed = result.body as { success: boolean; data: RefreshResponse | null };
     if (!parsed.success || !parsed.data) {
@@ -23,10 +24,9 @@ export async function POST(req: NextRequest) {
     }
     tokens = parsed.data;
   } else {
-    const backendUrl = process.env.BACKEND_URL;
-    const upstream = await fetch(`${backendUrl}/auth/refresh`, {
+    const upstream = await fetch(`${process.env.BACKEND_URL}/auth/refresh`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...realBackendHeaders() },
       body: JSON.stringify({ refreshToken }),
     });
     if (!upstream.ok) {

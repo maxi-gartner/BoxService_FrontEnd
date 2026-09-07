@@ -1,15 +1,20 @@
 /**
  * Proxy BFF (Backend For Frontend): el navegador solo le habla a Next.js
  * (mismo origen, sin CORS). Acá se agrega el Authorization: Bearer <token>
- * leído de la cookie httpOnly y se reenvía al backend real — o, mientras
- * ese backend no exista, al router mockeado en lib/mock/.
+ * leído de la cookie httpOnly y se reenvía al backend real — o, para los
+ * módulos que ese backend todavía no implementa, al router mockeado en
+ * lib/mock/. Qué recurso va a cuál lo decide lib/backend-mode.ts (única
+ * fuente de verdad, compartida con las rutas de auth).
  *
- * El día que el backend real esté listo: BACKEND_MODE=real + BACKEND_URL
- * en .env, y listo — ningún otro archivo del frontend cambia.
+ * El backend real (BoxService_BackEnd, ASP.NET Core) no tiene JWT todavía
+ * — usa X-Api-Key, igual que el backend viejo. Por eso el reenvío "real"
+ * manda X-Api-Key en vez del Bearer (que sí entiende el mock).
  */
 import { NextResponse, type NextRequest } from "next/server";
 import { handleMockRequest } from "@/lib/mock/router";
+import { verifyMockToken } from "@/lib/mock/tokens";
 import { ACCESS_TOKEN_COOKIE } from "@/lib/auth/cookies";
+import { isResourceReal, realBackendHeaders } from "@/lib/backend-mode";
 
 async function handle(req: NextRequest, path: string[]) {
   const pathname = path.join("/");
@@ -22,27 +27,30 @@ async function handle(req: NextRequest, path: string[]) {
     body = text ? JSON.parse(text) : undefined;
   }
 
-  const useMock = process.env.BACKEND_MODE !== "real";
+  const resource = pathname.split("/")[0];
 
-  if (useMock) {
+  if (!isResourceReal(resource)) {
     const result = await handleMockRequest(req.method, pathname, req.nextUrl.searchParams, body, authHeader);
     return NextResponse.json(result.body, { status: result.status });
   }
 
-  const backendUrl = process.env.BACKEND_URL;
-  if (!backendUrl) {
+  // El backend real todavía no valida sesión (no tiene JWT) — la única
+  // "sesión" que existe hoy es la que emite el mock al loguearse. Se
+  // valida acá para que un recurso migrado no quede accesible sin login
+  // solo porque el backend de atrás no lo chequea.
+  if (!accessToken || !(await verifyMockToken(accessToken).catch(() => null))) {
     return NextResponse.json(
-      { success: false, data: null, error: { code: 500, message: "BACKEND_URL is not configured" } },
-      { status: 500 },
+      { success: false, data: null, error: { code: 401, message: "Missing or invalid token" } },
+      { status: 401 },
     );
   }
 
-  const upstreamUrl = `${backendUrl}/${pathname}${req.nextUrl.search}`;
+  const upstreamUrl = `${process.env.BACKEND_URL}/${pathname}${req.nextUrl.search}`;
   const upstreamResponse = await fetch(upstreamUrl, {
     method: req.method,
     headers: {
       "Content-Type": "application/json",
-      ...(authHeader ? { Authorization: authHeader } : {}),
+      ...realBackendHeaders(),
     },
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
