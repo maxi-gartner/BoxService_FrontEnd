@@ -5,7 +5,7 @@ export default function VehiculosPage() {
     <ModulePlaceholder
       icon="🚗"
       title="Vehículos"
-      description="El alta y la búsqueda de vehículos todavía se hacen desde Taller. El módulo propio se conecta al backend nuevo apenas se migre ese endpoint."
+      description="El backend de Vehículos ya está migrado y se usa desde Taller (búsqueda, alta, historial). Falta armar la pantalla propia del módulo."
     />
   );
 }

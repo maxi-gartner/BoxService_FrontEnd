@@ -5,7 +5,7 @@ export default function CatalogoPage() {
     <ModulePlaceholder
       icon="💲"
       title="Catálogo"
-      description="El catálogo de precios de mano de obra y repuestos todavía sobre el mock. Pendiente de migrar al backend nuevo."
+      description="El backend del Catálogo de precios ya está migrado y se usa al armar presupuestos en Taller. Falta armar la pantalla propia de alta/edición."
     />
   );
 }
