@@ -10,11 +10,18 @@
  *
  * Agregar un módulo acá cuando se lo migre en el backend es el único
  * cambio necesario para que el frontend deje de usar el mock en ese
- * recurso. "auth" no está ni va a estar en esta lista hasta que el
- * backend real tenga login propio — hasta entonces, auth siempre va al
+ * recurso. "auth" y "users" no están ni van a estar en esta lista hasta
+ * que el backend real tenga login propio — hasta entonces van siempre al
  * mock, sin importar BACKEND_MODE.
  */
-const REAL_BACKEND_RESOURCES = new Set(["clients"]);
+const REAL_BACKEND_RESOURCES = new Set([
+  "clients",
+  "vehicles",
+  "budgets",
+  "services",
+  "invoices",
+  "catalog",
+]);
 
 // Para mostrar en UI (ej. el badge "Modo backend" del dashboard) — no usar
 // para decidir ruteo, para eso está isResourceReal.
