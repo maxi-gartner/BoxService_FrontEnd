@@ -4,18 +4,18 @@
 
 const API_URL = "http://localhost:5001";
 
-// Tiene que coincidir con "ApiKey" en appsettings.json del backend.
-// Es un candado simple (no un sistema de auth completo).
-const API_KEY = "boxservice-dev-key";
+import { clearSession, getToken } from "./auth.js";
 
 async function request(method, endpoint, body = null) {
   const options = {
     method,
     headers: {
       "Content-Type": "application/json",
-      "X-Api-Key": API_KEY,
     },
   };
+
+  const token = getToken();
+  if (token) options.headers.Authorization = `Bearer ${token}`;
 
   if (body) {
     options.body = JSON.stringify(body);
@@ -23,20 +23,52 @@ async function request(method, endpoint, body = null) {
 
   try {
     const res = await fetch(`${API_URL}${endpoint}`, options);
-    const json = await res.json();
+    const responseText = await res.text();
+    let json;
+
+    if (!responseText.trim()) {
+      json = {
+        success: false,
+        data: null,
+        error: {
+          code: res.status,
+          message: `La API respondió sin contenido (${res.status}) para ${endpoint}.`,
+        },
+      };
+    } else {
+      try {
+        json = JSON.parse(responseText);
+      } catch {
+        json = {
+          success: false,
+          data: null,
+          error: {
+            code: res.status,
+            message: `La API devolvió una respuesta inválida (${res.status}) para ${endpoint}.`,
+          },
+        };
+      }
+    }
+
+    if (res.status === 401 && endpoint !== "/auth/login") clearSession();
 
     return json; // siempre devuelve { success, data, error }
   } catch (err) {
+    const isNetworkError = err instanceof TypeError && err.message.toLowerCase().includes("fetch");
     return {
       success: false,
       data: null,
       error: {
         code: 0,
-        message: err.message || "No se pudo conectar con el servidor",
+        message: isNetworkError
+          ? "No se pudo conectar con la API. Iniciá el backend en http://localhost:5001."
+          : err.message || "No se pudo conectar con el servidor",
       },
     };
   }
 }
+
+export const login = (credentials) => request("POST", "/auth/login", credentials);
 
 // ── Health ──────────────────────────────────────────
 export const getHealth = () =>
@@ -44,16 +76,16 @@ export const getHealth = () =>
 
 // ── Clients (Cristhian) ─────────────────────────────
 export const getClients = () =>
-  request("GET", "/api/clients");
+  request("GET", "/clients");
 
 export const getClientById = (id) =>
-  request("GET", `/api/clients/${id}`);
+  request("GET", `/clients/${id}`);
 
 export const getClientVehicles = (id) =>
-  request("GET", `/api/clients/${id}/vehicles`);
+  request("GET", `/clients/${id}/vehicles`);
 
 export const createClient = (data) =>
-  request("POST", "/api/clients", data);
+  request("POST", "/clients", data);
 
 // ── Vehicles (Leo) ──────────────────────────────────
 export const getVehiculos = () =>

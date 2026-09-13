@@ -14,7 +14,7 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { decodeJwt } from "jose";
 import { ACCESS_TOKEN_COOKIE } from "./cookies";
-import type { AccessTokenClaims, Role } from "@/types/auth";
+import { ROLE_LABELS, type AccessTokenClaims, type Role } from "@/types/auth";
 
 export type Session = {
   userId: string;
@@ -22,14 +22,26 @@ export type Session = {
   tenantId: string | null;
 };
 
+export function isRole(value: unknown): value is Role {
+  return normalizeRole(value) !== null;
+}
+
+export function normalizeRole(value: unknown): Role | null {
+  if (value === "owner" || value === "dueno") return "owner";
+  if (value === "employee" || value === "empleado") return "employee";
+  if (value === "superadmin") return "superadmin";
+  return null;
+}
+
 export const getSession = cache(async (): Promise<Session | null> => {
   const token = (await cookies()).get(ACCESS_TOKEN_COOKIE)?.value;
   if (!token) return null;
 
   try {
     const claims = decodeJwt<AccessTokenClaims>(token);
-    if (claims.exp * 1000 < Date.now()) return null;
-    return { userId: claims.sub, role: claims.role, tenantId: claims.tenantId };
+    const role = normalizeRole(claims.role);
+    if (!claims.sub || !claims.exp || claims.exp * 1000 < Date.now() || !role) return null;
+    return { userId: claims.sub, role, tenantId: claims.tenantId ?? null };
   } catch {
     return null;
   }

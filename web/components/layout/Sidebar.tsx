@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { logout } from "@/lib/api/auth";
-import type { Role } from "@/types/auth";
+import { ROLE_LABELS, type Role } from "@/types/auth";
 import { cn } from "@/lib/utils";
 
 type NavItem = { href: string; label: string; icon: string; roles?: Role[] };
@@ -16,7 +16,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/presupuestos", label: "Presupuestos", icon: "📋" },
   { href: "/facturas", label: "Facturas", icon: "🧾" },
   { href: "/catalogo", label: "Catálogo", icon: "💲" },
-  { href: "/admin", label: "Administración", icon: "⚙️", roles: ["superadmin"] },
+  { href: "/admin", label: "Administración", icon: "⚙️", roles: ["owner", "superadmin"] },
 ];
 
 export function Sidebar({ userName, role }: { userName: string; role: Role }) {
@@ -58,7 +58,8 @@ export function Sidebar({ userName, role }: { userName: string; role: Role }) {
       </nav>
 
       <div className="border-t border-border px-4 py-4">
-        <p className="text-xs text-muted mb-2">{userName}</p>
+        <p className="text-xs text-muted mb-1">{userName}</p>
+        <p className="text-xs text-accent mb-2">{ROLE_LABELS[role]}</p>
         <button onClick={handleLogout} className="text-xs text-danger hover:underline">
           Cerrar sesión
         </button>

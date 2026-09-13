@@ -10,10 +10,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { decodeJwt } from "jose";
 import { ACCESS_TOKEN_COOKIE } from "@/lib/auth/cookies";
+import { normalizeRole } from "@/lib/auth/session";
 import type { AccessTokenClaims } from "@/types/auth";
 
 const PUBLIC_ROUTES = ["/login"];
-const SUPERADMIN_ONLY_PREFIX = "/admin";
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -23,7 +23,12 @@ export function proxy(request: NextRequest) {
   if (token) {
     try {
       claims = decodeJwt<AccessTokenClaims>(token);
-      if (claims.exp * 1000 < Date.now()) claims = null;
+      const role = normalizeRole(claims.role);
+      if (claims.exp * 1000 < Date.now() || !claims.sub || !role) {
+        claims = null;
+      } else {
+        claims.role = role;
+      }
     } catch {
       claims = null;
     }
@@ -41,7 +46,7 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  if (pathname.startsWith(SUPERADMIN_ONLY_PREFIX) && claims?.role !== "superadmin") {
+  if (pathname.startsWith("/admin") && (!claims || (claims.role !== "owner" && claims.role !== "superadmin"))) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
