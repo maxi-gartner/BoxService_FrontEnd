@@ -10,6 +10,12 @@
  */
 export type Role = "owner" | "employee" | "superadmin";
 
+export const ROLE_LABELS: Record<Role, string> = {
+  owner: "Dueño",
+  employee: "Empleado",
+  superadmin: "Superadmin",
+};
+
 export type User = {
   id: string;
   name: string;
@@ -20,30 +26,33 @@ export type User = {
 };
 
 export type LoginRequest = {
-  email: string;
+  username: string;
   password: string;
 };
 
 /**
- * Lo que devuelve el backend real en POST /auth/login. Los tokens NUNCA
- * llegan más allá del Route Handler de Next.js que los recibe — ver
- * docs/API_CONTRACT.md, sección Autenticación.
+ * Lo que devuelve el backend real en POST /auth/login HOY (ver
+ * docs/API_CONTRACT.md, sección Autenticación, para la diferencia con el
+ * contrato ideal). Los tokens NUNCA llegan más allá del Route Handler de
+ * Next.js que los recibe.
  */
 export type LoginResponse = {
-  accessToken: string;
-  refreshToken: string;
-  user: User;
+  token: string;
+  expiresAt: string;
+  username: string;
+  role: "dueno" | "superadmin" | "empleado";
 };
 
+/** El backend real todavía no tiene refresh token — ver API_CONTRACT.md. */
 export type RefreshResponse = {
-  accessToken: string;
-  refreshToken: string;
+  token: string;
+  expiresAt: string;
 };
 
 /** Claims mínimos que el access token trae codificados (ver contrato). */
 export type AccessTokenClaims = {
   sub: string; // userId
-  role: Role;
-  tenantId: string | null;
+  role: Role | "dueno" | "empleado";
+  tenantId?: string | null;
   exp: number;
 };

@@ -14,6 +14,7 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { decodeJwt } from "jose";
 import { ACCESS_TOKEN_COOKIE } from "./cookies";
+import { normalizeRole } from "./roles";
 import type { AccessTokenClaims, Role } from "@/types/auth";
 
 export type Session = {
@@ -28,8 +29,9 @@ export const getSession = cache(async (): Promise<Session | null> => {
 
   try {
     const claims = decodeJwt<AccessTokenClaims>(token);
-    if (claims.exp * 1000 < Date.now()) return null;
-    return { userId: claims.sub, role: claims.role, tenantId: claims.tenantId };
+    const role = normalizeRole(claims.role);
+    if (!claims.sub || !claims.exp || claims.exp * 1000 < Date.now() || !role) return null;
+    return { userId: claims.sub, role, tenantId: claims.tenantId ?? null };
   } catch {
     return null;
   }

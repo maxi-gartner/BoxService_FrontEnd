@@ -10,10 +10,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { decodeJwt } from "jose";
 import { ACCESS_TOKEN_COOKIE } from "@/lib/auth/cookies";
+import { normalizeRole } from "@/lib/auth/roles";
 import type { AccessTokenClaims } from "@/types/auth";
 
 const PUBLIC_ROUTES = ["/login"];
-const SUPERADMIN_ONLY_PREFIX = "/admin";
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -22,8 +22,13 @@ export function proxy(request: NextRequest) {
   let claims: AccessTokenClaims | null = null;
   if (token) {
     try {
-      claims = decodeJwt<AccessTokenClaims>(token);
-      if (claims.exp * 1000 < Date.now()) claims = null;
+      const decoded = decodeJwt<AccessTokenClaims>(token);
+      const role = normalizeRole(decoded.role);
+      if (decoded.exp * 1000 < Date.now() || !decoded.sub || !role) {
+        claims = null;
+      } else {
+        claims = { ...decoded, role };
+      }
     } catch {
       claims = null;
     }
@@ -41,7 +46,10 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  if (pathname.startsWith(SUPERADMIN_ONLY_PREFIX) && claims?.role !== "superadmin") {
+  // /admin es de dueño y superadmin (gestión de su taller / de talleres) —
+  // empleado no entra. El chequeo de verdad, igual que todo lo demás,
+  // está en el server component de la página (getSession + hasRole).
+  if (pathname.startsWith("/admin") && claims?.role !== "owner" && claims?.role !== "superadmin") {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 

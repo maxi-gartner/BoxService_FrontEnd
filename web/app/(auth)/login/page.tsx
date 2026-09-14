@@ -12,10 +12,9 @@ import { Input, Label } from "@/components/ui/Input";
 import { Alert } from "@/components/ui/Alert";
 
 const schema = z.object({
-  email: z
+  username: z
     .string()
-    .min(1, "Ingresá tu email")
-    .email("Email inválido"),
+    .min(1, "Ingresá tu usuario"),
 
   password: z
     .string()
@@ -108,27 +107,27 @@ function LoginForm() {
                 onSubmit={handleSubmit(onSubmit)}
                 className="space-y-5"
               >
-                {/* Correo electrónico */}
+                {/* Usuario */}
                 <div>
                   <Label
-                    htmlFor="email"
+                    htmlFor="username"
                     className="cursor-text"
                   >
-                    Email
+                    Usuario
                   </Label>
 
                   <Input
-                    id="email"
-                    type="email"
-                    placeholder="nombre@taller.com"
-                    autoComplete="email"
+                    id="username"
+                    type="text"
+                    placeholder="superadmin"
+                    autoComplete="username"
                     className="cursor-text"
-                    {...register("email")}
+                    {...register("username")}
                   />
 
-                  {errors.email && (
+                  {errors.username && (
                     <p className="mt-1 text-xs text-danger">
-                      {errors.email.message}
+                      {errors.username.message}
                     </p>
                   )}
                 </div>
@@ -215,10 +214,9 @@ function LoginForm() {
 
               <div className="mt-8 border-t border-border pt-5">
                 <p className="text-center text-xs text-muted">
-                  Mock de desarrollo:
+                  Desarrollo: superadmin / boxservice123
                   {" "}
-                  maxi@boxservice.com /
-                  boxservice123
+                  (o, con el mock: maxi@boxservice.com / boxservice123)
                 </p>
               </div>
             </div>

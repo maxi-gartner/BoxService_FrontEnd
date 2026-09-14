@@ -26,9 +26,27 @@ medio (BFF) que guarda los tokens en cookies `httpOnly`. Para el backend esto es
 transparente: reciben un `Authorization: Bearer <token>` normal en cada request, como
 cualquier API JWT estándar.
 
+> **Estado real (implementado en `BoxService_BackEnd/Auth/`) vs. lo ideal
+> descripto abajo:** el backend hoy tiene una lista fija de usuarios en
+> `appsettings.json` (no hay tabla de usuarios en Postgres), un solo
+> token sin refresh, y el `user` del login es sintético (arma `id`/`name`/
+> `email` a partir del `username`, no hay esos campos todavía). El BFF de
+> Next.js ya absorbe esa diferencia — a los componentes de React les
+> sigue llegando un `User` con la forma de abajo. Lo que sigue es lo que
+> se quiere terminar teniendo cuando haya tabla de usuarios real.
+
 ### `POST /auth/login`
-Body: `{ "email": string, "password": string }`
-Respuesta 200:
+Body: `{ "username": string, "password": string }`
+
+Respuesta 200 **real, hoy**:
+```json
+{ "token": "...", "expiresAt": "2026-09-14T19:00:00Z", "username": "dueno", "role": "dueno" }
+```
+`role` es `"dueno" | "superadmin" | "empleado"` (así vive en la base de usuarios
+de config) — el BFF lo normaliza a `"owner" | "employee" | "superadmin"` antes
+de mandarlo a React, ver `web/lib/auth/session.ts`.
+
+Respuesta 200 **ideal** (cuando haya tabla de usuarios y refresh token):
 ```json
 {
   "accessToken": "...",
@@ -42,24 +60,24 @@ Respuesta 200:
   }
 }
 ```
-- `role` es uno de: `"owner" | "employee" | "superadmin"`.
 - `tenantId` es `null` únicamente para `superadmin` sin taller seleccionado.
 - Credenciales inválidas → 401 con el envelope de error estándar (no 200 con
   `success: false` — esto es login, no una operación de negocio).
-- El `accessToken` es un JWT de vida corta (sugerido: 15 min) con claims mínimos:
-  `sub` (userId), `role`, `tenantId`, `exp`. **No poner datos sensibles en el
-  payload** — cualquiera puede decodificarlo (no verificarlo, pero sí leerlo).
-- El `refreshToken` es de vida más larga (sugerido: 7 días), opaco o JWT, a
-  criterio del backend — el frontend lo trata como un string opaco.
+- El access token es un JWT de vida corta (hoy: 60 min) con claims mínimos:
+  `sub` (userId), rol, `exp`. **No poner datos sensibles en el payload** —
+  cualquiera puede decodificarlo (no verificarlo, pero sí leerlo).
 
 ### `POST /auth/refresh`
-Body: `{ "refreshToken": string }`
-Respuesta 200: `{ "accessToken": string, "refreshToken": string }` (refresh token
-rotation: cada uso invalida el anterior y devuelve uno nuevo).
-Refresh token inválido/expirado → 401.
+**Todavía no implementado en el backend real** — el JWT expira y hay que
+volver a loguearse. El Route Handler (`web/app/api/auth/refresh/route.ts`)
+devuelve `501` y cierra la sesión del lado del front para no dejarla en un
+estado raro. Cuando el backend tenga refresh token, este endpoint pasa a
+ser: body `{ "refreshToken": string }` → `{ "accessToken": string,
+"refreshToken": string }` (rotation), inválido/expirado → 401.
 
 ### `POST /auth/logout`
-Invalida el refresh token del lado del backend (deny-list o borrado de sesión).
+Hoy es 100% del lado del front: el Route Handler borra las cookies de sesión,
+no hay nada que invalidar en el backend (no hay refresh token que revocar).
 Respuesta 200: `{ "message": "logged out" }`.
 
 ### Todas las demás rutas
