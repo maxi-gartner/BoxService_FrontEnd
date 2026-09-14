@@ -13,7 +13,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { handleMockRequest } from "@/lib/mock/router";
 import { ACCESS_TOKEN_COOKIE } from "@/lib/auth/cookies";
-import { isResourceReal, realBackendHeaders, realBackendPath } from "@/lib/backend-mode";
+import { isResourceReal, realBackendHeaders } from "@/lib/backend-mode";
 
 async function handle(req: NextRequest, path: string[]) {
   const pathname = path.join("/");
@@ -40,7 +40,7 @@ async function handle(req: NextRequest, path: string[]) {
     );
   }
 
-  const upstreamUrl = `${process.env.BACKEND_URL}/${realBackendPath(pathname)}${req.nextUrl.search}`;
+  const upstreamUrl = `${process.env.BACKEND_URL}/${pathname}${req.nextUrl.search}`;
   const upstreamResponse = await fetch(upstreamUrl, {
     method: req.method,
     headers: {

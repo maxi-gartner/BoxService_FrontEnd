@@ -89,55 +89,54 @@ export const createClient = (data) =>
 
 // ── Vehicles (Leo) ──────────────────────────────────
 export const getVehiculos = () =>
-  request("GET", "/api/vehiculos");
+  request("GET", "/vehicles");
 
 export const getVehiculoById = (id) =>
-  request("GET", `/api/vehiculos/${id}`);
+  request("GET", `/vehicles/${id}`);
 
-// Antes era GET /api/vehiculos/buscar?plate=X (verbo en la URL).
-// Ahora es un filtro sobre la misma colección: GET /api/vehiculos?plate=X.
+// El filtro usa la misma colección: GET /vehicles?plate=X.
 export const searchVehiculoByPlate = (plate) =>
-  request("GET", `/api/vehiculos?plate=${encodeURIComponent(plate)}`);
+  request("GET", `/vehicles?plate=${encodeURIComponent(plate)}`);
 
 export const getVehiculoHistory = (id) =>
-  request("GET", `/api/vehiculos/${id}/historial`);
+  request("GET", `/vehicles/${id}/history`);
 
 export const createVehiculo = (data) =>
-  request("POST", "/api/vehiculos", data);
+  request("POST", "/vehicles", data);
 
 // ── Services (Oscar) ────────────────────────────────
 export const getServices = () =>
-  request("GET", "/api/services");
+  request("GET", "/services");
 
 export const getServiceById = (id) =>
-  request("GET", `/api/services/${id}`);
+  request("GET", `/services/${id}`);
 
 export const createService = (data) =>
-  request("POST", "/api/services", data);
+  request("POST", "/services", data);
 
 export const createServiceDetail = (serviceId, data) =>
-  request("POST", `/api/services/${serviceId}/details`, data);
+  request("POST", `/services/${serviceId}/details`, data);
 
 export const getServiceDetails = (serviceId) =>
-  request("GET", `/api/services/${serviceId}/details`);
+  request("GET", `/services/${serviceId}/details`);
 
 // ── Budgets / Presupuestos (Maxi) ───────────────────
 export const getBudgets = () =>
-  request("GET", "/api/budgets");
+  request("GET", "/budgets");
 
 // NUEVO:
 // Trae un presupuesto puntual con sus detalles.
 // Esto se usa en Services para copiar detalle_presupuesto a detalle_service.
 export const getBudgetById = (id) =>
-  request("GET", `/api/budgets/${id}`);
+  request("GET", `/budgets/${id}`);
 
 export const createBudget = (data) =>
-  request("POST", "/api/budgets", data);
+  request("POST", "/budgets", data);
 
 // Antes eran dos endpoints (PUT .../status y POST .../approve) con un verbo
 // en la URL. Ahora es una sola transición de estado sobre el recurso.
 export const updateBudgetStatus = (id, status) =>
-  request("PATCH", `/api/budgets/${id}`, { status });
+  request("PATCH", `/budgets/${id}`, { status });
 
 export const approveBudget = (id) => updateBudgetStatus(id, "approved");
 
@@ -145,30 +144,30 @@ export const approveBudget = (id) => updateBudgetStatus(id, "approved");
 // Vincula el presupuesto aprobado con el service creado.
 // Actualiza presupuestos.id_service.
 export const assignServiceToBudget = (budgetId, serviceId) =>
-  request("PUT", `/api/budgets/${budgetId}/service`, { serviceId });
+  request("PUT", `/budgets/${budgetId}/service`, { serviceId });
 
 // ── Invoices / Facturas (Maxi) ──────────────────────
 export const getInvoices = () =>
-  request("GET", "/api/invoices");
+  request("GET", "/invoices");
 
 export const getInvoiceById = (id) =>
-  request("GET", `/api/invoices/${id}`);
+  request("GET", `/invoices/${id}`);
 
 export const createInvoice = (data) =>
-  request("POST", "/api/invoices", data);
+  request("POST", "/invoices", data);
 
 export const updateInvoiceStatus = (id, status) =>
-  request("PATCH", `/api/invoices/${id}`, { status });
+  request("PATCH", `/invoices/${id}`, { status });
 
 // ── Catálogo de precios (Maxi) ──────────────────────
 export const getCatalog = () =>
-  request("GET", "/api/catalogo");
+  request("GET", "/catalog");
 
 export const createCatalogItem = (data) =>
-  request("POST", "/api/catalogo", data);
+  request("POST", "/catalog", data);
 
 export const updateCatalogItem = (id, data) =>
-  request("PATCH", `/api/catalogo/${id}`, data);
+  request("PATCH", `/catalog/${id}`, data);
 
 export const deleteCatalogItem = (id) =>
-  request("DELETE", `/api/catalogo/${id}`);
+  request("DELETE", `/catalog/${id}`);

@@ -35,17 +35,3 @@ export function isResourceReal(resource: string): boolean {
 export function realBackendHeaders(): Record<string, string> {
   return {};
 }
-
-export function realBackendPath(pathname: string): string {
-  const [resource, ...segments] = pathname.split("/");
-  const prefixes: Record<string, string> = {
-    clients: "clients",
-    vehicles: "api/vehiculos",
-    budgets: "api/budgets",
-    services: "api/services",
-    invoices: "api/invoices",
-    catalog: "api/catalogo",
-  };
-
-  return [prefixes[resource] ?? resource, ...segments].join("/");
-}
