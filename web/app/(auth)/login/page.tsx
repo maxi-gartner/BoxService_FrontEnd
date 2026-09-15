@@ -215,6 +215,8 @@ function LoginForm() {
               <div className="mt-8 border-t border-border pt-5">
                 <p className="text-center text-xs text-muted">
                   Desarrollo: superadmin / boxservice123
+                  {" "}
+                  (o, con el mock: maxi@boxservice.com / boxservice123)
                 </p>
               </div>
             </div>

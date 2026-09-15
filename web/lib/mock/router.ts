@@ -87,6 +87,9 @@ export async function handleMockRequest(
 
 // ── Auth ────────────────────────────────────────────
 async function handleLogin(body: LoginRequest): Promise<MockResult> {
+  // LoginRequest.username, no .email (ver types/auth.ts) — el mock sigue
+  // identificando a sus usuarios por email, pero es lo que se manda como
+  // "username" en el login real (Auth/AuthService.cs no tiene email).
   const user = db.users.find((u) => u.email === body?.username && u.password === body?.password);
   if (!user) return fail(401, "Invalid credentials");
 

@@ -6,14 +6,16 @@
  * lib/mock/. Qué recurso va a cuál lo decide lib/backend-mode.ts (única
  * fuente de verdad, compartida con las rutas de auth).
  *
- * El backend real (BoxService_BackEnd, ASP.NET Core) no tiene JWT todavía
- * — usa X-Api-Key, igual que el backend viejo. Por eso el reenvío "real"
- * manda X-Api-Key en vez del Bearer (que sí entiende el mock).
+ * El backend real (BoxService_BackEnd) ya tiene JWT propio
+ * (Auth/AuthService.cs) — el Bearer que se reenvía es el token real del
+ * usuario logueado, y es el backend quien lo valida (401 si falta/venció,
+ * 403 si el rol no alcanza). Acá solo se corta antes si ni siquiera hay
+ * cookie, para no hacer un round-trip de más.
  */
 import { NextResponse, type NextRequest } from "next/server";
 import { handleMockRequest } from "@/lib/mock/router";
 import { ACCESS_TOKEN_COOKIE } from "@/lib/auth/cookies";
-import { isResourceReal, realBackendHeaders } from "@/lib/backend-mode";
+import { isResourceReal } from "@/lib/backend-mode";
 
 async function handle(req: NextRequest, path: string[]) {
   const pathname = path.join("/");
@@ -33,7 +35,7 @@ async function handle(req: NextRequest, path: string[]) {
     return NextResponse.json(result.body, { status: result.status });
   }
 
-  if (!accessToken) {
+  if (!authHeader) {
     return NextResponse.json(
       { success: false, data: null, error: { code: 401, message: "Missing or invalid token" } },
       { status: 401 },
@@ -45,8 +47,7 @@ async function handle(req: NextRequest, path: string[]) {
     method: req.method,
     headers: {
       "Content-Type": "application/json",
-      ...realBackendHeaders(),
-      Authorization: authHeader!,
+      Authorization: authHeader,
     },
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });

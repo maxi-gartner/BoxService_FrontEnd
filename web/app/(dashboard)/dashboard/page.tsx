@@ -4,9 +4,9 @@ import { Card } from "@/components/ui/Card";
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();
-  // auth/users van siempre al mock — si todo lo demás ya es real, se
-  // muestra "real" a secas; si es parcial, se listan los módulos activos.
-  const totalResources = 6;
+  // Si están todos los recursos activados se muestra "real" a secas; si
+  // es parcial (migrando de a uno todavía), se listan cuáles.
+  const totalResources = 7;
   const backendModeLabel =
     process.env.BACKEND_MODE !== "real"
       ? "mock"

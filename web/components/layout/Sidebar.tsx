@@ -16,6 +16,8 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/presupuestos", label: "Presupuestos", icon: "📋" },
   { href: "/facturas", label: "Facturas", icon: "🧾" },
   { href: "/catalogo", label: "Catálogo", icon: "💲" },
+  // Dueño gestiona su propio taller; superadmin, cualquiera — ver
+  // admin/page.tsx y proxy.ts, que aplican el mismo gate de verdad.
   { href: "/admin", label: "Administración", icon: "⚙️", roles: ["owner", "superadmin"] },
 ];
 
