@@ -164,6 +164,11 @@ Fuente única: **IBM Plex Mono** — importada desde Google Fonts en el `<head>`
 
 ## Comunicación con el backend
 
+La pantalla `login.html` obtiene un JWT desde `POST /auth/login` y lo guarda en la sesión del
+navegador. `js/api.js` agrega automáticamente `Authorization: Bearer <token>` a cada request y
+redirige al login cuando el token vence. El backend entrega los roles `dueno`, `superadmin` y
+`empleado`; la navegación del catálogo se reserva para dueño y superadmin.
+
 Todas las llamadas pasan por `js/api.js`. Cada función devuelve un objeto con esta estructura:
 
 ```javascript
