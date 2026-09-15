@@ -15,6 +15,7 @@
  * mock, sin importar BACKEND_MODE.
  */
 const REAL_BACKEND_RESOURCES = new Set([
+  "auth",
   "clients",
   "vehicles",
   "budgets",
@@ -32,6 +33,5 @@ export function isResourceReal(resource: string): boolean {
 }
 
 export function realBackendHeaders(): Record<string, string> {
-  const apiKey = process.env.BACKEND_API_KEY;
-  return apiKey ? { "X-Api-Key": apiKey } : {};
+  return {};
 }

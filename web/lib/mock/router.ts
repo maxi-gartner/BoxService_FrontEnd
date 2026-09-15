@@ -87,7 +87,7 @@ export async function handleMockRequest(
 
 // ── Auth ────────────────────────────────────────────
 async function handleLogin(body: LoginRequest): Promise<MockResult> {
-  const user = db.users.find((u) => u.email === body?.email && u.password === body?.password);
+  const user = db.users.find((u) => u.email === body?.username && u.password === body?.password);
   if (!user) return fail(401, "Invalid credentials");
 
   const accessToken = await signAccessToken(user);

@@ -16,13 +16,8 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   });
 
   if (res.status === 401) {
-    const refreshed = await fetch("/api/auth/refresh", { method: "POST" });
-    if (refreshed.ok) {
-      return request<T>(method, path, body);
-    }
-    if (typeof window !== "undefined") {
-      window.location.href = "/login";
-    }
+    await fetch("/api/auth/logout", { method: "POST" });
+    if (typeof window !== "undefined") window.location.href = "/login";
     throw new ApiClientError("Sesión expirada", 401);
   }
 

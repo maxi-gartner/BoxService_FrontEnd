@@ -1,44 +1,40 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { handleMockRequest } from "@/lib/mock/router";
-import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE, cookieOptions } from "@/lib/auth/cookies";
-import { isResourceReal, realBackendHeaders } from "@/lib/backend-mode";
+import { ACCESS_TOKEN_COOKIE, cookieOptions } from "@/lib/auth/cookies";
 import type { ApiResponse } from "@/types/api";
-import type { LoginResponse } from "@/types/auth";
+import type { LoginResponse, Role, User } from "@/types/auth";
+
+function normalizeRole(role: LoginResponse["role"]): Role {
+  return role === "dueno" ? "owner" : role === "empleado" ? "employee" : "superadmin";
+}
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
 
-  let result: ApiResponse<LoginResponse>;
 
-  // "auth" no está migrado al backend real (no tiene JWT todavía) — esto
-  // siempre da false hoy, pero queda armado igual que el resto para el
-  // día que exista login real, sin duplicar el criterio en otro lado.
-  if (!isResourceReal("auth")) {
-    const mockResult = await handleMockRequest("POST", "auth/login", new URLSearchParams(), body, null);
-    result = mockResult.body as ApiResponse<LoginResponse>;
-    if (!result.success) {
-      return NextResponse.json(result, { status: mockResult.status });
-    }
-  } else {
-    const upstream = await fetch(`${process.env.BACKEND_URL}/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...realBackendHeaders() },
-      body: JSON.stringify(body),
-    });
-    if (!upstream.ok) {
-      const errorBody = await upstream.json().catch(() => null);
-      return NextResponse.json(
-        errorBody ?? { success: false, data: null, error: { code: upstream.status, message: "Login failed" } },
-        { status: upstream.status },
-      );
-    }
-    result = { success: true, data: (await upstream.json()) as LoginResponse, error: null };
+  const upstream = await fetch(`${process.env.BACKEND_URL}/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const result = (await upstream.json().catch(() => null)) as ApiResponse<LoginResponse> | null;
+  if (!upstream.ok || !result?.success) {
+    return NextResponse.json(
+      result ?? { success: false, data: null, error: { code: upstream.status, message: "Login failed" } },
+      { status: upstream.status },
+    );
   }
 
-  const { accessToken, refreshToken, user } = result.data;
+  const { token, expiresAt, username, role } = result.data;
+  const user: User = {
+    id: username,
+    name: username,
+    email: username,
+    role: normalizeRole(role),
+    tenantId: null,
+  };
 
   const response = NextResponse.json({ success: true, data: { user }, error: null });
-  response.cookies.set(ACCESS_TOKEN_COOKIE, accessToken, { ...cookieOptions, maxAge: 60 * 15 });
-  response.cookies.set(REFRESH_TOKEN_COOKIE, refreshToken, { ...cookieOptions, maxAge: 60 * 60 * 24 * 7 });
+  const maxAge = Math.max(1, Math.floor((Date.parse(expiresAt) - Date.now()) / 1000));
+  response.cookies.set(ACCESS_TOKEN_COOKIE, token, { ...cookieOptions, maxAge });
   return response;
 }

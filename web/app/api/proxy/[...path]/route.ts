@@ -12,7 +12,6 @@
  */
 import { NextResponse, type NextRequest } from "next/server";
 import { handleMockRequest } from "@/lib/mock/router";
-import { verifyMockToken } from "@/lib/mock/tokens";
 import { ACCESS_TOKEN_COOKIE } from "@/lib/auth/cookies";
 import { isResourceReal, realBackendHeaders } from "@/lib/backend-mode";
 
@@ -34,11 +33,7 @@ async function handle(req: NextRequest, path: string[]) {
     return NextResponse.json(result.body, { status: result.status });
   }
 
-  // El backend real todavía no valida sesión (no tiene JWT) — la única
-  // "sesión" que existe hoy es la que emite el mock al loguearse. Se
-  // valida acá para que un recurso migrado no quede accesible sin login
-  // solo porque el backend de atrás no lo chequea.
-  if (!accessToken || !(await verifyMockToken(accessToken).catch(() => null))) {
+  if (!accessToken) {
     return NextResponse.json(
       { success: false, data: null, error: { code: 401, message: "Missing or invalid token" } },
       { status: 401 },
@@ -51,6 +46,7 @@ async function handle(req: NextRequest, path: string[]) {
     headers: {
       "Content-Type": "application/json",
       ...realBackendHeaders(),
+      Authorization: authHeader!,
     },
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
