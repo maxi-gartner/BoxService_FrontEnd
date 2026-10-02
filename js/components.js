@@ -2,6 +2,7 @@
 // Importar en cada página ANTES que el JS propio de la página.
 
 import { getHealth } from "./api.js";
+import { getCurrentUser, hasRole, logout, requireSession } from "./auth.js";
 
 const ROOT = getRootPath();
 
@@ -107,10 +108,19 @@ function initHamburger() {
 
 // ── Init ─────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", async () => {
+  if (!requireSession()) return;
   await loadComponent("#sidebar-container", "sidebar.html");
   await loadComponent("#footer-container", "footer.html");
   setActiveLink();
   checkHealth();
   initTabs();
   initHamburger();
+
+  const user = getCurrentUser();
+  const userLabel = document.getElementById("sidebar-user");
+  if (userLabel && user) userLabel.textContent = `${user.username} · ${user.role}`;
+  if (!hasRole("dueno", "superadmin")) {
+    document.querySelector('[data-role="catalog-write"]')?.remove();
+  }
+  document.getElementById("sidebar-logout")?.addEventListener("click", logout);
 });

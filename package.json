@@ -1,0 +1,9 @@
+{
+  "name": "boxservice-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Frontend estático de BoxService (HTML/CSS/JS vanilla, sin build). El script 'dev' solo sirve los archivos tal cual están — no compila ni transforma nada.",
+  "scripts": {
+    "dev": "node dev-server.js"
+  }
+}
