@@ -31,11 +31,19 @@ segundo proyecto.
 | `BACKEND_MODE` | `real` | `real` |
 | `BACKEND_URL` | URL del servicio `boxservice-backend-dev` en Render | URL del servicio `boxservice-backend-prod` en Render |
 | `NEXT_PUBLIC_APP_URL` | URL que Vercel le da al deploy de `develop` | dominio de producción |
+| `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | mismo Client ID en los dos — ver `BoxService_BackEnd/docs/PORTAL.md` | mismo Client ID en los dos |
 
-Ninguna de estas tres es secreta en el sentido de "credencial" — son URLs
-públicas. No hay ningún token ni clave del lado del frontend: el JWT vive
-en una cookie `httpOnly` que arma el backend en el login
-(`app/api/auth/login/route.ts`), el navegador nunca lo toca directamente.
+Ninguna de estas es secreta en el sentido de "credencial" — son URLs e
+IDs públicos. No hay ningún token ni clave del lado del frontend: el JWT
+de staff vive en una cookie `httpOnly` que arma el backend en el login
+(`app/api/auth/login/route.ts`), y el del portal del cliente en otra
+cookie separada armada igual (`app/api/portal-auth/google/route.ts`) —
+el navegador nunca los toca directamente.
+
+**Recordatorio para el Client ID de Google**: en Google Cloud Console,
+"Authorized JavaScript origins" tiene que incluir la URL de cada
+ambiente desplegado (no solo `localhost:3000`) o el botón de Google
+falla en producción.
 
 ## CI
 

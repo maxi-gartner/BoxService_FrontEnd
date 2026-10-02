@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useClients, useClientVehicles, useCreateClient } from "@/hooks/useClients";
+import { useClients, useClientVehicles, useCreateClient, useInvitePortal } from "@/hooks/useClients";
 import { ApiClientError } from "@/lib/api/client";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -22,9 +22,27 @@ type FormValues = z.infer<typeof schema>;
 export default function ClientesPage() {
   const { data: clients, isLoading } = useClients();
   const createClient = useCreateClient();
+  const invitePortal = useInvitePortal();
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
   const [selectedClientName, setSelectedClientName] = useState("");
   const { data: vehicles, isLoading: loadingVehicles } = useClientVehicles(selectedClientId);
+  const [inviteError, setInviteError] = useState("");
+  const [invitingClientId, setInvitingClientId] = useState<number | null>(null);
+
+  async function handleInvite(clientId: number) {
+    setInviteError("");
+    setInvitingClientId(clientId);
+    try {
+      const invite = await invitePortal.mutateAsync(clientId);
+      // Un solo click: generamos el link y abrimos WhatsApp con el
+      // mensaje ya armado, listo para mandar.
+      window.open(invite.whatsappUrl, "_blank");
+    } catch (err) {
+      setInviteError(err instanceof ApiClientError ? err.message : "No se pudo generar la invitación.");
+    } finally {
+      setInvitingClientId(null);
+    }
+  }
 
   const {
     register,
@@ -80,6 +98,7 @@ export default function ClientesPage() {
 
         <Card>
           <CardTitle>Clientes activos</CardTitle>
+          <Alert type="error">{inviteError}</Alert>
           <TableWrapper>
             <THead>
               <th>ID</th>
@@ -98,15 +117,25 @@ export default function ClientesPage() {
                   <TD>{client.phone}</TD>
                   <TD>{client.email}</TD>
                   <TD>
-                    <button
-                      onClick={() => {
-                        setSelectedClientId(client.clientId);
-                        setSelectedClientName(client.name);
-                      }}
-                      className="text-xs text-accent hover:underline"
-                    >
-                      Ver vehículos
-                    </button>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => {
+                          setSelectedClientId(client.clientId);
+                          setSelectedClientName(client.name);
+                        }}
+                        className="text-xs text-accent hover:underline"
+                      >
+                        Ver vehículos
+                      </button>
+                      <button
+                        onClick={() => handleInvite(client.clientId)}
+                        disabled={invitingClientId === client.clientId}
+                        className="text-xs text-accent hover:underline disabled:opacity-50"
+                        title="Genera un link para que el cliente vea el estado de su auto y abre WhatsApp para mandárselo"
+                      >
+                        {invitingClientId === client.clientId ? "Generando..." : "Invitar al portal"}
+                      </button>
+                    </div>
                   </TD>
                 </TR>
               ))}
