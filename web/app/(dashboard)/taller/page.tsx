@@ -52,8 +52,13 @@ function TallerContent() {
     );
 
     if (vehicle) {
+      // Deep-link: hay que esperar a que "vehicles" (async, React Query)
+      // esté disponible para poder resolver el vehículo — no se puede
+      // calcular puramente en el render mientras tanto.
+      /* eslint-disable react-hooks/set-state-in-effect */
       setSelectedVehicle(vehicle);
       setView("resumen");
+      /* eslint-enable react-hooks/set-state-in-effect */
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps

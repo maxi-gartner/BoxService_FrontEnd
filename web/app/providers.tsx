@@ -10,7 +10,13 @@ export function Providers({ children }: { children: ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 30_000,
+            staleTime: 60_000,
+            // Default a false: evita una tanda de refetches cada vez que
+            // alguien vuelve a la pestaña sin que haya pasado nada. Los
+            // hooks de Taller (presupuestos/services/facturas) lo
+            // reactivan puntualmente porque ahí sí importa enterarse
+            // rápido de un cambio hecho desde otro puesto.
+            refetchOnWindowFocus: false,
             retry: 1,
           },
         },

@@ -2,8 +2,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { catalogApi } from "@/lib/api/catalog";
 import type { CatalogItemCreateRequest, CatalogItemUpdateRequest } from "@/types/entities";
 
+// Precios del catálogo casi no cambian durante el día — el default global
+// (60s) ya ahorra pedidos de más, pero acá podemos ir bastante más largo.
 export function useCatalog() {
-  return useQuery({ queryKey: ["catalog"], queryFn: catalogApi.list });
+  return useQuery({ queryKey: ["catalog"], queryFn: catalogApi.list, staleTime: 5 * 60_000 });
 }
 
 export function useCreateCatalogItem() {

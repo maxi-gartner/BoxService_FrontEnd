@@ -27,6 +27,14 @@ export type ClientCreateRequest = {
   email?: string;
 };
 
+// Portal del cliente: invitación por WhatsApp para que el dueño del auto
+// entre con Google a ver el estado de su vehículo (ver docs/PORTAL.md).
+export type PortalInvite = {
+  inviteUrl: string;
+  whatsappUrl: string;
+  expiresAt: string;
+};
+
 // ── Vehículos ─────────────────────────────────────────
 export type Vehicle = {
   vehicleId: number;

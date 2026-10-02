@@ -13,7 +13,14 @@ import { ACCESS_TOKEN_COOKIE } from "@/lib/auth/cookies";
 import { normalizeRole } from "@/lib/auth/roles";
 import type { AccessTokenClaims } from "@/types/auth";
 
-const PUBLIC_ROUTES = ["/login"];
+// /portal es un mundo aparte: su propia sesión (cookie bs_portal_token,
+// ver lib/auth/portalCookies.ts), su propio login con Google, nada que
+// ver con la sesión de staff que gatea este proxy — no exige sesión de
+// staff, pero tampoco rebota a un miembro del staff logueado fuera de
+// ahí (a diferencia de /login, que si ya tenés sesión no tiene sentido
+// mostrarlo de nuevo).
+const STAFF_AUTH_EXEMPT_ROUTES = ["/login", "/portal"];
+const REDIRECT_IF_LOGGED_IN_ROUTES = ["/login"];
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -34,15 +41,15 @@ export function proxy(request: NextRequest) {
     }
   }
 
-  const isPublicRoute = PUBLIC_ROUTES.some((r) => pathname.startsWith(r));
+  const isExempt = STAFF_AUTH_EXEMPT_ROUTES.some((r) => pathname.startsWith(r));
 
-  if (!isPublicRoute && !claims) {
+  if (!isExempt && !claims) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  if (isPublicRoute && claims) {
+  if (REDIRECT_IF_LOGGED_IN_ROUTES.some((r) => pathname.startsWith(r)) && claims) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 

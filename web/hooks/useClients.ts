@@ -21,3 +21,11 @@ export function useCreateClient() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["clients"] }),
   });
 }
+
+// No invalida nada: generar una invitación no cambia ningún dato visible
+// en la lista de clientes, solo arma el link.
+export function useInvitePortal() {
+  return useMutation({
+    mutationFn: (clientId: number) => clientsApi.invitePortal(clientId),
+  });
+}

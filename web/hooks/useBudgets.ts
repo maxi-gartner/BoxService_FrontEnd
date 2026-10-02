@@ -2,8 +2,16 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { budgetsApi } from "@/lib/api/budgets";
 import type { BudgetCreateRequest, BudgetStatus } from "@/types/entities";
 
+// Estado del taller en vivo: más de un puesto puede aprobar/cambiar un
+// presupuesto al mismo tiempo que otro lo está mirando — acá sí vale la
+// pena refetchear al volver a la pestaña, a diferencia del default global.
 export function useBudgets() {
-  return useQuery({ queryKey: ["budgets"], queryFn: budgetsApi.list });
+  return useQuery({
+    queryKey: ["budgets"],
+    queryFn: budgetsApi.list,
+    staleTime: 15_000,
+    refetchOnWindowFocus: true,
+  });
 }
 
 export function useBudget(id: number | null) {
@@ -11,6 +19,8 @@ export function useBudget(id: number | null) {
     queryKey: ["budgets", id],
     queryFn: () => budgetsApi.getById(id as number),
     enabled: id !== null,
+    staleTime: 15_000,
+    refetchOnWindowFocus: true,
   });
 }
 
