@@ -70,7 +70,7 @@ export default function ClientesPage() {
     <div>
       <h1 className="text-2xl font-bold mb-6">Clientes</h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6 mb-6">
         <Card>
           <CardTitle>Nuevo cliente</CardTitle>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -117,7 +117,7 @@ export default function ClientesPage() {
                   <TD>{client.phone}</TD>
                   <TD>{client.email}</TD>
                   <TD>
-                    <div className="flex gap-3">
+                    <div className="flex flex-col items-start gap-1.5 whitespace-nowrap sm:flex-row sm:items-center sm:gap-3">
                       <button
                         onClick={() => {
                           setSelectedClientId(client.clientId);
@@ -145,8 +145,8 @@ export default function ClientesPage() {
       </div>
 
       <Card>
-        <div className="flex items-center justify-between mb-4">
-          <CardTitle>Vehículos del cliente</CardTitle>
+        <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+          <CardTitle className="mb-0">Vehículos del cliente</CardTitle>
           <p className="text-sm text-muted">
             {selectedClientId ? `Vehículos de ${selectedClientName}` : "Seleccioná un cliente para ver sus vehículos."}
           </p>

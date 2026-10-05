@@ -87,10 +87,10 @@ export function NewBudgetTab({ vehicle, onCreated }: { vehicle: Vehicle; onCreat
         <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Ej: Cliente pide revisar suspensión también" />
       </div>
 
-      <div className="flex items-center justify-between mb-3 border-b border-border pb-3">
+      <div className="flex flex-col gap-3 mb-3 border-b border-border pb-3 sm:flex-row sm:items-center sm:justify-between">
         <span className="text-xs font-semibold uppercase text-muted">Ítems del presupuesto</span>
-        <div className="flex gap-2">
-          <Select value={catalogChoice} onChange={(e) => setCatalogChoice(e.target.value)} className="max-w-[240px]">
+        <div className="flex flex-wrap gap-2">
+          <Select value={catalogChoice} onChange={(e) => setCatalogChoice(e.target.value)} className="w-full sm:w-auto sm:max-w-60">
             <option value="">Elegir del catálogo...</option>
             {catalog?.map((c) => (
               <option key={c.catalogId} value={c.catalogId}>
@@ -107,9 +107,13 @@ export function NewBudgetTab({ vehicle, onCreated }: { vehicle: Vehicle; onCreat
         </div>
       </div>
 
-      <div className="space-y-2 mb-4">
+      {/* Las filas de ítems tienen 6 columnas de ancho fijo: en mobile no
+          entran — en vez de recortar el layout a una versión distinta
+          achicada, se deja scrollear horizontal (mismo criterio que
+          TableWrapper para las tablas). */}
+      <div className="space-y-2 mb-4 overflow-x-auto">
         {items.map((item) => (
-          <div key={item.key} className="grid grid-cols-[110px_1fr_72px_110px_100px_auto] gap-2 items-center">
+          <div key={item.key} className="grid grid-cols-[110px_1fr_72px_110px_100px_auto] gap-2 items-center min-w-160">
             <Select value={item.type} onChange={(e) => updateItem(item.key, { type: e.target.value as "labor" | "part" })}>
               <option value="labor">Mano de obra</option>
               <option value="part">Repuesto</option>
