@@ -40,7 +40,7 @@ export function VehicleOverview({ vehicle, onOpen }: { vehicle: Vehicle; onOpen:
           <CardTitle>Actividad reciente</CardTitle>
           {loading && <p className="text-sm text-muted">Cargando actividad...</p>}
           {!loading && activity.length === 0 && <div className="py-8 text-center"><p className="text-sm text-muted mb-3">Todavía no hay actividad registrada para este vehículo.</p><Button size="sm" onClick={() => onOpen("nuevo-presupuesto")}>Crear primer presupuesto</Button></div>}
-          {!loading && activity.map((item) => <div key={item.key} className="grid grid-cols-[90px_1fr_auto] gap-3 items-center py-3 border-b border-border last:border-0"><span className="text-xs text-muted">{formatDate(item.date)}</span><div><p className="text-sm font-semibold">{item.title}</p><p className="text-xs text-muted mt-1">{item.detail}</p></div><Button size="sm" variant="secondary" onClick={() => onOpen(item.section)}>Ver</Button></div>)}
+          {!loading && activity.map((item) => <div key={item.key} className="grid grid-cols-[90px_1fr_auto] gap-3 items-center py-3 border-b border-border last:border-0"><span className="text-xs text-muted">{formatDate(item.date)}</span><div className="min-w-0"><p className="text-sm font-semibold wrap-break-word">{item.title}</p><p className="text-xs text-muted mt-1 wrap-break-word">{item.detail}</p></div><Button size="sm" variant="secondary" onClick={() => onOpen(item.section)}>Ver</Button></div>)}
         </Card>
         <Card>
           <CardTitle>Próximo mantenimiento</CardTitle>
