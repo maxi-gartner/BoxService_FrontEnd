@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { getCurrentUser } from "@/lib/auth/getCurrentUser";
-import { Sidebar } from "@/components/layout/Sidebar";
+import { DashboardShell } from "@/components/layout/DashboardShell";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
@@ -11,9 +11,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (!user) redirect("/login");
 
   return (
-    <div className="flex min-h-screen">
-      <Sidebar userName={user.name} role={user.role} />
-      <main className="flex-1 p-8 overflow-x-hidden">{children}</main>
-    </div>
+    <DashboardShell userName={user.name} role={user.role}>
+      {children}
+    </DashboardShell>
   );
 }

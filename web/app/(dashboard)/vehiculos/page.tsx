@@ -80,7 +80,7 @@ export default function VehiculosPage() {
     <div>
       <h1 className="text-2xl font-bold mb-6">Vehículos</h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6">
         <Card>
           <CardTitle>Registrar vehículo</CardTitle>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -135,13 +135,13 @@ export default function VehiculosPage() {
         </Card>
 
         <Card>
-          <div className="flex items-center justify-between gap-4 mb-4">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <CardTitle className="mb-0">Vehículos registrados</CardTitle>
             <Input
               placeholder="Buscar por patente, marca, modelo o cliente…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="max-w-xs"
+              className="w-full sm:max-w-xs"
             />
           </div>
           <TableWrapper>

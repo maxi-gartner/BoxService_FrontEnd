@@ -21,8 +21,15 @@ jobs:
           cache: "npm"
           cache-dependency-path: web/package-lock.json
 
+      # npm ci (no npm install) exige que el lockfile describa exactamente
+      # la misma resolución que reconstruiría desde cero — y eso se rompe
+      # con @hookform/resolvers/ajv, un peer opcional que el proyecto ni
+      # usa (solo se usa @hookform/resolvers/zod) pero que entra en
+      # conflicto de versión con el ajv interno de ESLint. npm install lo
+      # tolera sin problema — es literalmente lo que ya usa Vercel para
+      # el deploy real, así que este paso queda consistente con eso.
       - name: Install
-        run: npm ci
+        run: npm install
 
       - name: Lint
         run: npm run lint
