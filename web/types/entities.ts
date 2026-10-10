@@ -137,6 +137,55 @@ export type ServiceDetailCreateRequest = {
   done: boolean;
 };
 
+// Inspección de ingreso: documenta cómo llegó el vehículo para un service.
+export type InspectionItemStatus = "ok" | "damaged" | "not_checked";
+
+export type ServiceInspectionItem = {
+  itemId: number;
+  itemCode: string;
+  itemName: string;
+  status: InspectionItemStatus;
+  observation: string;
+};
+
+export type ServiceInspectionPhoto = {
+  photoId: number;
+  storagePath: string;
+  photoType: string;
+  description: string;
+  originalFileName: string;
+  contentType: string;
+  createdAt: string;
+};
+
+export type ServiceInspection = {
+  inspectionId: number;
+  serviceId: number;
+  fuelLevel: number | null;
+  generalObservations: string;
+  inspectedBy: string;
+  inspectedAt: string;
+  items: ServiceInspectionItem[];
+  photos: ServiceInspectionPhoto[];
+};
+
+export type ServiceInspectionItemRequest = {
+  itemCode: string;
+  status: InspectionItemStatus;
+  observation: string | null;
+};
+
+export type ServiceInspectionUpsertRequest = {
+  fuelLevel: number | null;
+  generalObservations: string | null;
+  items: ServiceInspectionItemRequest[];
+};
+
+export type InspectionPhotoUrl = {
+  url: string;
+  expiresIn: number;
+};
+
 // ── Facturas ──────────────────────────────────────────
 export type InvoiceStatus = "issued" | "paid" | "cancelled";
 

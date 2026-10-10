@@ -21,16 +21,15 @@ async function handle(req: NextRequest, path: string[]) {
   const pathname = path.join("/");
   const accessToken = req.cookies.get(ACCESS_TOKEN_COOKIE)?.value ?? null;
   const authHeader = accessToken ? `Bearer ${accessToken}` : null;
-
-  let body: unknown = undefined;
-  if (req.method !== "GET" && req.method !== "HEAD") {
-    const text = await req.text();
-    body = text ? JSON.parse(text) : undefined;
-  }
-
   const resource = pathname.split("/")[0];
 
   if (!isResourceReal(resource)) {
+    let body: unknown = undefined;
+    if (req.method !== "GET" && req.method !== "HEAD") {
+      const text = await req.text();
+      body = text ? JSON.parse(text) : undefined;
+    }
+
     const result = await handleMockRequest(req.method, pathname, req.nextUrl.searchParams, body, authHeader);
     return NextResponse.json(result.body, { status: result.status });
   }
@@ -43,13 +42,17 @@ async function handle(req: NextRequest, path: string[]) {
   }
 
   const upstreamUrl = `${process.env.BACKEND_URL}/${pathname}${req.nextUrl.search}`;
+  const contentType = req.headers.get("content-type");
+  const hasBody = req.method !== "GET" && req.method !== "HEAD";
+  const rawBody = hasBody ? await req.arrayBuffer() : undefined;
+
   const upstreamResponse = await fetch(upstreamUrl, {
     method: req.method,
     headers: {
-      "Content-Type": "application/json",
+      ...(contentType ? { "Content-Type": contentType } : {}),
       Authorization: authHeader,
     },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
+    body: rawBody && rawBody.byteLength > 0 ? rawBody : undefined,
   });
 
   const responseBody = await upstreamResponse.text();
