@@ -35,7 +35,7 @@ jobs:
         run: npm run lint
 
       - name: Typecheck
-        run: npx tsc --noEmit
+        run: npx next typegen && npx tsc --noEmit
 
       # Sin BACKEND_MODE seteada cae a "mock" (lib/backend-mode.ts) — el
       # build no necesita ningún secreto ni backend real levantado.
