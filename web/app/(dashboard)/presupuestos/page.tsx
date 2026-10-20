@@ -154,6 +154,13 @@ export default function PresupuestosPage() {
                       >
                         {expandedId === b.budgetId ? "Ocultar" : "Ver detalle"}
                       </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => window.open(`/presupuesto?id=${b.budgetId}`, "_blank")}
+                      >
+                        Imprimir / PDF
+                      </Button>
                       {pending && (
                         <>
                           <Button size="sm" disabled={busy} onClick={() => act(b.budgetId, "approved")}>

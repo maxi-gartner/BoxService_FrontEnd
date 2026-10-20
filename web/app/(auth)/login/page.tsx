@@ -119,7 +119,7 @@ function LoginForm() {
                   <Input
                     id="username"
                     type="text"
-                    placeholder="superadmin"
+                    placeholder="Ingresá tu usuario"
                     autoComplete="username"
                     className="cursor-text"
                     {...register("username")}
