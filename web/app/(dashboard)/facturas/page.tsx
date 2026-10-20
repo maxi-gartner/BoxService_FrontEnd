@@ -136,6 +136,13 @@ export default function FacturasPage() {
                     <Badge status={i.status} />
                   </TD>
                   <TD className="flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => window.open(`/factura?id=${i.invoiceId}`, "_blank")}
+                    >
+                      Imprimir / PDF
+                    </Button>
                     {i.status === "issued" && (
                       <>
                         <Button size="sm" disabled={busy} onClick={() => act(i.invoiceId, "paid", "Cobrada")}>
