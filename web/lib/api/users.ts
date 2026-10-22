@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { UserAccount, UserCreateRequest, UserUpdateRequest } from "@/types/entities";
+import type { ResetPasswordRequest, UserAccount, UserCreateRequest, UserUpdateRequest } from "@/types/entities";
 
 export const usersApi = {
   // dueno/empleado: solo los de su tenant. superadmin: todos, con tenantName.
@@ -8,4 +8,6 @@ export const usersApi = {
   // tenant puntual como superadmin, ver tenantsApi.createUser.
   create: (data: UserCreateRequest) => api.post<UserAccount>("users", data),
   update: (id: number, data: UserUpdateRequest) => api.patch<UserAccount>(`users/${id}`, data),
+  resetPassword: (id: number, data: ResetPasswordRequest) =>
+    api.post<{ message: string }>(`users/${id}/reset-password`, data),
 };

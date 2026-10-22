@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/Button";
 import { Input, Label } from "@/components/ui/Input";
 import { Alert } from "@/components/ui/Alert";
 import { TableWrapper, THead, TBody, TR, TD, EmptyRow } from "@/components/ui/Table";
+import { ResetPasswordButton } from "@/components/admin/ResetPasswordButton";
 
 const ROLE_LABEL: Record<string, string> = { dueno: "Dueño", empleado: "Empleado" };
 
@@ -118,7 +119,8 @@ function EmpleadosCard() {
                 <TD className="text-muted">{u.username}</TD>
                 <TD className="text-muted">{ROLE_LABEL[u.role] ?? u.role}</TD>
                 <TD className={u.active ? "text-success" : "text-danger"}>{u.active ? "Activo" : "Inactivo"}</TD>
-                <TD>
+                <TD className="flex gap-2">
+                  <ResetPasswordButton userId={u.userId} onDone={(msg) => msg && setMessage(msg)} />
                   {u.role !== "dueno" && (
                     <Button
                       size="sm"

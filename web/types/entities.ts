@@ -23,6 +23,10 @@ export type Tenant = {
   name: string;
   active: boolean;
   createdAt: string;
+  telefono: string | null;
+  email: string | null;
+  ownerName: string | null;
+  ownerUsername: string | null;
 };
 
 export type TenantCreateRequest = {
@@ -30,6 +34,8 @@ export type TenantCreateRequest = {
   ownerName: string;
   username: string;
   password: string;
+  telefono?: string;
+  email?: string;
 };
 
 export type TenantCreateResult = {
@@ -38,8 +44,39 @@ export type TenantCreateResult = {
   owner: { userId: number; username: string; name: string };
 };
 
+// Control de pago mensual por taller — por ahora solo "pagó este mes
+// sí/no" y cuánto, no una contabilidad completa.
+export type TenantPayment = {
+  paymentId: number;
+  tenantId: number;
+  amount: number;
+  period: string; // "YYYY-MM"
+  paymentDate: string;
+  notes: string | null;
+  createdAt: string;
+};
+
+export type TenantPaymentCreateRequest = {
+  amount: number;
+  period: string;
+  paymentDate?: string;
+  notes?: string;
+};
+
+// GET /admin/payments — de un vistazo, quién pagó el mes actual.
+export type TenantPaymentStatus = {
+  tenantId: number;
+  tenantName: string;
+  paidCurrentPeriod: boolean;
+  lastAmount: number | null;
+  lastPeriod: string | null;
+  lastPaymentDate: string | null;
+};
+
 export type TenantUpdateRequest = {
   active?: boolean;
+  telefono?: string;
+  email?: string;
 };
 
 export type Sucursal = {
@@ -91,6 +128,12 @@ export type UserUpdateRequest = {
   name?: string;
   email?: string | null;
   active?: boolean;
+};
+
+// POST /users/{id}/reset-password — soporte cuando un dueño/empleado se
+// olvida la contraseña.
+export type ResetPasswordRequest = {
+  newPassword: string;
 };
 
 // GET /admin/clients (superadmin) — misma forma que Client, con el
