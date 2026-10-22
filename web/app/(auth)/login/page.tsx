@@ -44,10 +44,11 @@ function LoginForm() {
     setInfoMessage("");
 
     try {
-      await login(values);
+      const user = await login(values);
+      const home = user.role === "superadmin" ? "/admin/tenants" : "/taller";
 
       router.push(
-        searchParams.get("next") ?? "/dashboard",
+        searchParams.get("next") ?? home,
       );
 
       router.refresh();

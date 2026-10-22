@@ -11,13 +11,15 @@ type NavItem = { href: string; label: string; icon: string; roles?: Role[] };
 // Operativo: pantallas de UN taller puntual (dueño/empleado). Superadmin
 // no opera un taller, administra talleres — no tiene sentido acá.
 const STAFF_NAV_ITEMS: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: "🏠" },
+  { href: "/taller", label: "Taller", icon: "🔧" },
   { href: "/clientes", label: "Clientes", icon: "👤" },
   { href: "/vehiculos", label: "Vehículos", icon: "🚗" },
-  { href: "/taller", label: "Taller", icon: "🔧" },
   { href: "/presupuestos", label: "Presupuestos", icon: "📋" },
   { href: "/facturas", label: "Facturas", icon: "🧾" },
   { href: "/catalogo", label: "Catálogo", icon: "💲" },
+  // Datos del negocio (ingresos, etc.) — solo dueño, mismo criterio que
+  // Administración.
+  { href: "/metricas", label: "Métricas", icon: "📊", roles: ["owner"] },
   // Gestión de empleados/sucursales del propio tenant — solo dueño.
   { href: "/admin", label: "Administración", icon: "⚙️", roles: ["owner"] },
 ];
@@ -27,6 +29,7 @@ const STAFF_NAV_ITEMS: NavItem[] = [
 const SUPERADMIN_NAV_ITEMS: NavItem[] = [
   { href: "/admin/tenants", label: "Talleres", icon: "🏢" },
   { href: "/admin/usuarios", label: "Usuarios", icon: "👥" },
+  { href: "/admin/pagos", label: "Pagos", icon: "💰" },
 ];
 
 type Props = {
