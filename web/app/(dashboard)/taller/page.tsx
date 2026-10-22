@@ -32,6 +32,14 @@ const SECTIONS: { id: View; label: string }[] = [
   { id: "facturacion", label: "Facturación" },
 ];
 
+// Mismos tabs que SECTIONS (misma barra, mismo hover/resaltado) en vez de
+// botones aparte arriba — así armar un presupuesto o un service se ve
+// como "entrar a otra sección", no como una acción fuera de lugar.
+const ACTIONS: { id: View; label: string }[] = [
+  { id: "nuevo-presupuesto", label: "+ Nuevo presupuesto" },
+  { id: "nuevo-service", label: "+ Registrar service" },
+];
+
 function TallerContent() {
   const searchParams = useSearchParams();
   const { data: vehicles } = useVehicles();
@@ -105,11 +113,7 @@ function TallerContent() {
 
       {selectedVehicle && view !== "buscar" && (
         <>
-          <VehicleWorkspaceHeader
-            vehicle={selectedVehicle}
-            onNewBudget={() => setView("nuevo-presupuesto")}
-            onNewService={() => setView("nuevo-service")}
-          />
+          <VehicleWorkspaceHeader vehicle={selectedVehicle} />
 
           <div className="flex gap-1 border-b border-border mb-6 overflow-x-auto">
             {SECTIONS.map((section) => (
@@ -126,6 +130,22 @@ function TallerContent() {
                 {section.label}
               </button>
             ))}
+            <div className="ml-auto flex gap-1">
+              {ACTIONS.map((action) => (
+                <button
+                  key={action.id}
+                  onClick={() => setView(action.id)}
+                  className={cn(
+                    "px-4 py-3 text-sm whitespace-nowrap border-b-2 -mb-px transition-colors",
+                    view === action.id
+                      ? "border-accent text-accent"
+                      : "border-transparent text-muted hover:text-light",
+                  )}
+                >
+                  {action.label}
+                </button>
+              ))}
+            </div>
           </div>
         </>
       )}

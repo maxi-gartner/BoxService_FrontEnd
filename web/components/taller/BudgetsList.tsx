@@ -1,20 +1,47 @@
 "use client";
 
-import { useState } from "react";
-import { useBudgets, useUpdateBudgetStatus, useAssignServiceToBudget } from "@/hooks/useBudgets";
+import { Fragment, useState } from "react";
+import { useBudgets, useBudget, useUpdateBudgetStatus, useAssignServiceToBudget, useUpdateBudgetDetails } from "@/hooks/useBudgets";
 import { useInvoices, useCreateInvoice } from "@/hooks/useInvoices";
 import { useCreateService, useCreateServiceDetail } from "@/hooks/useServices";
-import { budgetsApi } from "@/lib/api/budgets";
 import { ApiClientError } from "@/lib/api/client";
+import { BudgetDetailsEditor } from "@/components/taller/BudgetDetailsEditor";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { TableWrapper, THead, TBody, TR, TD, EmptyRow } from "@/components/ui/Table";
 import { formatDate } from "@/lib/utils";
-import type { Budget, BudgetStatus, Vehicle } from "@/types/entities";
+import type { Budget, BudgetDetailRequest, BudgetStatus, Vehicle } from "@/types/entities";
 
 function isCompleted(b: Budget) {
   return b.status === "completed" || (b.status === "approved" && !!b.serviceId);
+}
+
+function EditableBudgetRow({ budgetId, colSpan, canFinalize, onSave, onFinalize, busy }: {
+  budgetId: number;
+  colSpan: number;
+  canFinalize: boolean;
+  onSave: (budgetId: number, details: BudgetDetailRequest[]) => void;
+  onFinalize: (budgetId: number, details: BudgetDetailRequest[]) => void;
+  busy: boolean;
+}) {
+  const { data, isLoading } = useBudget(budgetId);
+  return (
+    <tr>
+      <td colSpan={colSpan} className="bg-surface-2 px-4 py-4">
+        {isLoading && <p className="text-sm text-muted">Cargando ítems...</p>}
+        {data && (
+          <BudgetDetailsEditor
+            details={data.details}
+            saving={busy}
+            onSave={(details) => onSave(budgetId, details)}
+            onFinalize={canFinalize ? (details) => onFinalize(budgetId, details) : undefined}
+            finalizing={busy}
+          />
+        )}
+      </td>
+    </tr>
+  );
 }
 
 export function BudgetsList({ vehicle, onChanged }: { vehicle: Vehicle; onChanged: () => void }) {
@@ -25,9 +52,11 @@ export function BudgetsList({ vehicle, onChanged }: { vehicle: Vehicle; onChange
   const createInvoice = useCreateInvoice();
   const createService = useCreateService();
   const createServiceDetail = useCreateServiceDetail();
+  const updateDetails = useUpdateBudgetDetails();
 
   const [message, setMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
   const [workingId, setWorkingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
 
   const mine = (budgets ?? []).filter((b) => b.vehicleId === vehicle.vehicleId);
 
@@ -56,9 +85,32 @@ export function BudgetsList({ vehicle, onChanged }: { vehicle: Vehicle; onChange
     }
   }
 
-  async function handleGenerateService(budget: Budget) {
-    setWorkingId(budget.budgetId);
+  async function handleSaveDetails(budgetId: number, details: BudgetDetailRequest[]) {
+    setWorkingId(budgetId);
+    setMessage(null);
     try {
+      await updateDetails.mutateAsync({ id: budgetId, details });
+      setMessage({ type: "ok", text: "Presupuesto actualizado." });
+      setEditingId(null);
+    } catch (err) {
+      setMessage({ type: "error", text: err instanceof ApiClientError ? err.message : "No se pudo actualizar." });
+    } finally {
+      setWorkingId(null);
+    }
+  }
+
+  // "Realizar trabajo": guarda los ítems (ya editados si hacía falta
+  // sumar o sacar algo) y recién ahí genera el service — un solo paso,
+  // sin tener que cancelar el presupuesto si algo cambió a último momento.
+  async function handleFinalize(budgetId: number, details: BudgetDetailRequest[]) {
+    const budget = mine.find((b) => b.budgetId === budgetId);
+    if (!budget) return;
+
+    setWorkingId(budgetId);
+    setMessage(null);
+    try {
+      await updateDetails.mutateAsync({ id: budgetId, details });
+
       let mileage = vehicle.currentMileage;
       if (!mileage || mileage <= 0) {
         const entered = window.prompt(`Ingresá el kilometraje actual para generar el service del presupuesto ${budget.number}:`);
@@ -67,9 +119,8 @@ export function BudgetsList({ vehicle, onChanged }: { vehicle: Vehicle; onChange
         if (!mileage || mileage <= 0) throw new Error("El kilometraje debe ser mayor a 0.");
       }
 
-      const detail = await budgetsApi.getById(budget.budgetId);
-      const descriptions = detail.details.map((d) => d.description).filter((d) => d.length > 0);
-      if (!descriptions.length) throw new Error("El presupuesto no tiene detalles para cargar en el service.");
+      const descriptions = details.map((d) => d.description).filter((d) => d.length > 0);
+      if (!descriptions.length) throw new Error("El presupuesto no tiene ítems para cargar en el service.");
 
       const service = await createService.mutateAsync({
         vehicleId: budget.vehicleId,
@@ -86,6 +137,7 @@ export function BudgetsList({ vehicle, onChanged }: { vehicle: Vehicle; onChange
       await assignService.mutateAsync({ budgetId: budget.budgetId, serviceId: service.serviceId });
 
       setMessage({ type: "ok", text: "Service creado correctamente desde el presupuesto aprobado." });
+      setEditingId(null);
       onChanged();
     } catch (err) {
       setMessage({ type: "error", text: err instanceof Error ? err.message : "No se pudo generar el service." });
@@ -132,58 +184,79 @@ export function BudgetsList({ vehicle, onChanged }: { vehicle: Vehicle; onChange
             const completed = isCompleted(b);
             const invoice = completed && b.serviceId ? invoices?.find((i) => i.serviceId === b.serviceId) : null;
             const busy = workingId === b.budgetId;
+            const editable = b.status === "draft" || b.status === "sent" || (b.status === "approved" && !completed);
 
             return (
-              <TR key={b.budgetId}>
-                <TD className="text-accent">{b.number}</TD>
-                <TD className="text-muted">{formatDate(b.date)}</TD>
-                <TD>
-                  <Badge status={completed ? "completed" : b.status} />
-                </TD>
-                <TD className="flex gap-2">
-                  {(b.status === "draft" || b.status === "sent") && (
-                    <>
-                      <Button size="sm" disabled={busy} onClick={() => handleApprove(b.budgetId)}>
-                        Aprobar
-                      </Button>
-                      <Button size="sm" variant="danger" disabled={busy} onClick={() => handleReject(b.budgetId, false)}>
-                        Rechazar
-                      </Button>
-                    </>
-                  )}
-                  {b.status === "approved" && !completed && (
-                    <>
-                      <Button size="sm" disabled={busy} onClick={() => handleGenerateService(b)}>
-                        Trabajo realizado
-                      </Button>
+              <Fragment key={b.budgetId}>
+                <TR>
+                  <TD className="text-accent">{b.number}</TD>
+                  <TD className="text-muted">{formatDate(b.date)}</TD>
+                  <TD>
+                    <Badge status={completed ? "completed" : b.status} />
+                  </TD>
+                  <TD className="flex flex-wrap gap-2">
+                    {(b.status === "draft" || b.status === "sent") && (
+                      <>
+                        <Button size="sm" disabled={busy} onClick={() => handleApprove(b.budgetId)}>
+                          Aprobar
+                        </Button>
+                        <Button size="sm" variant="danger" disabled={busy} onClick={() => handleReject(b.budgetId, false)}>
+                          Rechazar
+                        </Button>
+                      </>
+                    )}
+                    {b.status === "approved" && !completed && (
                       <Button size="sm" variant="danger" disabled={busy} onClick={() => handleReject(b.budgetId, true)}>
                         Cancelar
                       </Button>
-                    </>
-                  )}
-                  {completed && b.serviceId && (
-                    <>
-                      {invoice ? (
-                        <Button size="sm" variant="secondary" onClick={() => handleViewInvoice(b.serviceId!)}>
-                          Ver factura
-                        </Button>
-                      ) : (
-                        <Button size="sm" disabled={busy} onClick={() => handleInvoice(b)}>
-                          Facturar
-                        </Button>
-                      )}
+                    )}
+                    {editable && (
                       <Button
                         size="sm"
                         variant="secondary"
-                        onClick={() => window.open(`/ticket?serviceId=${b.serviceId}`, "_blank")}
+                        onClick={() => setEditingId(editingId === b.budgetId ? null : b.budgetId)}
                       >
-                        Generar ticket
+                        {editingId === b.budgetId
+                          ? "Cerrar"
+                          : b.status === "approved"
+                            ? "Realizar trabajo"
+                            : "Editar"}
                       </Button>
-                    </>
-                  )}
-                  {b.status === "rejected" && "—"}
-                </TD>
-              </TR>
+                    )}
+                    {completed && b.serviceId && (
+                      <>
+                        {invoice ? (
+                          <Button size="sm" variant="secondary" onClick={() => handleViewInvoice(b.serviceId!)}>
+                            Ver factura
+                          </Button>
+                        ) : (
+                          <Button size="sm" disabled={busy} onClick={() => handleInvoice(b)}>
+                            Facturar
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => window.open(`/ticket?serviceId=${b.serviceId}`, "_blank")}
+                        >
+                          Generar ticket
+                        </Button>
+                      </>
+                    )}
+                    {b.status === "rejected" && "—"}
+                  </TD>
+                </TR>
+                {editingId === b.budgetId && (
+                  <EditableBudgetRow
+                    budgetId={b.budgetId}
+                    colSpan={4}
+                    canFinalize={b.status === "approved" && !completed}
+                    onSave={handleSaveDetails}
+                    onFinalize={handleFinalize}
+                    busy={busy}
+                  />
+                )}
+              </Fragment>
             );
           })}
         </TBody>

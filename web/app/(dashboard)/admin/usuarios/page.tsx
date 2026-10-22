@@ -8,6 +8,7 @@ import { Card, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { TableWrapper, THead, TBody, TR, TD, EmptyRow } from "@/components/ui/Table";
+import { ResetPasswordButton } from "@/components/admin/ResetPasswordButton";
 
 const ROLE_LABEL: Record<string, string> = { dueno: "Dueño", empleado: "Empleado", superadmin: "Superadmin" };
 
@@ -60,7 +61,7 @@ export default function UsuariosPage() {
                     <TD className="text-muted">{ROLE_LABEL[u.role] ?? u.role}</TD>
                     <TD className="text-accent">{u.tenantName ?? "—"}</TD>
                     <TD className={u.active ? "text-success" : "text-danger"}>{u.active ? "Activo" : "Inactivo"}</TD>
-                    <TD>
+                    <TD className="flex gap-2">
                       <Button
                         size="sm"
                         variant={u.active ? "danger" : "secondary"}
@@ -69,6 +70,7 @@ export default function UsuariosPage() {
                       >
                         {u.active ? "Desactivar" : "Activar"}
                       </Button>
+                      <ResetPasswordButton userId={u.userId} onDone={(msg) => msg && setMessage(msg)} />
                     </TD>
                   </TR>
                 ))}
