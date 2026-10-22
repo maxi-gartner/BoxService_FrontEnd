@@ -26,6 +26,7 @@ const REAL_BACKEND_RESOURCES = new Set([
   "users",
   "admin",
   "metrics",
+  "vehicle-catalog",
 ]);
 
 // Para mostrar en UI si hiciera falta — no usar para decidir ruteo, para

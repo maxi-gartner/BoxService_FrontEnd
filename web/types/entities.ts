@@ -174,6 +174,7 @@ export type Vehicle = {
   clientId: number;
   brand: string;
   model: string;
+  version: string | null;
   year: number | null;
   plate: string;
   currentMileage: number;
@@ -184,9 +185,18 @@ export type VehicleCreateRequest = {
   clientId: number;
   brand: string;
   model: string;
+  version?: string;
   year?: number | null;
   plate: string;
   currentMileage?: number;
+};
+
+// Sugerencias de marca/modelo/versión al cargar un vehículo, sacadas del
+// catálogo público de Mercado Libre Argentina (GET /vehicle-catalog/*).
+// Solo son sugerencias — los campos siguen aceptando texto libre.
+export type VehicleCatalogOption = {
+  id: string;
+  name: string;
 };
 
 // ── Presupuestos ──────────────────────────────────────

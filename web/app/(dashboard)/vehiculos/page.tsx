@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ChangeEvent } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useVehicles, useCreateVehicle } from "@/hooks/useVehicles";
 import { useClients } from "@/hooks/useClients";
+import { useVehicleBrands, useVehicleModels, useVehicleVersions } from "@/hooks/useVehicleCatalog";
 import { ApiClientError } from "@/lib/api/client";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -13,11 +14,14 @@ import { Input, Label, Select } from "@/components/ui/Input";
 import { Alert } from "@/components/ui/Alert";
 import { TableWrapper, THead, TBody, TR, TD, EmptyRow } from "@/components/ui/Table";
 
+const OTHER_BRAND = "__otra__";
+
 const schema = z.object({
   clientId: z.string().min(1, "Elegí un cliente"),
   plate: z.string().min(1, "Ingresá la patente"),
   brand: z.string().min(1, "Ingresá la marca"),
   model: z.string().min(1, "Ingresá el modelo"),
+  version: z.string().optional(),
   year: z
     .string()
     .optional()
@@ -33,6 +37,7 @@ export default function VehiculosPage() {
   const { data: vehicles, isLoading } = useVehicles();
   const { data: clients } = useClients();
   const createVehicle = useCreateVehicle();
+  const { data: brands } = useVehicleBrands();
 
   const clientsById = useMemo(
     () => new Map((clients ?? []).map((c) => [c.clientId, c.name])),
@@ -42,13 +47,35 @@ export default function VehiculosPage() {
   const [search, setSearch] = useState("");
   const [formError, setFormError] = useState("");
   const [formOk, setFormOk] = useState("");
+  const [customBrand, setCustomBrand] = useState(false);
 
   const {
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({ resolver: zodResolver(schema) });
+
+  // Las sugerencias de modelo/versión dependen de la marca/modelo
+  // elegidos — se resuelven por nombre contra lo que ya trajo ML
+  // (datalist no da IDs, solo el texto tipeado/elegido).
+  const watchedBrand = watch("brand");
+  const watchedModel = watch("model");
+  const brandId = brands?.find((b) => b.name === watchedBrand)?.id ?? null;
+  const { data: models } = useVehicleModels(brandId);
+  const modelId = models?.find((m) => m.name === watchedModel)?.id ?? null;
+  const { data: versions } = useVehicleVersions(brandId, modelId);
+
+  function handleBrandSelect(e: ChangeEvent<HTMLSelectElement>) {
+    if (e.target.value === OTHER_BRAND) {
+      setCustomBrand(true);
+      setValue("brand", "");
+    } else {
+      setValue("brand", e.target.value, { shouldValidate: true });
+    }
+  }
 
   async function onSubmit(values: FormValues) {
     setFormError("");
@@ -59,11 +86,13 @@ export default function VehiculosPage() {
         plate: values.plate.trim().toUpperCase(),
         brand: values.brand.trim(),
         model: values.model.trim(),
+        version: values.version?.trim() || undefined,
         year: values.year ? Number(values.year) : null,
         currentMileage: values.currentMileage ? Number(values.currentMileage) : 0,
       });
       setFormOk(`Vehículo ${created.plate} registrado.`);
       reset();
+      setCustomBrand(false);
     } catch (err) {
       setFormError(err instanceof ApiClientError ? err.message : "No se pudo registrar el vehículo.");
     }
@@ -110,16 +139,52 @@ export default function VehiculosPage() {
                 {errors.year && <p className="mt-1 text-xs text-danger">{errors.year.message}</p>}
               </div>
             </div>
+            <div>
+              <Label>Marca</Label>
+              {customBrand || !brands?.length ? (
+                <Input placeholder="Toyota" {...register("brand")} />
+              ) : (
+                <Select value={watchedBrand ?? ""} onChange={handleBrandSelect}>
+                  <option value="" disabled>
+                    Elegí una marca…
+                  </option>
+                  {brands.map((b) => (
+                    <option key={b.id} value={b.name}>
+                      {b.name}
+                    </option>
+                  ))}
+                  <option value={OTHER_BRAND}>Otra (escribir)…</option>
+                </Select>
+              )}
+              {customBrand && (
+                <button
+                  type="button"
+                  className="mt-1 text-xs text-accent hover:underline"
+                  onClick={() => {
+                    setCustomBrand(false);
+                    setValue("brand", "");
+                  }}
+                >
+                  Elegir de la lista
+                </button>
+              )}
+              {errors.brand && <p className="mt-1 text-xs text-danger">{errors.brand.message}</p>}
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label>Marca</Label>
-                <Input placeholder="Toyota" {...register("brand")} />
-                {errors.brand && <p className="mt-1 text-xs text-danger">{errors.brand.message}</p>}
+                <Label>Modelo</Label>
+                <Input placeholder="Corolla" list="model-suggestions" {...register("model")} />
+                <datalist id="model-suggestions">
+                  {models?.map((m) => <option key={m.id} value={m.name} />)}
+                </datalist>
+                {errors.model && <p className="mt-1 text-xs text-danger">{errors.model.message}</p>}
               </div>
               <div>
-                <Label>Modelo</Label>
-                <Input placeholder="Corolla" {...register("model")} />
-                {errors.model && <p className="mt-1 text-xs text-danger">{errors.model.message}</p>}
+                <Label>Versión (opcional)</Label>
+                <Input placeholder="XEI 1.8" list="version-suggestions" {...register("version")} />
+                <datalist id="version-suggestions">
+                  {versions?.map((v) => <option key={v.id} value={v.name} />)}
+                </datalist>
               </div>
             </div>
             <div>
@@ -164,6 +229,7 @@ export default function VehiculosPage() {
                   <TD className="text-accent">{v.plate}</TD>
                   <TD>
                     {v.brand} {v.model}
+                    {v.version && <p className="text-xs text-muted">{v.version}</p>}
                   </TD>
                   <TD>{v.year ?? "-"}</TD>
                   <TD>{v.currentMileage.toLocaleString("es-AR")}</TD>

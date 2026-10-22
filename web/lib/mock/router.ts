@@ -219,6 +219,7 @@ function handleVehicles(
       clientId: req.clientId,
       brand: req.brand,
       model: req.model,
+      version: req.version ?? null,
       year: req.year ?? null,
       plate: req.plate.toUpperCase(),
       currentMileage: req.currentMileage ?? 0,
