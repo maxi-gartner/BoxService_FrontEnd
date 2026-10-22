@@ -21,8 +21,9 @@ export type User = {
   name: string;
   email: string;
   role: Role;
-  /** null solo para superadmin operando sin tenant seleccionado. */
+  /** null solo para superadmin — administra talleres, no pertenece a uno. */
   tenantId: string | null;
+  tenantName: string | null;
 };
 
 export type LoginRequest = {

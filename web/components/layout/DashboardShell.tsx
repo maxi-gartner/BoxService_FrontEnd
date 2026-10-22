@@ -7,10 +7,12 @@ import type { Role } from "@/types/auth";
 export function DashboardShell({
   userName,
   role,
+  tenantName,
   children,
 }: {
   userName: string;
   role: Role;
+  tenantName: string | null;
   children: ReactNode;
 }) {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -29,6 +31,7 @@ export function DashboardShell({
       <Sidebar
         userName={userName}
         role={role}
+        tenantName={tenantName}
         isOpen={isSidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />

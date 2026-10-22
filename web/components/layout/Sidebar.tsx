@@ -8,7 +8,9 @@ import { cn } from "@/lib/utils";
 
 type NavItem = { href: string; label: string; icon: string; roles?: Role[] };
 
-const NAV_ITEMS: NavItem[] = [
+// Operativo: pantallas de UN taller puntual (dueño/empleado). Superadmin
+// no opera un taller, administra talleres — no tiene sentido acá.
+const STAFF_NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: "🏠" },
   { href: "/clientes", label: "Clientes", icon: "👤" },
   { href: "/vehiculos", label: "Vehículos", icon: "🚗" },
@@ -16,20 +18,28 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/presupuestos", label: "Presupuestos", icon: "📋" },
   { href: "/facturas", label: "Facturas", icon: "🧾" },
   { href: "/catalogo", label: "Catálogo", icon: "💲" },
-  // Dueño gestiona su propio taller; superadmin, cualquiera — ver
-  // admin/page.tsx y proxy.ts, que aplican el mismo gate de verdad.
-  { href: "/admin", label: "Administración", icon: "⚙️", roles: ["owner", "superadmin"] },
+  // Gestión de empleados/sucursales del propio tenant — solo dueño.
+  { href: "/admin", label: "Administración", icon: "⚙️", roles: ["owner"] },
+];
+
+// Superadmin: administra talleres (tenants) y a toda la gente registrada
+// en ellos, nunca datos operativos de un taller puntual — ver proxy.ts.
+const SUPERADMIN_NAV_ITEMS: NavItem[] = [
+  { href: "/admin/tenants", label: "Talleres", icon: "🏢" },
+  { href: "/admin/usuarios", label: "Usuarios", icon: "👥" },
 ];
 
 type Props = {
   userName: string;
   role: Role;
+  /** null para superadmin (no pertenece a un tenant). */
+  tenantName: string | null;
   /** Mobile: si el drawer está abierto. En desktop (md+) se ignora, siempre visible. */
   isOpen: boolean;
   onClose: () => void;
 };
 
-export function Sidebar({ userName, role, isOpen, onClose }: Props) {
+export function Sidebar({ userName, role, tenantName, isOpen, onClose }: Props) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -39,7 +49,10 @@ export function Sidebar({ userName, role, isOpen, onClose }: Props) {
     router.refresh();
   }
 
-  const items = NAV_ITEMS.filter((item) => !item.roles || item.roles.includes(role));
+  const items =
+    role === "superadmin"
+      ? SUPERADMIN_NAV_ITEMS
+      : STAFF_NAV_ITEMS.filter((item) => !item.roles || item.roles.includes(role));
 
   return (
     <aside
@@ -80,6 +93,7 @@ export function Sidebar({ userName, role, isOpen, onClose }: Props) {
       <div className="border-t border-border px-4 py-4">
         <p className="text-xs text-muted mb-1 truncate">{userName}</p>
         <p className="text-xs text-accent mb-2">{ROLE_LABELS[role]}</p>
+        {tenantName && <p className="text-xs text-muted mb-2 truncate">{tenantName}</p>}
         <button onClick={handleLogout} className="text-xs text-danger hover:underline">
           Cerrar sesión
         </button>
