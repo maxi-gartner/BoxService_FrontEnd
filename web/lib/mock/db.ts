@@ -13,9 +13,9 @@ import type {
   CatalogItem,
   Client,
   Invoice,
+  MockTenant,
   Service,
   ServiceDetail,
-  Tenant,
   Vehicle,
 } from "@/types/entities";
 import type { Role } from "@/types/auth";
@@ -32,7 +32,7 @@ export type MockUser = {
 const TENANT_A = "t-lubricentro-sur";
 
 export const db = {
-  tenants: [{ tenantId: TENANT_A, name: "Lubricentro Sur", createdAt: "2026-01-01" }] as Tenant[],
+  tenants: [{ tenantId: TENANT_A, name: "Lubricentro Sur", createdAt: "2026-01-01" }] as MockTenant[],
 
   users: [
     {

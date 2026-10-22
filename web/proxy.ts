@@ -60,6 +60,14 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
+  // superadmin administra talleres, no opera uno — no tiene tenant
+  // propio, así que las pantallas operativas de un taller puntual
+  // (mismas que el backend ya le bloquea con 403) no tienen sentido acá.
+  const OPERATIONAL_ROUTES = ["/clientes", "/vehiculos", "/taller", "/presupuestos", "/facturas", "/catalogo"];
+  if (claims?.role === "superadmin" && OPERATIONAL_ROUTES.some((r) => pathname.startsWith(r))) {
+    return NextResponse.redirect(new URL("/admin/tenants", request.url));
+  }
+
   return NextResponse.next();
 }
 

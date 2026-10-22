@@ -34,6 +34,11 @@ function fail(status: number, message: string): MockResult {
   return { status, body: { success: false, data: null, error: { code: status, message } } };
 }
 
+function tenantNameFor(tenantId: string | null): string | null {
+  if (tenantId === null) return null;
+  return db.tenants.find((t) => t.tenantId === tenantId)?.name ?? null;
+}
+
 type Claims = { userId: string; role: Role; tenantId: string | null };
 
 async function getClaims(authHeader: string | null): Promise<Claims | null> {
@@ -100,7 +105,14 @@ async function handleLogin(body: LoginRequest): Promise<MockResult> {
   return ok({
     accessToken,
     refreshToken,
-    user: { id: user.id, name: user.name, email: user.email, role: user.role, tenantId: user.tenantId },
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      tenantId: user.tenantId,
+      tenantName: tenantNameFor(user.tenantId),
+    },
   });
 }
 
@@ -128,7 +140,14 @@ function handleUsers(method: string, segments: string[], claims: Claims): MockRe
   if (method === "GET" && segments[1] === "me") {
     const user = db.users.find((u) => u.id === claims.userId);
     if (!user) return fail(404, "User not found");
-    return ok({ id: user.id, name: user.name, email: user.email, role: user.role, tenantId: user.tenantId });
+    return ok({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      tenantId: user.tenantId,
+      tenantName: tenantNameFor(user.tenantId),
+    });
   }
   return fail(404, "User route not found");
 }

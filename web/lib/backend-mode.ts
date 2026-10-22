@@ -21,6 +21,10 @@ const REAL_BACKEND_RESOURCES = new Set([
   "services",
   "invoices",
   "catalog",
+  "tenants",
+  "sucursales",
+  "users",
+  "admin",
 ]);
 
 // Para mostrar en UI (ej. el badge "Modo backend" del dashboard) — no usar
