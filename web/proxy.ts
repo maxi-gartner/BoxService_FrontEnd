@@ -49,21 +49,25 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
+  // superadmin no tiene tenant propio — su "home" es su panel de
+  // talleres, no Taller (pantalla operativa de un taller puntual).
+  const homeFor = (role: string | undefined) => (role === "superadmin" ? "/admin/tenants" : "/taller");
+
   if (REDIRECT_IF_LOGGED_IN_ROUTES.some((r) => pathname.startsWith(r)) && claims) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    return NextResponse.redirect(new URL(homeFor(claims.role), request.url));
   }
 
   // /admin es de dueño y superadmin (gestión de su taller / de talleres) —
   // empleado no entra. El chequeo de verdad, igual que todo lo demás,
   // está en el server component de la página (getSession + hasRole).
   if (pathname.startsWith("/admin") && claims?.role !== "owner" && claims?.role !== "superadmin") {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    return NextResponse.redirect(new URL(homeFor(claims?.role), request.url));
   }
 
   // superadmin administra talleres, no opera uno — no tiene tenant
   // propio, así que las pantallas operativas de un taller puntual
   // (mismas que el backend ya le bloquea con 403) no tienen sentido acá.
-  const OPERATIONAL_ROUTES = ["/clientes", "/vehiculos", "/taller", "/presupuestos", "/facturas", "/catalogo"];
+  const OPERATIONAL_ROUTES = ["/clientes", "/vehiculos", "/taller", "/presupuestos", "/facturas", "/catalogo", "/metricas"];
   if (claims?.role === "superadmin" && OPERATIONAL_ROUTES.some((r) => pathname.startsWith(r))) {
     return NextResponse.redirect(new URL("/admin/tenants", request.url));
   }
