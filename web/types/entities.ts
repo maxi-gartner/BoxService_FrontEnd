@@ -357,3 +357,32 @@ export type CatalogItemCreateRequest = {
 };
 
 export type CatalogItemUpdateRequest = Partial<CatalogItemCreateRequest>;
+
+// ── Métricas (GET /metrics) ────────────────────────────
+// Resumen de cómo viene el mes/año para el tenant del que llama — no es
+// contabilidad exacta, es para que el dueño vea de un vistazo cómo va.
+export type MonthlyRevenue = {
+  month: string; // "YYYY-MM"
+  total: number;
+};
+
+export type ServiceRanking = {
+  description: string;
+  type: "labor" | "part";
+  count: number;
+  total: number;
+};
+
+export type TenantMetrics = {
+  revenueThisMonth: number;
+  revenueThisYear: number;
+  servicesThisMonth: number;
+  servicesThisYear: number;
+  newClientsThisMonth: number;
+  pendingBudgetsCount: number;
+  pendingBudgetsValue: number;
+  averageTicketThisMonth: number;
+  revenueByMonth: MonthlyRevenue[];
+  topServicesByRevenue: ServiceRanking[];
+  topServicesByFrequency: ServiceRanking[];
+};
