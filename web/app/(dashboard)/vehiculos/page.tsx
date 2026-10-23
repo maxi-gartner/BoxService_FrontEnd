@@ -15,6 +15,8 @@ import { Alert } from "@/components/ui/Alert";
 import { TableWrapper, THead, TBody, TR, TD, EmptyRow } from "@/components/ui/Table";
 
 const OTHER_BRAND = "__otra__";
+const OTHER_MODEL = "__otro__";
+const OTHER_VERSION = "__otra_version__";
 
 const schema = z.object({
   clientId: z.string().min(1, "Elegí un cliente"),
@@ -48,6 +50,8 @@ export default function VehiculosPage() {
   const [formError, setFormError] = useState("");
   const [formOk, setFormOk] = useState("");
   const [customBrand, setCustomBrand] = useState(false);
+  const [customModel, setCustomModel] = useState(false);
+  const [customVersion, setCustomVersion] = useState(false);
 
   const {
     register,
@@ -58,15 +62,23 @@ export default function VehiculosPage() {
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({ resolver: zodResolver(schema) });
 
-  // Las sugerencias de modelo/versión dependen de la marca/modelo
-  // elegidos — se resuelven por nombre contra lo que ya trajo ML
-  // (datalist no da IDs, solo el texto tipeado/elegido).
+  // Modelo y versión dependen en cascada de la marca/modelo elegidos —
+  // se resuelven por nombre contra el catálogo de ArgAutos (los <select>
+  // solo manejan el nombre, no el ID interno).
   const watchedBrand = watch("brand");
   const watchedModel = watch("model");
+  const watchedVersion = watch("version");
   const brandId = brands?.find((b) => b.name === watchedBrand)?.id ?? null;
   const { data: models } = useVehicleModels(brandId);
   const modelId = models?.find((m) => m.name === watchedModel)?.id ?? null;
   const { data: versions } = useVehicleVersions(brandId, modelId);
+
+  function resetModelAndVersion() {
+    setValue("model", "");
+    setValue("version", "");
+    setCustomModel(false);
+    setCustomVersion(false);
+  }
 
   function handleBrandSelect(e: ChangeEvent<HTMLSelectElement>) {
     if (e.target.value === OTHER_BRAND) {
@@ -74,6 +86,27 @@ export default function VehiculosPage() {
       setValue("brand", "");
     } else {
       setValue("brand", e.target.value, { shouldValidate: true });
+    }
+    resetModelAndVersion();
+  }
+
+  function handleModelSelect(e: ChangeEvent<HTMLSelectElement>) {
+    if (e.target.value === OTHER_MODEL) {
+      setCustomModel(true);
+      setValue("model", "");
+    } else {
+      setValue("model", e.target.value, { shouldValidate: true });
+    }
+    setValue("version", "");
+    setCustomVersion(false);
+  }
+
+  function handleVersionSelect(e: ChangeEvent<HTMLSelectElement>) {
+    if (e.target.value === OTHER_VERSION) {
+      setCustomVersion(true);
+      setValue("version", "");
+    } else {
+      setValue("version", e.target.value);
     }
   }
 
@@ -93,6 +126,8 @@ export default function VehiculosPage() {
       setFormOk(`Vehículo ${created.plate} registrado.`);
       reset();
       setCustomBrand(false);
+      setCustomModel(false);
+      setCustomVersion(false);
     } catch (err) {
       setFormError(err instanceof ApiClientError ? err.message : "No se pudo registrar el vehículo.");
     }
@@ -163,6 +198,7 @@ export default function VehiculosPage() {
                   onClick={() => {
                     setCustomBrand(false);
                     setValue("brand", "");
+                    resetModelAndVersion();
                   }}
                 >
                   Elegir de la lista
@@ -173,18 +209,64 @@ export default function VehiculosPage() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Modelo</Label>
-                <Input placeholder="Corolla" list="model-suggestions" {...register("model")} />
-                <datalist id="model-suggestions">
-                  {models?.map((m) => <option key={m.id} value={m.name} />)}
-                </datalist>
+                {customModel || !brandId || !models?.length ? (
+                  <Input placeholder="Corolla" {...register("model")} />
+                ) : (
+                  <Select value={watchedModel ?? ""} onChange={handleModelSelect}>
+                    <option value="" disabled>
+                      Elegí un modelo…
+                    </option>
+                    {models.map((m) => (
+                      <option key={m.id} value={m.name}>
+                        {m.name}
+                      </option>
+                    ))}
+                    <option value={OTHER_MODEL}>Otro (escribir)…</option>
+                  </Select>
+                )}
+                {customModel && brandId && !!models?.length && (
+                  <button
+                    type="button"
+                    className="mt-1 text-xs text-accent hover:underline"
+                    onClick={() => {
+                      setCustomModel(false);
+                      setValue("model", "");
+                      setValue("version", "");
+                      setCustomVersion(false);
+                    }}
+                  >
+                    Elegir de la lista
+                  </button>
+                )}
                 {errors.model && <p className="mt-1 text-xs text-danger">{errors.model.message}</p>}
               </div>
               <div>
                 <Label>Versión (opcional)</Label>
-                <Input placeholder="XEI 1.8" list="version-suggestions" {...register("version")} />
-                <datalist id="version-suggestions">
-                  {versions?.map((v) => <option key={v.id} value={v.name} />)}
-                </datalist>
+                {customVersion || !modelId || !versions?.length ? (
+                  <Input placeholder="XEI 1.8" {...register("version")} />
+                ) : (
+                  <Select value={watchedVersion ?? ""} onChange={handleVersionSelect}>
+                    <option value="">Sin especificar</option>
+                    {versions.map((v) => (
+                      <option key={v.id} value={v.name}>
+                        {v.name}
+                      </option>
+                    ))}
+                    <option value={OTHER_VERSION}>Otra (escribir)…</option>
+                  </Select>
+                )}
+                {customVersion && modelId && !!versions?.length && (
+                  <button
+                    type="button"
+                    className="mt-1 text-xs text-accent hover:underline"
+                    onClick={() => {
+                      setCustomVersion(false);
+                      setValue("version", "");
+                    }}
+                  >
+                    Elegir de la lista
+                  </button>
+                )}
               </div>
             </div>
             <div>
