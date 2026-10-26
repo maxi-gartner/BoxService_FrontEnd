@@ -99,11 +99,11 @@ export default function MetricasPage() {
 
         <div className="space-y-6">
           <Card>
-            <CardTitle>Lo que más plata da</CardTitle>
+            <CardTitle>Servicios que generan mayor ingreso</CardTitle>
             <RankingList items={data.topServicesByRevenue} />
           </Card>
           <Card>
-            <CardTitle>Lo que más se pide</CardTitle>
+            <CardTitle>Servicios más pedidos</CardTitle>
             <RankingList items={data.topServicesByFrequency} />
           </Card>
         </div>

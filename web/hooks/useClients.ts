@@ -2,8 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { clientsApi } from "@/lib/api/clients";
 import type { ClientCreateRequest } from "@/types/entities";
 
-export function useClients() {
-  return useQuery({ queryKey: ["clients"], queryFn: clientsApi.list });
+export function useClients(params: { page?: number; pageSize?: number; search?: string } = {}) {
+  return useQuery({ queryKey: ["clients", params], queryFn: () => clientsApi.list(params) });
 }
 
 export function useClientVehicles(clientId: number | null) {

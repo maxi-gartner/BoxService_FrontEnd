@@ -1,8 +1,8 @@
 "use client";
 
 import { Fragment, useState } from "react";
-import { useBudgets, useBudget, useUpdateBudgetStatus, useAssignServiceToBudget, useUpdateBudgetDetails } from "@/hooks/useBudgets";
-import { useInvoices, useCreateInvoice } from "@/hooks/useInvoices";
+import { useBudgetsByVehicle, useBudget, useUpdateBudgetStatus, useAssignServiceToBudget, useUpdateBudgetDetails } from "@/hooks/useBudgets";
+import { useInvoicesByVehicle, useCreateInvoice } from "@/hooks/useInvoices";
 import { useCreateService, useCreateServiceDetail } from "@/hooks/useServices";
 import { ApiClientError } from "@/lib/api/client";
 import { BudgetDetailsEditor } from "@/components/taller/BudgetDetailsEditor";
@@ -45,8 +45,8 @@ function EditableBudgetRow({ budgetId, colSpan, canFinalize, onSave, onFinalize,
 }
 
 export function BudgetsList({ vehicle, onChanged }: { vehicle: Vehicle; onChanged: () => void }) {
-  const { data: budgets, isLoading } = useBudgets();
-  const { data: invoices } = useInvoices();
+  const { data: budgets, isLoading } = useBudgetsByVehicle(vehicle.vehicleId);
+  const { data: invoices } = useInvoicesByVehicle(vehicle.vehicleId);
   const updateStatus = useUpdateBudgetStatus();
   const assignService = useAssignServiceToBudget();
   const createInvoice = useCreateInvoice();
@@ -58,7 +58,7 @@ export function BudgetsList({ vehicle, onChanged }: { vehicle: Vehicle; onChange
   const [workingId, setWorkingId] = useState<number | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
 
-  const mine = (budgets ?? []).filter((b) => b.vehicleId === vehicle.vehicleId);
+  const mine = budgets ?? [];
 
   async function handleApprove(id: number) {
     setWorkingId(id);

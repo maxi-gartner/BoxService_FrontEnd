@@ -5,6 +5,17 @@
  * porque ahora todo vive dentro de un tenant (taller).
  */
 
+// Forma de respuesta de los listados grandes (Clientes, Vehículos,
+// Presupuestos, Facturas) — reemplaza al array simple que devolvían
+// antes. Ver backend Api/PagedResult.cs.
+export type PagedResult<T> = {
+  items: T[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+};
+
 // Usado solo por el mock (lib/mock/db.ts) — ahí tenantId sigue siendo el
 // string placeholder histórico, independiente del modelo real de abajo.
 export type MockTenant = {
@@ -174,19 +185,31 @@ export type Vehicle = {
   clientId: number;
   brand: string;
   model: string;
+  version: string | null;
   year: number | null;
   plate: string;
   currentMileage: number;
   createdAt: string;
+  /** Solo viene en GET /vehicles paginado (join contra clientes) — usarlo evita pedir /clients aparte solo para la etiqueta. */
+  clientName?: string | null;
 };
 
 export type VehicleCreateRequest = {
   clientId: number;
   brand: string;
   model: string;
+  version?: string;
   year?: number | null;
   plate: string;
   currentMileage?: number;
+};
+
+// Sugerencias de marca/modelo/versión al cargar un vehículo, sacadas del
+// catálogo público de Mercado Libre Argentina (GET /vehicle-catalog/*).
+// Solo son sugerencias — los campos siguen aceptando texto libre.
+export type VehicleCatalogOption = {
+  id: string;
+  name: string;
 };
 
 // ── Presupuestos ──────────────────────────────────────
@@ -211,6 +234,10 @@ export type Budget = {
   notes: string | null;
   vehicleId: number;
   serviceId: number | null;
+  /** Solo vienen en GET /budgets paginado (join contra vehiculos). */
+  vehiclePlate?: string | null;
+  vehicleBrand?: string | null;
+  vehicleModel?: string | null;
 };
 
 export type BudgetWithDetails = {
@@ -330,6 +357,11 @@ export type Invoice = {
   status: InvoiceStatus;
   serviceId: number;
   budgetId: number | null;
+  /** Solo vienen en GET /invoices paginado (join contra services/vehiculos). */
+  vehicleId?: number | null;
+  vehiclePlate?: string | null;
+  vehicleBrand?: string | null;
+  vehicleModel?: string | null;
 };
 
 export type InvoiceCreateRequest = {

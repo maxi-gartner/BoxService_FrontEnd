@@ -1,35 +1,31 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useInvoices, useUpdateInvoiceStatus } from "@/hooks/useInvoices";
-import { useServices } from "@/hooks/useServices";
-import { useVehicles } from "@/hooks/useVehicles";
+import { useInvoiceStats, useInvoices, useUpdateInvoiceStatus } from "@/hooks/useInvoices";
 import { ApiClientError } from "@/lib/api/client";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { Badge } from "@/components/ui/Badge";
+import { Pagination } from "@/components/ui/Pagination";
 import { TableWrapper, THead, TBody, TR, TD, EmptyRow } from "@/components/ui/Table";
 import { formatDate, formatMoney } from "@/lib/utils";
 import type { InvoiceStatus } from "@/types/entities";
 
 export default function FacturasPage() {
-  const { data: invoices, isLoading } = useInvoices();
-  const { data: services } = useServices();
-  const { data: vehicles } = useVehicles();
+  const [page, setPage] = useState(1);
+  const [filter, setFilter] = useState<"todas" | "por-cobrar">("por-cobrar");
+  const { data: invoicesPage, isLoading } = useInvoices({ page, pageSize: 25, status: filter });
+  const { data: stats } = useInvoiceStats();
   const updateStatus = useUpdateInvoiceStatus();
-
-  const vehicleByService = useMemo(() => {
-    const vById = new Map((vehicles ?? []).map((v) => [v.vehicleId, v]));
-    const map = new Map<number, ReturnType<typeof vById.get>>();
-    for (const s of services ?? []) map.set(s.serviceId, vById.get(s.vehicleId));
-    return map;
-  }, [services, vehicles]);
 
   const [message, setMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
   const [workingId, setWorkingId] = useState<number | null>(null);
-  const [filter, setFilter] = useState<"todas" | "por-cobrar">("por-cobrar");
+
+  useEffect(() => {
+    setPage(1);
+  }, [filter]);
 
   async function act(id: number, status: InvoiceStatus, label: string) {
     if (status === "cancelled" && !confirm("¿Anular esta factura?")) return;
@@ -45,13 +41,7 @@ export default function FacturasPage() {
     }
   }
 
-  const rows = (invoices ?? [])
-    .filter((i) => (filter === "todas" ? true : i.status === "issued"))
-    .sort((a, b) => b.invoiceId - a.invoiceId);
-
-  const totalPorCobrar = (invoices ?? [])
-    .filter((i) => i.status === "issued")
-    .reduce((acc, i) => acc + i.total, 0);
+  const rows = invoicesPage?.items ?? [];
 
   return (
     <div>
@@ -65,15 +55,15 @@ export default function FacturasPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <Card>
           <p className="text-xs uppercase text-muted mb-1">Por cobrar</p>
-          <p className="text-2xl font-bold text-accent">{formatMoney(totalPorCobrar)}</p>
+          <p className="text-2xl font-bold text-accent">{formatMoney(stats?.pendingTotal ?? 0)}</p>
         </Card>
         <Card>
           <p className="text-xs uppercase text-muted mb-1">Facturas emitidas</p>
-          <p className="text-2xl font-bold">{(invoices ?? []).filter((i) => i.status === "issued").length}</p>
+          <p className="text-2xl font-bold">{stats?.pendingCount ?? 0}</p>
         </Card>
         <Card>
           <p className="text-xs uppercase text-muted mb-1">Total facturas</p>
-          <p className="text-2xl font-bold">{invoices?.length ?? 0}</p>
+          <p className="text-2xl font-bold">{stats?.totalCount ?? 0}</p>
         </Card>
       </div>
 
@@ -114,8 +104,9 @@ export default function FacturasPage() {
               </EmptyRow>
             )}
             {rows.map((i) => {
-              const vehicle = vehicleByService.get(i.serviceId);
-              const label = vehicle ? `${vehicle.plate} — ${vehicle.brand} ${vehicle.model}` : `Service #${i.serviceId}`;
+              const label = i.vehiclePlate
+                ? `${i.vehiclePlate} — ${i.vehicleBrand} ${i.vehicleModel}`
+                : `Service #${i.serviceId}`;
               const busy = workingId === i.invoiceId;
 
               return (
@@ -123,8 +114,8 @@ export default function FacturasPage() {
                   <TD className="text-accent">{i.number}</TD>
                   <TD className="text-muted">{formatDate(i.date)}</TD>
                   <TD>
-                    {vehicle ? (
-                      <Link href={`/taller?id=${vehicle.vehicleId}`} className="hover:text-accent hover:underline">
+                    {i.vehicleId ? (
+                      <Link href={`/taller?id=${i.vehicleId}`} className="hover:text-accent hover:underline">
                         {label}
                       </Link>
                     ) : (
@@ -164,6 +155,14 @@ export default function FacturasPage() {
             })}
           </TBody>
         </TableWrapper>
+        {invoicesPage && (
+          <Pagination
+            page={invoicesPage.page}
+            totalPages={invoicesPage.totalPages}
+            totalCount={invoicesPage.totalCount}
+            onPageChange={setPage}
+          />
+        )}
       </Card>
     </div>
   );

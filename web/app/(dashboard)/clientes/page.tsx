@@ -1,15 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useClients, useClientVehicles, useCreateClient, useInvitePortal } from "@/hooks/useClients";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { ApiClientError } from "@/lib/api/client";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input, Label } from "@/components/ui/Input";
 import { Alert } from "@/components/ui/Alert";
+import { Pagination } from "@/components/ui/Pagination";
 import { TableWrapper, THead, TBody, TR, TD, EmptyRow } from "@/components/ui/Table";
 
 const schema = z.object({
@@ -20,7 +22,11 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export default function ClientesPage() {
-  const { data: clients, isLoading } = useClients();
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
+  const { data: clientsPage, isLoading } = useClients({ page, pageSize: 25, search: debouncedSearch || undefined });
+  const clients = clientsPage?.items;
   const createClient = useCreateClient();
   const invitePortal = useInvitePortal();
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
@@ -28,6 +34,10 @@ export default function ClientesPage() {
   const { data: vehicles, isLoading: loadingVehicles } = useClientVehicles(selectedClientId);
   const [inviteError, setInviteError] = useState("");
   const [invitingClientId, setInvitingClientId] = useState<number | null>(null);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
 
   async function handleInvite(clientId: number) {
     setInviteError("");
@@ -97,7 +107,15 @@ export default function ClientesPage() {
         </Card>
 
         <Card>
-          <CardTitle>Clientes activos</CardTitle>
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <CardTitle className="mb-0">Clientes activos</CardTitle>
+            <Input
+              placeholder="Buscar por nombre, teléfono o email…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full sm:max-w-xs"
+            />
+          </div>
           <Alert type="error">{inviteError}</Alert>
           <TableWrapper>
             <THead>
@@ -109,7 +127,11 @@ export default function ClientesPage() {
             </THead>
             <TBody>
               {isLoading && <EmptyRow colSpan={5}>Cargando...</EmptyRow>}
-              {!isLoading && clients?.length === 0 && <EmptyRow colSpan={5}>No hay clientes cargados.</EmptyRow>}
+              {!isLoading && clients?.length === 0 && (
+                <EmptyRow colSpan={5}>
+                  {debouncedSearch ? "Ningún cliente coincide con la búsqueda." : "No hay clientes cargados."}
+                </EmptyRow>
+              )}
               {clients?.map((client) => (
                 <TR key={client.clientId}>
                   <TD>{client.clientId}</TD>
@@ -141,6 +163,14 @@ export default function ClientesPage() {
               ))}
             </TBody>
           </TableWrapper>
+          {clientsPage && (
+            <Pagination
+              page={clientsPage.page}
+              totalPages={clientsPage.totalPages}
+              totalCount={clientsPage.totalCount}
+              onPageChange={setPage}
+            />
+          )}
         </Card>
       </div>
 

@@ -1,12 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { clientsApi } from "@/lib/api/clients";
+import { useEffect, useState } from "react";
 import { useVehicles } from "@/hooks/useVehicles";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { Pagination } from "@/components/ui/Pagination";
 import { TableWrapper, THead, TBody, TR, TD, EmptyRow } from "@/components/ui/Table";
 import type { Vehicle } from "@/types/entities";
 
@@ -17,26 +17,18 @@ export function VehicleSearch({
   selectedVehicleId: number | null;
   onSelect: (vehicle: Vehicle) => void;
 }) {
+  const [page, setPage] = useState(1);
   const [term, setTerm] = useState("");
-  const { data: vehicles, isLoading } = useVehicles();
-  const { data: clients } = useQuery({ queryKey: ["clients"], queryFn: clientsApi.list });
+  const debouncedTerm = useDebouncedValue(term);
+  // Búsqueda server-side (patente/marca/modelo/cliente, ver
+  // VehicleRepository.GetPaged) — antes esto bajaba TODOS los vehículos
+  // del tenant para filtrar acá en el navegador.
+  const { data: vehiclesPage, isLoading } = useVehicles({ page, pageSize: 20, search: debouncedTerm || undefined });
+  const vehicles = vehiclesPage?.items ?? [];
 
-  const clientsById = useMemo(() => {
-    const map = new Map<number, string>();
-    clients?.forEach((c) => map.set(c.clientId, c.name));
-    return map;
-  }, [clients]);
-
-  const filtered = useMemo(() => {
-    if (!vehicles) return [];
-    const words = term.toLowerCase().trim().split(/\s+/).filter(Boolean);
-    if (!words.length) return vehicles;
-
-    return vehicles.filter((v) => {
-      const haystack = `${clientsById.get(v.clientId) ?? ""} ${v.plate} ${v.brand} ${v.model}`.toLowerCase();
-      return words.every((w) => haystack.includes(w));
-    });
-  }, [vehicles, term, clientsById]);
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedTerm]);
 
   return (
     <Card>
@@ -58,12 +50,12 @@ export function VehicleSearch({
         </THead>
         <TBody>
           {isLoading && <EmptyRow colSpan={5}>Cargando...</EmptyRow>}
-          {!isLoading && filtered.length === 0 && <EmptyRow colSpan={5}>No se encontraron vehículos.</EmptyRow>}
-          {filtered.map((v) => {
+          {!isLoading && vehicles.length === 0 && <EmptyRow colSpan={5}>No se encontraron vehículos.</EmptyRow>}
+          {vehicles.map((v) => {
             const isSelected = v.vehicleId === selectedVehicleId;
             return (
               <TR key={v.vehicleId} className={isSelected ? "bg-accent-dim" : ""}>
-                <TD>{clientsById.get(v.clientId) ?? `Cliente #${v.clientId}`}</TD>
+                <TD>{v.clientName ?? `Cliente #${v.clientId}`}</TD>
                 <TD>
                   {v.brand} {v.model}
                 </TD>
@@ -79,6 +71,14 @@ export function VehicleSearch({
           })}
         </TBody>
       </TableWrapper>
+      {vehiclesPage && (
+        <Pagination
+          page={vehiclesPage.page}
+          totalPages={vehiclesPage.totalPages}
+          totalCount={vehiclesPage.totalCount}
+          onPageChange={setPage}
+        />
+      )}
     </Card>
   );
 }

@@ -34,6 +34,13 @@ function fail(status: number, message: string): MockResult {
   return { status, body: { success: false, data: null, error: { code: status, message } } };
 }
 
+// Mismo contrato que el backend real (ver Api/PagedResult.cs), pero sin
+// paginar/buscar de verdad — los fixtures del mock son chicos, "todo en
+// una sola página" alcanza para probar la UI.
+function page<T>(items: T[]): MockResult {
+  return ok({ items, page: 1, pageSize: Math.max(items.length, 1), totalCount: items.length, totalPages: 1 });
+}
+
 function tenantNameFor(tenantId: string | null): string | null {
   if (tenantId === null) return null;
   return db.tenants.find((t) => t.tenantId === tenantId)?.name ?? null;
@@ -82,9 +89,9 @@ export async function handleMockRequest(
   if (segments[0] === "users") return handleUsers(method, segments, claims);
   if (segments[0] === "clients") return handleClients(method, segments, body, tenantId);
   if (segments[0] === "vehicles") return handleVehicles(method, segments, searchParams, body, tenantId);
-  if (segments[0] === "budgets") return handleBudgets(method, segments, body, tenantId);
-  if (segments[0] === "services") return handleServices(method, segments, body, tenantId);
-  if (segments[0] === "invoices") return handleInvoices(method, segments, body, tenantId);
+  if (segments[0] === "budgets") return handleBudgets(method, segments, searchParams, body, tenantId);
+  if (segments[0] === "services") return handleServices(method, segments, searchParams, body, tenantId);
+  if (segments[0] === "invoices") return handleInvoices(method, segments, searchParams, body, tenantId);
   if (segments[0] === "catalog") return handleCatalog(method, segments, body, tenantId);
 
   return fail(404, "Route not found");
@@ -156,7 +163,7 @@ function handleUsers(method: string, segments: string[], claims: Claims): MockRe
 function handleClients(method: string, segments: string[], body: unknown, tenantId: string): MockResult {
   const mine = () => db.clients.filter((c) => c.tenantId === tenantId);
 
-  if (method === "GET" && segments.length === 1) return ok(mine());
+  if (method === "GET" && segments.length === 1) return page(mine());
 
   if (method === "POST" && segments.length === 1) {
     const req = body as ClientCreateRequest;
@@ -202,7 +209,11 @@ function handleVehicles(
       const found = mine().find((v) => v.plate.toLowerCase() === plate.toLowerCase());
       return found ? ok(found) : fail(404, "Vehicle not found");
     }
-    return ok(mine());
+    const withClientName = mine().map((v) => ({
+      ...v,
+      clientName: db.clients.find((c) => c.clientId === v.clientId)?.name ?? null,
+    }));
+    return page(withClientName);
   }
 
   if (method === "POST" && segments.length === 1) {
@@ -219,6 +230,7 @@ function handleVehicles(
       clientId: req.clientId,
       brand: req.brand,
       model: req.model,
+      version: req.version ?? null,
       year: req.year ?? null,
       plate: req.plate.toUpperCase(),
       currentMileage: req.currentMileage ?? 0,
@@ -242,10 +254,19 @@ function handleVehicles(
 }
 
 // ── Presupuestos ────────────────────────────────────
-function handleBudgets(method: string, segments: string[], body: unknown, tenantId: string): MockResult {
+function handleBudgets(method: string, segments: string[], searchParams: URLSearchParams, body: unknown, tenantId: string): MockResult {
   const mine = () => db.budgets.filter((b) => b.tenantId === tenantId);
 
-  if (method === "GET" && segments.length === 1) return ok(mine());
+  if (method === "GET" && segments.length === 1) {
+    const vehicleId = searchParams.get("vehicleId");
+    if (vehicleId) return ok(mine().filter((b) => b.vehicleId === Number(vehicleId)));
+
+    const withVehicle = mine().map((b) => {
+      const vehicle = db.vehicles.find((v) => v.vehicleId === b.vehicleId);
+      return { ...b, vehiclePlate: vehicle?.plate ?? null, vehicleBrand: vehicle?.brand ?? null, vehicleModel: vehicle?.model ?? null };
+    });
+    return page(withVehicle);
+  }
 
   if (method === "POST" && segments.length === 1) {
     const req = body as BudgetCreateRequest;
@@ -320,10 +341,14 @@ function handleBudgets(method: string, segments: string[], body: unknown, tenant
 }
 
 // ── Services ────────────────────────────────────────
-function handleServices(method: string, segments: string[], body: unknown, tenantId: string): MockResult {
+function handleServices(method: string, segments: string[], searchParams: URLSearchParams, body: unknown, tenantId: string): MockResult {
   const mine = () => db.services.filter((s) => s.tenantId === tenantId);
 
-  if (method === "GET" && segments.length === 1) return ok(mine());
+  if (method === "GET" && segments.length === 1) {
+    const vehicleId = searchParams.get("vehicleId");
+    if (vehicleId) return ok(mine().filter((s) => s.vehicleId === Number(vehicleId)));
+    return ok(mine());
+  }
 
   if (method === "POST" && segments.length === 1) {
     const req = body as ServiceCreateRequest;
@@ -379,10 +404,38 @@ function addMonths(isoDate: string, months: number) {
 }
 
 // ── Facturas ────────────────────────────────────────
-function handleInvoices(method: string, segments: string[], body: unknown, tenantId: string): MockResult {
+function handleInvoices(method: string, segments: string[], searchParams: URLSearchParams, body: unknown, tenantId: string): MockResult {
   const mine = () => db.invoices.filter((i) => i.tenantId === tenantId);
+  const vehicleFor = (i: Invoice) => {
+    const service = db.services.find((s) => s.serviceId === i.serviceId);
+    return service ? db.vehicles.find((v) => v.vehicleId === service.vehicleId) : undefined;
+  };
 
-  if (method === "GET" && segments.length === 1) return ok(mine());
+  if (method === "GET" && segments.length === 1) {
+    const vehicleId = searchParams.get("vehicleId");
+    if (vehicleId) return ok(mine().filter((i) => vehicleFor(i)?.vehicleId === Number(vehicleId)));
+
+    const withVehicle = mine().map((i) => {
+      const vehicle = vehicleFor(i);
+      return {
+        ...i,
+        vehicleId: vehicle?.vehicleId ?? null,
+        vehiclePlate: vehicle?.plate ?? null,
+        vehicleBrand: vehicle?.brand ?? null,
+        vehicleModel: vehicle?.model ?? null,
+      };
+    });
+    return page(withVehicle);
+  }
+
+  if (method === "GET" && segments[1] === "stats") {
+    const pending = mine().filter((i) => i.status === "issued");
+    return ok({
+      totalCount: mine().length,
+      pendingCount: pending.length,
+      pendingTotal: pending.reduce((sum, i) => sum + i.total, 0),
+    });
+  }
 
   if (method === "POST" && segments.length === 1) {
     const req = body as InvoiceCreateRequest;
