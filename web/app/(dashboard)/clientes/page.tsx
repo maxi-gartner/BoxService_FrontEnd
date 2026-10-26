@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -35,9 +35,13 @@ export default function ClientesPage() {
   const [inviteError, setInviteError] = useState("");
   const [invitingClientId, setInvitingClientId] = useState<number | null>(null);
 
-  useEffect(() => {
+  // Reset de página al cambiar el buscador — ajuste de estado durante el
+  // render (patrón recomendado por React), no un efecto.
+  const [searchForPage, setSearchForPage] = useState(debouncedSearch);
+  if (debouncedSearch !== searchForPage) {
+    setSearchForPage(debouncedSearch);
     setPage(1);
-  }, [debouncedSearch]);
+  }
 
   async function handleInvite(clientId: number) {
     setInviteError("");

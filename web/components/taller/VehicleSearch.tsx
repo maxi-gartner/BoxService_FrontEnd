@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useVehicles } from "@/hooks/useVehicles";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { Card, CardTitle } from "@/components/ui/Card";
@@ -26,9 +26,13 @@ export function VehicleSearch({
   const { data: vehiclesPage, isLoading } = useVehicles({ page, pageSize: 20, search: debouncedTerm || undefined });
   const vehicles = vehiclesPage?.items ?? [];
 
-  useEffect(() => {
+  // Reset de página al cambiar el buscador — ajuste de estado durante el
+  // render (patrón recomendado por React), no un efecto.
+  const [termForPage, setTermForPage] = useState(debouncedTerm);
+  if (debouncedTerm !== termForPage) {
+    setTermForPage(debouncedTerm);
     setPage(1);
-  }, [debouncedTerm]);
+  }
 
   return (
     <Card>
