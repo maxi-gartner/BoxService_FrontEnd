@@ -1,8 +1,8 @@
 "use client";
 
-import { useBudgets } from "@/hooks/useBudgets";
-import { useServices } from "@/hooks/useServices";
-import { useInvoices } from "@/hooks/useInvoices";
+import { useBudgetsByVehicle } from "@/hooks/useBudgets";
+import { useServicesByVehicle } from "@/hooks/useServices";
+import { useInvoicesByVehicle } from "@/hooks/useInvoices";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { formatDate, formatMoney } from "@/lib/utils";
@@ -11,13 +11,10 @@ import type { Vehicle } from "@/types/entities";
 type Section = "presupuestos" | "historial" | "facturacion" | "nuevo-presupuesto" | "nuevo-service";
 
 export function VehicleOverview({ vehicle, onOpen }: { vehicle: Vehicle; onOpen: (section: Section) => void }) {
-  const { data: budgets = [], isLoading: loadingBudgets } = useBudgets();
-  const { data: services = [], isLoading: loadingServices } = useServices();
-  const { data: invoices = [], isLoading: loadingInvoices } = useInvoices();
-  const vehicleBudgets = budgets.filter((item) => item.vehicleId === vehicle.vehicleId);
-  const vehicleServices = services.filter((item) => item.vehicleId === vehicle.vehicleId).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  const serviceIds = new Set(vehicleServices.map((item) => item.serviceId));
-  const vehicleInvoices = invoices.filter((item) => serviceIds.has(item.serviceId));
+  const { data: vehicleBudgets = [], isLoading: loadingBudgets } = useBudgetsByVehicle(vehicle.vehicleId);
+  const { data: services = [], isLoading: loadingServices } = useServicesByVehicle(vehicle.vehicleId);
+  const { data: vehicleInvoices = [], isLoading: loadingInvoices } = useInvoicesByVehicle(vehicle.vehicleId);
+  const vehicleServices = [...services].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   const pendingBudgets = vehicleBudgets.filter((item) => item.status === "draft" || item.status === "sent").length;
   const pendingInvoices = vehicleInvoices.filter((item) => item.status === "issued").length;
   const latestService = vehicleServices[0];

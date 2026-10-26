@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { useVehicles } from "@/hooks/useVehicles";
+import { useVehicleById } from "@/hooks/useVehicles";
 import { VehicleSearch } from "@/components/taller/VehicleSearch";
 import { VehicleWorkspaceHeader } from "@/components/taller/VehicleWorkspaceHeader";
 import { VehicleOverview } from "@/components/taller/VehicleOverview";
@@ -42,7 +42,11 @@ const ACTIONS: { id: View; label: string }[] = [
 
 function TallerContent() {
   const searchParams = useSearchParams();
-  const { data: vehicles } = useVehicles();
+  const idParam = searchParams.get("id");
+  // Un pedido directo por ID, no la lista completa de vehículos — antes
+  // esta pantalla bajaba TODOS los vehículos solo para resolver el
+  // deep-link /taller?id=123.
+  const { data: deepLinkVehicle } = useVehicleById(idParam ? Number(idParam) : null);
   const queryClient = useQueryClient();
 
   const [view, setView] = useState<View>("buscar");
@@ -51,26 +55,16 @@ function TallerContent() {
 
   // Deep-link: /taller?id=123 abre directamente la ficha del vehículo.
   useEffect(() => {
-    const idParam = searchParams.get("id");
+    if (!deepLinkVehicle) return;
 
-    if (!idParam || !vehicles) return;
-
-    const vehicle = vehicles.find(
-      (item) => item.vehicleId === Number(idParam),
-    );
-
-    if (vehicle) {
-      // Deep-link: hay que esperar a que "vehicles" (async, React Query)
-      // esté disponible para poder resolver el vehículo — no se puede
-      // calcular puramente en el render mientras tanto.
-      /* eslint-disable react-hooks/set-state-in-effect */
-      setSelectedVehicle(vehicle);
-      setView("resumen");
-      /* eslint-enable react-hooks/set-state-in-effect */
-    }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [vehicles]);
+    // Hay que esperar a que "deepLinkVehicle" (async, React Query) esté
+    // disponible para poder resolver el vehículo — no se puede calcular
+    // puramente en el render mientras tanto.
+    /* eslint-disable react-hooks/set-state-in-effect */
+    setSelectedVehicle(deepLinkVehicle);
+    setView("resumen");
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [deepLinkVehicle]);
 
   function handleSelect(vehicle: Vehicle) {
     setSelectedVehicle(vehicle);
