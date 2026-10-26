@@ -1,15 +1,15 @@
 "use client";
 
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import Link from "next/link";
 import { useBudgets, useUpdateBudgetStatus, useUpdateBudgetDetails, useBudget } from "@/hooks/useBudgets";
-import { useVehicles } from "@/hooks/useVehicles";
 import { ApiClientError } from "@/lib/api/client";
 import { BudgetDetailsEditor } from "@/components/taller/BudgetDetailsEditor";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { Badge } from "@/components/ui/Badge";
+import { Pagination } from "@/components/ui/Pagination";
 import { TableWrapper, THead, TBody, TR, TD, EmptyRow } from "@/components/ui/Table";
 import { formatDate, formatMoney } from "@/lib/utils";
 import type { Budget, BudgetDetailRequest } from "@/types/entities";
@@ -67,21 +67,20 @@ function EditBudgetRow({ budgetId, colSpan, onSave, saving }: {
 }
 
 export default function PresupuestosPage() {
-  const { data: budgets, isLoading } = useBudgets();
-  const { data: vehicles } = useVehicles();
+  const [page, setPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState<"todos" | "pendientes">("todos");
+  const { data: budgetsPage, isLoading } = useBudgets({ page, pageSize: 25, status: statusFilter });
   const updateStatus = useUpdateBudgetStatus();
   const updateDetails = useUpdateBudgetDetails();
-
-  const vehiclesById = useMemo(
-    () => new Map((vehicles ?? []).map((v) => [v.vehicleId, v])),
-    [vehicles],
-  );
 
   const [message, setMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
   const [workingId, setWorkingId] = useState<number | null>(null);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [statusFilter, setStatusFilter] = useState<"todos" | "pendientes">("todos");
+
+  useEffect(() => {
+    setPage(1);
+  }, [statusFilter]);
 
   async function act(id: number, status: "approved" | "rejected") {
     setWorkingId(id);
@@ -110,11 +109,7 @@ export default function PresupuestosPage() {
     }
   }
 
-  const rows = (budgets ?? [])
-    .filter((b) =>
-      statusFilter === "todos" ? true : b.status === "draft" || b.status === "sent",
-    )
-    .sort((a, b) => b.budgetId - a.budgetId);
+  const rows = budgetsPage?.items ?? [];
 
   return (
     <div>
@@ -161,8 +156,9 @@ export default function PresupuestosPage() {
               </EmptyRow>
             )}
             {rows.map((b) => {
-              const vehicle = vehiclesById.get(b.vehicleId);
-              const label = vehicle ? `${vehicle.plate} — ${vehicle.brand} ${vehicle.model}` : `Vehículo #${b.vehicleId}`;
+              const label = b.vehiclePlate
+                ? `${b.vehiclePlate} — ${b.vehicleBrand} ${b.vehicleModel}`
+                : `Vehículo #${b.vehicleId}`;
               const completed = isCompleted(b);
               const busy = workingId === b.budgetId;
               const pending = b.status === "draft" || b.status === "sent";
@@ -233,6 +229,14 @@ export default function PresupuestosPage() {
             })}
           </TBody>
         </TableWrapper>
+        {budgetsPage && (
+          <Pagination
+            page={budgetsPage.page}
+            totalPages={budgetsPage.totalPages}
+            totalCount={budgetsPage.totalCount}
+            onPageChange={setPage}
+          />
+        )}
       </Card>
     </div>
   );

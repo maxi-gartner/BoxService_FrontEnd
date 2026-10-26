@@ -40,6 +40,14 @@ export class ApiClientError extends Error {
   }
 }
 
+// Query string para los listados paginados (page/pageSize/search/status/
+// vehicleId) — omite claves undefined/null/"" en vez de mandarlas vacías.
+export function buildQuery(params: Record<string, string | number | undefined | null>): string {
+  const entries = Object.entries(params).filter(([, v]) => v !== undefined && v !== null && v !== "");
+  if (entries.length === 0) return "";
+  return "?" + entries.map(([k, v]) => `${k}=${encodeURIComponent(String(v))}`).join("&");
+}
+
 export const api = {
   get: <T>(path: string) => request<T>("GET", path),
   post: <T>(path: string, body?: unknown) => request<T>("POST", path, body),

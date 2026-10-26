@@ -1,8 +1,12 @@
-import { api } from "./client";
-import type { Budget, BudgetCreateRequest, BudgetDetailRequest, BudgetStatus, BudgetWithDetails } from "@/types/entities";
+import { api, buildQuery } from "./client";
+import type { Budget, BudgetCreateRequest, BudgetDetailRequest, BudgetStatus, BudgetWithDetails, PagedResult } from "@/types/entities";
 
 export const budgetsApi = {
-  list: () => api.get<Budget[]>("budgets"),
+  list: (params: { page?: number; pageSize?: number; status?: "todos" | "pendientes" } = {}) =>
+    api.get<PagedResult<Budget>>(`budgets${buildQuery(params)}`),
+  // Sin paginar — todos los presupuestos de un vehículo puntual (lo usa
+  // BudgetsList en el Taller en vez de pedir el listado global).
+  listByVehicle: (vehicleId: number) => api.get<Budget[]>(`budgets${buildQuery({ vehicleId })}`),
   getById: (id: number) => api.get<BudgetWithDetails>(`budgets/${id}`),
   create: (data: BudgetCreateRequest) => api.post<Budget>("budgets", data),
   updateStatus: (id: number, status: BudgetStatus) =>

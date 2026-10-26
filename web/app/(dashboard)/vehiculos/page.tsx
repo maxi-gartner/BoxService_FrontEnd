@@ -1,17 +1,19 @@
 "use client";
 
-import { useMemo, useState, type ChangeEvent } from "react";
+import { useEffect, useState, type ChangeEvent } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useVehicles, useCreateVehicle } from "@/hooks/useVehicles";
 import { useClients } from "@/hooks/useClients";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useVehicleBrands, useVehicleModels, useVehicleVersions } from "@/hooks/useVehicleCatalog";
 import { ApiClientError } from "@/lib/api/client";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input, Label, Select } from "@/components/ui/Input";
 import { Alert } from "@/components/ui/Alert";
+import { Pagination } from "@/components/ui/Pagination";
 import { TableWrapper, THead, TBody, TR, TD, EmptyRow } from "@/components/ui/Table";
 
 const OTHER_BRAND = "__otra__";
@@ -36,17 +38,22 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export default function VehiculosPage() {
-  const { data: vehicles, isLoading } = useVehicles();
-  const { data: clients } = useClients();
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
+  const { data: vehiclesPage, isLoading } = useVehicles({ page, pageSize: 25, search: debouncedSearch || undefined });
+  const vehicles = vehiclesPage?.items;
+  // El picker de "Cliente" del alta necesita la lista completa (combo),
+  // no una página — ver comentario en ClientService.ListPaged.
+  const { data: clientsPage } = useClients({ pageSize: 200 });
+  const clients = clientsPage?.items;
   const createVehicle = useCreateVehicle();
   const { data: brands } = useVehicleBrands();
 
-  const clientsById = useMemo(
-    () => new Map((clients ?? []).map((c) => [c.clientId, c.name])),
-    [clients],
-  );
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
 
-  const [search, setSearch] = useState("");
   const [formError, setFormError] = useState("");
   const [formOk, setFormOk] = useState("");
   const [customBrand, setCustomBrand] = useState(false);
@@ -132,13 +139,6 @@ export default function VehiculosPage() {
       setFormError(err instanceof ApiClientError ? err.message : "No se pudo registrar el vehículo.");
     }
   }
-
-  const term = search.trim().toLowerCase();
-  const filtered = (vehicles ?? []).filter((v) => {
-    if (!term) return true;
-    const clientName = clientsById.get(v.clientId) ?? "";
-    return [v.plate, v.brand, v.model, clientName].join(" ").toLowerCase().includes(term);
-  });
 
   return (
     <div>
@@ -301,12 +301,12 @@ export default function VehiculosPage() {
             </THead>
             <TBody>
               {isLoading && <EmptyRow colSpan={5}>Cargando...</EmptyRow>}
-              {!isLoading && filtered.length === 0 && (
+              {!isLoading && vehicles?.length === 0 && (
                 <EmptyRow colSpan={5}>
-                  {term ? "Ningún vehículo coincide con la búsqueda." : "No hay vehículos registrados."}
+                  {debouncedSearch ? "Ningún vehículo coincide con la búsqueda." : "No hay vehículos registrados."}
                 </EmptyRow>
               )}
-              {filtered.map((v) => (
+              {vehicles?.map((v) => (
                 <TR key={v.vehicleId}>
                   <TD className="text-accent">{v.plate}</TD>
                   <TD>
@@ -315,11 +315,19 @@ export default function VehiculosPage() {
                   </TD>
                   <TD>{v.year ?? "-"}</TD>
                   <TD>{v.currentMileage.toLocaleString("es-AR")}</TD>
-                  <TD>{clientsById.get(v.clientId) ?? `Cliente #${v.clientId}`}</TD>
+                  <TD>{v.clientName ?? `Cliente #${v.clientId}`}</TD>
                 </TR>
               ))}
             </TBody>
           </TableWrapper>
+          {vehiclesPage && (
+            <Pagination
+              page={vehiclesPage.page}
+              totalPages={vehiclesPage.totalPages}
+              totalCount={vehiclesPage.totalCount}
+              onPageChange={setPage}
+            />
+          )}
         </Card>
       </div>
     </div>
