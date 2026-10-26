@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ChangeEvent } from "react";
+import { useState, type ChangeEvent } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -50,9 +50,13 @@ export default function VehiculosPage() {
   const createVehicle = useCreateVehicle();
   const { data: brands } = useVehicleBrands();
 
-  useEffect(() => {
+  // Reset de página al cambiar el buscador — ajuste de estado durante el
+  // render (patrón recomendado por React), no un efecto.
+  const [searchForPage, setSearchForPage] = useState(debouncedSearch);
+  if (debouncedSearch !== searchForPage) {
+    setSearchForPage(debouncedSearch);
     setPage(1);
-  }, [debouncedSearch]);
+  }
 
   const [formError, setFormError] = useState("");
   const [formOk, setFormOk] = useState("");

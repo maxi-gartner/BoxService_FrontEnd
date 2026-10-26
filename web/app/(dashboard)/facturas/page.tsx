@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useInvoiceStats, useInvoices, useUpdateInvoiceStatus } from "@/hooks/useInvoices";
 import { ApiClientError } from "@/lib/api/client";
@@ -23,9 +23,13 @@ export default function FacturasPage() {
   const [message, setMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
   const [workingId, setWorkingId] = useState<number | null>(null);
 
-  useEffect(() => {
+  // Reset de página al cambiar el filtro — ajuste de estado durante el
+  // render (patrón recomendado por React), no un efecto.
+  const [filterForPage, setFilterForPage] = useState(filter);
+  if (filter !== filterForPage) {
+    setFilterForPage(filter);
     setPage(1);
-  }, [filter]);
+  }
 
   async function act(id: number, status: InvoiceStatus, label: string) {
     if (status === "cancelled" && !confirm("¿Anular esta factura?")) return;

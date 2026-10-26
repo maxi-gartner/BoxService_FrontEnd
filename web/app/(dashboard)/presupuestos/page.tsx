@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useState } from "react";
 import Link from "next/link";
 import { useBudgets, useUpdateBudgetStatus, useUpdateBudgetDetails, useBudget } from "@/hooks/useBudgets";
 import { ApiClientError } from "@/lib/api/client";
@@ -78,9 +78,13 @@ export default function PresupuestosPage() {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
 
-  useEffect(() => {
+  // Reset de página al cambiar el filtro — ajuste de estado durante el
+  // render (patrón recomendado por React), no un efecto.
+  const [statusFilterForPage, setStatusFilterForPage] = useState(statusFilter);
+  if (statusFilter !== statusFilterForPage) {
+    setStatusFilterForPage(statusFilter);
     setPage(1);
-  }, [statusFilter]);
+  }
 
   async function act(id: number, status: "approved" | "rejected") {
     setWorkingId(id);
