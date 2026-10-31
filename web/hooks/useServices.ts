@@ -36,6 +36,7 @@ export function useCreateService() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["services"] });
       queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+      queryClient.invalidateQueries({ queryKey: ["service-reminders"] });
     },
   });
 }
