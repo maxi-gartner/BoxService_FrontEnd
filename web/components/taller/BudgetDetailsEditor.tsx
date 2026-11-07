@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input, Select } from "@/components/ui/Input";
@@ -111,13 +110,13 @@ export function BudgetDetailsEditor({
         <div className="flex gap-2">
           <Button
             variant="secondary"
-            disabled={!valid || saving}
+            loading={saving} disabled={!valid || saving}
             onClick={() => onSave(items.map(({ key, ...rest }) => rest))}
           >
             {saving ? "Guardando..." : saveLabel}
           </Button>
           {onFinalize && (
-            <Button disabled={!valid || finalizing} onClick={() => onFinalize(items.map(({ key, ...rest }) => rest))}>
+            <Button loading={finalizing} disabled={!valid || finalizing} onClick={() => onFinalize(items.map(({ key, ...rest }) => rest))}>
               {finalizing ? "Generando..." : finalizeLabel}
             </Button>
           )}

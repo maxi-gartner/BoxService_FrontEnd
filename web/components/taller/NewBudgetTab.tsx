@@ -1,4 +1,6 @@
 "use client";
+import { LoadingState } from "@/components/ui/LoadingState";
+
 
 import { useState } from "react";
 import { useCatalog } from "@/hooks/useCatalog";
@@ -16,7 +18,7 @@ type ItemRow = BudgetDetailRequest & { key: number };
 let keySeq = 0;
 
 export function NewBudgetTab({ vehicle, onCreated }: { vehicle: Vehicle; onCreated: () => void }) {
-  const { data: catalog } = useCatalog();
+  const { data: catalog, error: catalogError, isLoading: loadingCatalog } = useCatalog();
   const createBudget = useCreateBudget();
 
   const [notes, setNotes] = useState("");
@@ -80,6 +82,8 @@ export function NewBudgetTab({ vehicle, onCreated }: { vehicle: Vehicle; onCreat
   return (
     <Card>
       <CardTitle>Nuevo presupuesto</CardTitle>
+      {loadingCatalog && <LoadingState label="Cargando catálogo..." />}
+      {catalogError && <p role="alert" className="text-sm text-danger">No se pudo cargar el catálogo. Podés cargar los conceptos manualmente.</p>}
       {message && <Alert type={message.type}>{message.text}</Alert>}
 
       <div className="mb-4 mt-4">
@@ -155,7 +159,7 @@ export function NewBudgetTab({ vehicle, onCreated }: { vehicle: Vehicle; onCreat
       </div>
 
       <div className="flex justify-end pt-4">
-        <Button onClick={handleSave} disabled={createBudget.isPending}>
+        <Button onClick={handleSave} loading={createBudget.isPending} disabled={createBudget.isPending}>
           {createBudget.isPending ? "Guardando..." : "Guardar presupuesto"}
         </Button>
       </div>

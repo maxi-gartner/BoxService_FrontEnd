@@ -1,5 +1,6 @@
 "use client";
-
+import { LoadingState } from "@/components/ui/LoadingState";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -51,7 +52,7 @@ function ContactEditRow({ tenant, onDone }: { tenant: Tenant; onDone: (msg: Mess
         <Input placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
       </TD>
       <TD className="flex gap-2">
-        <Button size="sm" disabled={updateContact.isPending} onClick={save}>
+        <Button size="sm" loading={updateContact.isPending} disabled={updateContact.isPending} onClick={save}>
           Guardar
         </Button>
         <Button size="sm" variant="secondary" onClick={() => onDone(null)}>
@@ -63,7 +64,7 @@ function ContactEditRow({ tenant, onDone }: { tenant: Tenant; onDone: (msg: Mess
 }
 
 export default function TenantsPage() {
-  const { data: tenants, isLoading } = useTenants();
+  const { data: tenants, isLoading, error: tenantsLoadError, isLoading: tenantsLoading, refetch: refetchTenants } = useTenants();
   const createTenant = useCreateTenant();
   const setActive = useSetTenantActive();
   const [message, setMessage] = useState<Message>(null);
@@ -107,6 +108,10 @@ export default function TenantsPage() {
     }
   }
 
+  const loadError = tenantsLoadError;
+  if (loadError) return <ErrorState error={loadError} resource="la información" onRetry={() => { if (tenantsLoadError) void refetchTenants(); }} />;
+  if (tenantsLoading) return <LoadingState label="Cargando la información..." />;
+
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">Talleres</h1>
@@ -145,7 +150,7 @@ export default function TenantsPage() {
               <Label>Email (opcional)</Label>
               <Input type="email" placeholder="juan@taller.com" {...register("email")} />
             </div>
-            <Button type="submit" disabled={isSubmitting} className="w-full">
+            <Button type="submit" loading={isSubmitting} disabled={isSubmitting} className="w-full">
               {isSubmitting ? "Creando..." : "Crear taller"}
             </Button>
           </form>
@@ -162,7 +167,7 @@ export default function TenantsPage() {
               <th></th>
             </THead>
             <TBody>
-              {isLoading && <EmptyRow colSpan={5}>Cargando...</EmptyRow>}
+              {isLoading && <EmptyRow colSpan={5}><LoadingState label="Cargando..." className="py-0" /></EmptyRow>}
               {!isLoading && tenants?.length === 0 && <EmptyRow colSpan={5}>Todavía no hay talleres.</EmptyRow>}
               {tenants?.map((t) =>
                 editingContactId === t.tenantId ? (

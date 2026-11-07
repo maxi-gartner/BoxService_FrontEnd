@@ -1,5 +1,6 @@
 "use client";
-
+import { LoadingState } from "@/components/ui/LoadingState";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { useState } from "react";
 import { useServiceReminders, useContactReminder, useReminderPhone } from "@/hooks/useServiceReminders";
 import { Button } from "@/components/ui/Button";
@@ -30,6 +31,10 @@ export default function RecordatoriosPage() {
     catch (err) { setError(err instanceof Error ? err.message : "No se pudo guardar el teléfono."); }
   }
 
+  const loadError = reminders.error;
+  if (loadError) return <ErrorState error={loadError} resource="los recordatorios" onRetry={() => { void reminders.refetch(); }} />;
+  if (reminders.isLoading) return <LoadingState label="Cargando los recordatorios..." />;
+
   return <div className="space-y-5">
     <div>
       <h1 className="text-2xl font-bold">Recordatorios de service</h1>
@@ -38,11 +43,9 @@ export default function RecordatoriosPage() {
     <div className="flex flex-wrap gap-2">
       <Button variant={contacted ? "secondary" : "primary"} onClick={() => setContacted(false)}>Pendientes ({reminders.data?.pendingCount ?? 0})</Button>
       <Button variant={contacted ? "primary" : "secondary"} onClick={() => setContacted(true)}>Contactados</Button>
-      <Button variant="secondary" disabled={reminders.isFetching} onClick={() => reminders.refetch()}>Actualizar</Button>
+      <Button variant="secondary" loading={reminders.isFetching} disabled={reminders.isFetching} onClick={() => reminders.refetch()}>Actualizar</Button>
     </div>
     {error && <Alert type="error">{error}</Alert>}
-    {reminders.isError && <Alert type="error">{reminders.error.message}</Alert>}
-    {reminders.isLoading && <p className="text-muted">Cargando recordatorios...</p>}
     {reminders.isSuccess && items.length === 0 && <p className="rounded-lg border border-border p-6 text-muted">{contacted ? "No hay contactos registrados para los recordatorios vigentes." : "No hay recordatorios pendientes."}</p>}
     <div className="grid gap-4 lg:grid-cols-2">
       {items.map(r => <article key={r.serviceId} className="space-y-3 rounded-xl border border-border bg-surface p-5">
@@ -58,13 +61,13 @@ export default function RecordatoriosPage() {
         <div className="flex flex-wrap gap-2">
           {r.whatsappUrl ? <a href={r.whatsappUrl} target="_blank" rel="noopener noreferrer" className="rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-[#0d1117]">Enviar WhatsApp</a>
             : <Button variant="secondary" onClick={() => { setPhoneClient(r.clientId); setPhone(r.phone); }}>Cargar teléfono</Button>}
-          {!r.contactedAt && <Button variant="secondary" disabled={contact.isPending} onClick={() => mark(r.serviceId)}>Marcar como contactado</Button>}
+          {!r.contactedAt && <Button variant="secondary" loading={contact.isPending} disabled={contact.isPending} onClick={() => mark(r.serviceId)}>Marcar como contactado</Button>}
         </div>
         {!r.whatsappUrl && <p className="text-xs text-muted">Falta un teléfono válido con código de país.</p>}
         {phoneClient === r.clientId && <form className="space-y-2 border-t border-border pt-3" onSubmit={event => { event.preventDefault(); void savePhone(); }}>
           <Label htmlFor={`phone-${r.serviceId}`}>Teléfono con código de país</Label>
           <Input id={`phone-${r.serviceId}`} type="tel" placeholder="+5493431234567" value={phone} onChange={event => setPhone(event.target.value)} required />
-          <div className="flex gap-2"><Button type="submit" disabled={updatePhone.isPending}>Guardar teléfono</Button><Button type="button" variant="secondary" onClick={() => setPhoneClient(null)}>Cancelar</Button></div>
+          <div className="flex gap-2"><Button type="submit" loading={updatePhone.isPending} disabled={updatePhone.isPending}>Guardar teléfono</Button><Button type="button" variant="secondary" onClick={() => setPhoneClient(null)}>Cancelar</Button></div>
         </form>}
       </article>)}
     </div>

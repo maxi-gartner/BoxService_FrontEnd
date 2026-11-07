@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 import { useCreateService, useCreateServiceDetail } from "@/hooks/useServices";
 import { ApiClientError } from "@/lib/api/client";
@@ -22,6 +21,7 @@ export function NewServiceTab({ vehicle }: { vehicle: Vehicle }) {
   const createService = useCreateService();
   const createServiceDetail = useCreateServiceDetail();
 
+  const [saving, setSaving] = useState(false);
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [mileage, setMileage] = useState("");
   const [serviceType, setServiceType] = useState("");
@@ -30,6 +30,7 @@ export function NewServiceTab({ vehicle }: { vehicle: Vehicle }) {
   const [message, setMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
 
   async function handleSubmit() {
+    if (saving) return;
     setMessage(null);
 
     if (!detail.trim()) {
@@ -37,6 +38,7 @@ export function NewServiceTab({ vehicle }: { vehicle: Vehicle }) {
       return;
     }
 
+    setSaving(true);
     try {
       const service = await createService.mutateAsync({
         vehicleId: vehicle.vehicleId,
@@ -63,7 +65,7 @@ export function NewServiceTab({ vehicle }: { vehicle: Vehicle }) {
         type: "error",
         text: err instanceof ApiClientError ? err.message : err instanceof Error ? err.message : "No se pudo crear el service.",
       });
-    }
+    } finally { setSaving(false); }
   }
 
   return (
@@ -111,8 +113,8 @@ export function NewServiceTab({ vehicle }: { vehicle: Vehicle }) {
       </div>
 
       <div className="flex justify-end mt-6">
-        <Button onClick={handleSubmit} disabled={createService.isPending}>
-          {createService.isPending ? "Guardando..." : "Crear service"}
+        <Button onClick={handleSubmit} loading={saving} disabled={saving}>
+          {saving ? "Guardando..." : "Crear service"}
         </Button>
       </div>
     </Card>

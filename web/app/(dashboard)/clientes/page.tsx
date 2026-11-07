@@ -1,5 +1,9 @@
 "use client";
+import { Spinner } from "@/components/ui/Spinner";
 
+
+import { LoadingState } from "@/components/ui/LoadingState";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -25,13 +29,13 @@ export default function ClientesPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search);
-  const { data: clientsPage, isLoading } = useClients({ page, pageSize: 25, search: debouncedSearch || undefined });
+  const { data: clientsPage, isLoading, error: clientsLoadError, isLoading: clientsLoading, refetch: refetchClients } = useClients({ page, pageSize: 25, search: debouncedSearch || undefined });
   const clients = clientsPage?.items;
   const createClient = useCreateClient();
   const invitePortal = useInvitePortal();
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
   const [selectedClientName, setSelectedClientName] = useState("");
-  const { data: vehicles, isLoading: loadingVehicles } = useClientVehicles(selectedClientId);
+  const { data: vehicles, isLoading: loadingVehicles, error: clientVehiclesLoadError, isLoading: clientVehiclesLoading, refetch: refetchClientVehicles } = useClientVehicles(selectedClientId);
   const [inviteError, setInviteError] = useState("");
   const [invitingClientId, setInvitingClientId] = useState<number | null>(null);
 
@@ -80,6 +84,10 @@ export default function ClientesPage() {
     }
   }
 
+  const loadError = clientsLoadError ?? clientVehiclesLoadError;
+  if (loadError) return <ErrorState error={loadError} resource="los clientes" onRetry={() => { if (clientsLoadError) void refetchClients(); if (clientVehiclesLoadError) void refetchClientVehicles(); }} />;
+  if (clientsLoading || clientVehiclesLoading) return <LoadingState label="Cargando los clientes..." />;
+
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">Clientes</h1>
@@ -104,7 +112,7 @@ export default function ClientesPage() {
             </div>
             <Alert type="error">{formError}</Alert>
             <Alert type="ok">{formOk}</Alert>
-            <Button type="submit" disabled={isSubmitting} className="w-full">
+            <Button type="submit" loading={isSubmitting} disabled={isSubmitting} className="w-full">
               {isSubmitting ? "Guardando..." : "Guardar cliente"}
             </Button>
           </form>
@@ -130,7 +138,7 @@ export default function ClientesPage() {
               <th></th>
             </THead>
             <TBody>
-              {isLoading && <EmptyRow colSpan={5}>Cargando...</EmptyRow>}
+              {isLoading && <EmptyRow colSpan={5}><LoadingState label="Cargando..." className="py-0" /></EmptyRow>}
               {!isLoading && clients?.length === 0 && (
                 <EmptyRow colSpan={5}>
                   {debouncedSearch ? "Ningún cliente coincide con la búsqueda." : "No hay clientes cargados."}
@@ -159,7 +167,7 @@ export default function ClientesPage() {
                         className="text-xs text-accent hover:underline disabled:opacity-50"
                         title="Genera un link para que el cliente vea el estado de su auto y abre WhatsApp para mandárselo"
                       >
-                        {invitingClientId === client.clientId ? "Generando..." : "Invitar al portal"}
+                        {invitingClientId === client.clientId ? <span className="inline-flex items-center gap-2"><Spinner />Generando...</span> : "Invitar al portal"}
                       </button>
                     </div>
                   </TD>
@@ -195,7 +203,7 @@ export default function ClientesPage() {
           </THead>
           <TBody>
             {!selectedClientId && <EmptyRow colSpan={5}>Sin datos para mostrar.</EmptyRow>}
-            {selectedClientId && loadingVehicles && <EmptyRow colSpan={5}>Cargando...</EmptyRow>}
+            {selectedClientId && loadingVehicles && <EmptyRow colSpan={5}><LoadingState label="Cargando..." className="py-0" /></EmptyRow>}
             {selectedClientId && !loadingVehicles && vehicles?.length === 0 && (
               <EmptyRow colSpan={5}>Este cliente no tiene vehículos asociados todavía.</EmptyRow>
             )}

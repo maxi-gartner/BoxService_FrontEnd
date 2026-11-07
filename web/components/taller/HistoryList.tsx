@@ -1,5 +1,6 @@
 "use client";
-
+import { LoadingState } from "@/components/ui/LoadingState";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { useState } from "react";
 import { useVehicleHistory } from "@/hooks/useVehicles";
 import { Button } from "@/components/ui/Button";
@@ -9,8 +10,12 @@ import { formatDate } from "@/lib/utils";
 import type { Service, Vehicle } from "@/types/entities";
 
 export function HistoryList({ vehicle }: { vehicle: Vehicle }) {
-  const { data: history, isLoading } = useVehicleHistory(vehicle.vehicleId);
+  const { data: history, isLoading, error: vehicleHistoryLoadError, isLoading: vehicleHistoryLoading, refetch: refetchVehicleHistory } = useVehicleHistory(vehicle.vehicleId);
   const [inspectionService, setInspectionService] = useState<Service | null>(null);
+
+  const loadError = vehicleHistoryLoadError;
+  if (loadError) return <ErrorState error={loadError} resource="el historial" onRetry={() => { if (vehicleHistoryLoadError) void refetchVehicleHistory(); }} />;
+  if (vehicleHistoryLoading) return <LoadingState label="Cargando el historial..." />;
 
   return (
     <>
@@ -25,7 +30,7 @@ export function HistoryList({ vehicle }: { vehicle: Vehicle }) {
           <th></th>
         </THead>
         <TBody>
-          {isLoading && <EmptyRow colSpan={7}>Cargando historial...</EmptyRow>}
+          {isLoading && <EmptyRow colSpan={7}><LoadingState label="Cargando historial..." className="py-0" /></EmptyRow>}
           {!isLoading && history?.length === 0 && <EmptyRow colSpan={7}>Este vehículo todavía no tiene services registrados.</EmptyRow>}
           {history?.map((service) => (
             <TR key={service.serviceId}>

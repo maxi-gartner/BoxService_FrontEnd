@@ -1,5 +1,6 @@
 "use client";
-
+import { LoadingState } from "@/components/ui/LoadingState";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -28,8 +29,8 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export default function PagosPage() {
-  const { data: overview, isLoading } = usePaymentsOverview();
-  const { data: tenants } = useTenants();
+  const { data: overview, isLoading, error: paymentsOverviewLoadError, isLoading: paymentsOverviewLoading, refetch: refetchPaymentsOverview } = usePaymentsOverview();
+  const { data: tenants, error: tenantsLoadError, isLoading: tenantsLoading, refetch: refetchTenants } = useTenants();
   const recordPayment = useRecordPayment();
   const [message, setMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
 
@@ -56,6 +57,10 @@ export default function PagosPage() {
       setMessage({ type: "error", text: err instanceof ApiClientError ? err.message : "No se pudo registrar el pago." });
     }
   }
+
+  const loadError = paymentsOverviewLoadError ?? tenantsLoadError;
+  if (loadError) return <ErrorState error={loadError} resource="la información" onRetry={() => { if (paymentsOverviewLoadError) void refetchPaymentsOverview(); if (tenantsLoadError) void refetchTenants(); }} />;
+  if (paymentsOverviewLoading || tenantsLoading) return <LoadingState label="Cargando la información..." />;
 
   return (
     <div>
@@ -93,7 +98,7 @@ export default function PagosPage() {
               <Label>Notas (opcional)</Label>
               <Input placeholder="Transferencia" {...register("notes")} />
             </div>
-            <Button type="submit" disabled={isSubmitting} className="w-full">
+            <Button type="submit" loading={isSubmitting} disabled={isSubmitting} className="w-full">
               {isSubmitting ? "Guardando..." : "Registrar pago"}
             </Button>
           </form>
@@ -108,7 +113,7 @@ export default function PagosPage() {
               <th>Último pago</th>
             </THead>
             <TBody>
-              {isLoading && <EmptyRow colSpan={3}>Cargando...</EmptyRow>}
+              {isLoading && <EmptyRow colSpan={3}><LoadingState label="Cargando..." className="py-0" /></EmptyRow>}
               {!isLoading && overview?.length === 0 && <EmptyRow colSpan={3}>No hay talleres todavía.</EmptyRow>}
               {overview?.map((row) => (
                 <TR key={row.tenantId}>

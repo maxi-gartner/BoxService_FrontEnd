@@ -1,5 +1,6 @@
 "use client";
-
+import { LoadingState } from "@/components/ui/LoadingState";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -33,7 +34,7 @@ type SucursalFormValues = z.infer<typeof sucursalSchema>;
 type Message = { type: "ok" | "error"; text: string } | null;
 
 function EmpleadosCard() {
-  const { data: users, isLoading } = useUsers();
+  const { data: users, isLoading, error: usersLoadError, isLoading: usersLoading, refetch: refetchUsers } = useUsers();
   const createUser = useCreateUser();
   const updateUser = useUpdateUser();
   const [message, setMessage] = useState<Message>(null);
@@ -69,6 +70,10 @@ function EmpleadosCard() {
     }
   }
 
+  const loadError = usersLoadError;
+  if (loadError) return <ErrorState error={loadError} resource="los usuarios del taller" onRetry={() => { if (usersLoadError) void refetchUsers(); }} />;
+  if (usersLoading) return <LoadingState label="Cargando los usuarios del taller..." />;
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-6">
       <Card>
@@ -94,7 +99,7 @@ function EmpleadosCard() {
             <Label>Email (opcional)</Label>
             <Input type="email" placeholder="carlos@taller.com" {...register("email")} />
           </div>
-          <Button type="submit" disabled={isSubmitting} className="w-full">
+          <Button type="submit" loading={isSubmitting} disabled={isSubmitting} className="w-full">
             {isSubmitting ? "Creando..." : "Crear empleado"}
           </Button>
         </form>
@@ -111,7 +116,7 @@ function EmpleadosCard() {
             <th></th>
           </THead>
           <TBody>
-            {isLoading && <EmptyRow colSpan={5}>Cargando...</EmptyRow>}
+            {isLoading && <EmptyRow colSpan={5}><LoadingState label="Cargando..." className="py-0" /></EmptyRow>}
             {!isLoading && users?.length === 0 && <EmptyRow colSpan={5}>Todavía no hay empleados.</EmptyRow>}
             {users?.map((u) => (
               <TR key={u.userId}>
@@ -142,7 +147,7 @@ function EmpleadosCard() {
 }
 
 function SucursalesCard() {
-  const { data: sucursales, isLoading } = useSucursales();
+  const { data: sucursales, isLoading, error: sucursalesLoadError, isLoading: sucursalesLoading, refetch: refetchSucursales } = useSucursales();
   const createSucursal = useCreateSucursal();
   const updateSucursal = useUpdateSucursal();
   const [message, setMessage] = useState<Message>(null);
@@ -178,6 +183,10 @@ function SucursalesCard() {
     }
   }
 
+  const loadError = sucursalesLoadError;
+  if (loadError) return <ErrorState error={loadError} resource="las sucursales" onRetry={() => { if (sucursalesLoadError) void refetchSucursales(); }} />;
+  if (sucursalesLoading) return <LoadingState label="Cargando las sucursales..." />;
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-6">
       <Card>
@@ -193,7 +202,7 @@ function SucursalesCard() {
             <Label>Dirección (opcional)</Label>
             <Input placeholder="Av. Siempre Viva 123" {...register("address")} />
           </div>
-          <Button type="submit" disabled={isSubmitting} className="w-full">
+          <Button type="submit" loading={isSubmitting} disabled={isSubmitting} className="w-full">
             {isSubmitting ? "Creando..." : "Crear sucursal"}
           </Button>
         </form>
@@ -209,7 +218,7 @@ function SucursalesCard() {
             <th></th>
           </THead>
           <TBody>
-            {isLoading && <EmptyRow colSpan={4}>Cargando...</EmptyRow>}
+            {isLoading && <EmptyRow colSpan={4}><LoadingState label="Cargando..." className="py-0" /></EmptyRow>}
             {!isLoading && sucursales?.length === 0 && <EmptyRow colSpan={4}>Todavía no hay sucursales.</EmptyRow>}
             {sucursales?.map((s) => (
               <TR key={s.sucursalId}>

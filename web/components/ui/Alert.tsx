@@ -6,5 +6,5 @@ const styles = {
 export function Alert({ type, children }: { type: "ok" | "error"; children: React.ReactNode }) {
   if (!children) return null;
 
-  return <div className={`rounded-lg border px-4 py-3 text-sm ${styles[type]}`}>{children}</div>;
+  return <div role={type === "error" ? "alert" : "status"} aria-live={type === "error" ? "assertive" : "polite"} className={`rounded-lg border px-4 py-3 text-sm ${styles[type]}`}>{children}</div>;
 }

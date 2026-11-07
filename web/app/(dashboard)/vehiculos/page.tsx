@@ -1,5 +1,6 @@
 "use client";
-
+import { LoadingState } from "@/components/ui/LoadingState";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { useState, type ChangeEvent } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -41,14 +42,14 @@ export default function VehiculosPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search);
-  const { data: vehiclesPage, isLoading } = useVehicles({ page, pageSize: 25, search: debouncedSearch || undefined });
+  const { data: vehiclesPage, isLoading, error: vehiclesLoadError, isLoading: vehiclesLoading, refetch: refetchVehicles } = useVehicles({ page, pageSize: 25, search: debouncedSearch || undefined });
   const vehicles = vehiclesPage?.items;
   // El picker de "Cliente" del alta necesita la lista completa (combo),
   // no una página — ver comentario en ClientService.ListPaged.
-  const { data: clientsPage } = useClients({ pageSize: 200 });
+  const { data: clientsPage, error: clientsLoadError, isLoading: clientsLoading, refetch: refetchClients } = useClients({ pageSize: 200 });
   const clients = clientsPage?.items;
   const createVehicle = useCreateVehicle();
-  const { data: brands } = useVehicleBrands();
+  const { data: brands, error: brandsError, isFetching: loadingBrands } = useVehicleBrands();
 
   // Reset de página al cambiar el buscador — ajuste de estado durante el
   // render (patrón recomendado por React), no un efecto.
@@ -80,9 +81,9 @@ export default function VehiculosPage() {
   const watchedModel = watch("model");
   const watchedVersion = watch("version");
   const brandId = brands?.find((b) => b.name === watchedBrand)?.id ?? null;
-  const { data: models } = useVehicleModels(brandId);
+  const { data: models, error: modelsError, isFetching: loadingModels } = useVehicleModels(brandId);
   const modelId = models?.find((m) => m.name === watchedModel)?.id ?? null;
-  const { data: versions } = useVehicleVersions(brandId, modelId);
+  const { data: versions, error: versionsError, isFetching: loadingVersions } = useVehicleVersions(brandId, modelId);
 
   function resetModelAndVersion() {
     setValue("model", "");
@@ -144,6 +145,10 @@ export default function VehiculosPage() {
     }
   }
 
+  const loadError = vehiclesLoadError ?? clientsLoadError;
+  if (loadError) return <ErrorState error={loadError} resource="los vehículos" onRetry={() => { if (vehiclesLoadError) void refetchVehicles(); if (clientsLoadError) void refetchClients(); }} />;
+  if (vehiclesLoading || clientsLoading) return <LoadingState label="Cargando los vehículos..." />;
+
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">Vehículos</h1>
@@ -151,6 +156,8 @@ export default function VehiculosPage() {
       <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6">
         <Card>
           <CardTitle>Registrar vehículo</CardTitle>
+          {(loadingBrands || loadingModels || loadingVersions) && <LoadingState label="Cargando opciones de vehículos..." />}
+          {(brandsError || modelsError || versionsError) && <p role="alert" className="mb-3 text-sm text-danger">No se pudieron cargar algunas opciones. Podés elegir Otra marca / Otro modelo para ingresarlos manualmente.</p>}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
               <Label>Cliente</Label>
@@ -279,7 +286,7 @@ export default function VehiculosPage() {
             </div>
             <Alert type="error">{formError}</Alert>
             <Alert type="ok">{formOk}</Alert>
-            <Button type="submit" disabled={isSubmitting} className="w-full">
+            <Button type="submit" loading={isSubmitting} disabled={isSubmitting} className="w-full">
               {isSubmitting ? "Guardando..." : "Guardar vehículo"}
             </Button>
           </form>
@@ -304,7 +311,7 @@ export default function VehiculosPage() {
               <th>Cliente</th>
             </THead>
             <TBody>
-              {isLoading && <EmptyRow colSpan={5}>Cargando...</EmptyRow>}
+              {isLoading && <EmptyRow colSpan={5}><LoadingState label="Cargando..." className="py-0" /></EmptyRow>}
               {!isLoading && vehicles?.length === 0 && (
                 <EmptyRow colSpan={5}>
                   {debouncedSearch ? "Ningún vehículo coincide con la búsqueda." : "No hay vehículos registrados."}

@@ -1,6 +1,8 @@
 "use client";
+import { LoadingState } from "@/components/ui/LoadingState";
 
-import { Suspense, useState } from "react";
+
+import { Suspense, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -25,6 +27,7 @@ type FormValues = z.infer<typeof schema>;
 
 function LoginForm() {
   const router = useRouter();
+  const [navigating, startNavigation] = useTransition();
   const searchParams = useSearchParams();
 
   const [serverError, setServerError] = useState("");
@@ -47,11 +50,10 @@ function LoginForm() {
       const user = await login(values);
       const home = user.role === "superadmin" ? "/admin/tenants" : "/taller";
 
-      router.push(
-        searchParams.get("next") ?? home,
-      );
-
-      router.refresh();
+      startNavigation(() => {
+        router.push(searchParams.get("next") ?? home);
+        router.refresh();
+      });
     } catch (err) {
       setServerError(
         err instanceof ApiClientError
@@ -204,7 +206,7 @@ function LoginForm() {
 
                 <Button
                   type="submit"
-                  disabled={isSubmitting}
+                  loading={isSubmitting || navigating} disabled={isSubmitting || navigating}
                   className="w-full cursor-pointer disabled:cursor-not-allowed"
                 >
                   {isSubmitting
@@ -230,7 +232,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense>
+    <Suspense fallback={<LoadingState label="Cargando ingreso..." />}>
       <LoginForm />
     </Suspense>
   );

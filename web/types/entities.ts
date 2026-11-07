@@ -348,10 +348,19 @@ export type InspectionPhotoUrl = {
 // ── Facturas ──────────────────────────────────────────
 export type InvoiceStatus = "issued" | "paid" | "cancelled";
 
+export type InvoiceDetailRequest = {
+  type: "labor" | "part";
+  description: string;
+  quantity: number;
+  unitPrice: number;
+};
+export type InvoiceDetail = InvoiceDetailRequest & { detailId: number; subtotal: number };
+
 export type Invoice = {
   invoiceId: number;
   tenantId: string;
   number: string; // F-0001
+  details?: InvoiceDetail[];
   date: string;
   total: number;
   status: InvoiceStatus;
@@ -367,6 +376,7 @@ export type Invoice = {
 export type InvoiceCreateRequest = {
   serviceId: number;
   budgetId?: number | null;
+  details?: InvoiceDetailRequest[];
 };
 
 export type InvoiceStatusRequest = {
@@ -406,6 +416,10 @@ export type ServiceRanking = {
 };
 
 export type TenantMetrics = {
+  collectedThisMonth: number;
+  collectedThisYear: number;
+  pendingCollectionTotal: number;
+  paidWithoutDateTotal: number;
   revenueThisMonth: number;
   revenueThisYear: number;
   servicesThisMonth: number;

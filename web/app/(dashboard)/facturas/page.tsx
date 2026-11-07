@@ -1,5 +1,6 @@
 "use client";
-
+import { LoadingState } from "@/components/ui/LoadingState";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { useState } from "react";
 import Link from "next/link";
 import { useInvoiceStats, useInvoices, useUpdateInvoiceStatus } from "@/hooks/useInvoices";
@@ -16,8 +17,8 @@ import type { InvoiceStatus } from "@/types/entities";
 export default function FacturasPage() {
   const [page, setPage] = useState(1);
   const [filter, setFilter] = useState<"todas" | "por-cobrar">("por-cobrar");
-  const { data: invoicesPage, isLoading } = useInvoices({ page, pageSize: 25, status: filter });
-  const { data: stats } = useInvoiceStats();
+  const { data: invoicesPage, isLoading, error: invoicesLoadError, isLoading: invoicesLoading, refetch: refetchInvoices } = useInvoices({ page, pageSize: 25, status: filter });
+  const { data: stats, error: invoiceStatsLoadError, isLoading: invoiceStatsLoading, refetch: refetchInvoiceStats } = useInvoiceStats();
   const updateStatus = useUpdateInvoiceStatus();
 
   const [message, setMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
@@ -46,6 +47,10 @@ export default function FacturasPage() {
   }
 
   const rows = invoicesPage?.items ?? [];
+
+  const loadError = invoicesLoadError ?? invoiceStatsLoadError;
+  if (loadError) return <ErrorState error={loadError} resource="las facturas" onRetry={() => { if (invoicesLoadError) void refetchInvoices(); if (invoiceStatsLoadError) void refetchInvoiceStats(); }} />;
+  if (invoicesLoading || invoiceStatsLoading) return <LoadingState label="Cargando las facturas..." />;
 
   return (
     <div>
@@ -101,7 +106,7 @@ export default function FacturasPage() {
             <th></th>
           </THead>
           <TBody>
-            {isLoading && <EmptyRow colSpan={6}>Cargando...</EmptyRow>}
+            {isLoading && <EmptyRow colSpan={6}><LoadingState label="Cargando..." className="py-0" /></EmptyRow>}
             {!isLoading && rows.length === 0 && (
               <EmptyRow colSpan={6}>
                 {filter === "por-cobrar" ? "No hay facturas por cobrar." : "No hay facturas."}
@@ -140,13 +145,13 @@ export default function FacturasPage() {
                     </Button>
                     {i.status === "issued" && (
                       <>
-                        <Button size="sm" disabled={busy} onClick={() => act(i.invoiceId, "paid", "Cobrada")}>
+                        <Button size="sm" loading={busy} disabled={busy} onClick={() => act(i.invoiceId, "paid", "Cobrada")}>
                           Cobrar
                         </Button>
                         <Button
                           size="sm"
                           variant="danger"
-                          disabled={busy}
+                          loading={busy} disabled={busy}
                           onClick={() => act(i.invoiceId, "cancelled", "Anulada")}
                         >
                           Anular

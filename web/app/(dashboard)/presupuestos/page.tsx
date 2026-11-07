@@ -1,5 +1,6 @@
 "use client";
-
+import { LoadingState } from "@/components/ui/LoadingState";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { Fragment, useState } from "react";
 import Link from "next/link";
 import { useBudgets, useUpdateBudgetStatus, useUpdateBudgetDetails, useBudget } from "@/hooks/useBudgets";
@@ -19,11 +20,15 @@ function isCompleted(b: Budget) {
 }
 
 function BudgetDetailRow({ budgetId, colSpan }: { budgetId: number; colSpan: number }) {
-  const { data, isLoading } = useBudget(budgetId);
+  const { data, isLoading, error: budgetLoadError, isLoading: budgetLoading, refetch: refetchBudget } = useBudget(budgetId);
+  const loadError = budgetLoadError;
+  if (loadError) return <tr><td colSpan={colSpan}><ErrorState error={loadError} resource="la información" onRetry={() => { if (budgetLoadError) void refetchBudget(); }} /></td></tr>;
+  if (budgetLoading) return <tr><td colSpan={colSpan}><LoadingState label="Cargando la información..." /></td></tr>;
+
   return (
     <tr>
       <td colSpan={colSpan} className="px-4 py-3 bg-surface-2">
-        {isLoading && <p className="text-sm text-muted">Cargando detalle...</p>}
+        {isLoading && <LoadingState label="Cargando detalle..." />}
         {data && (
           <div className="space-y-2">
             {data.details.length === 0 && <p className="text-sm text-muted">Sin ítems.</p>}
@@ -55,11 +60,15 @@ function EditBudgetRow({ budgetId, colSpan, onSave, saving }: {
   onSave: (id: number, details: BudgetDetailRequest[]) => void;
   saving: boolean;
 }) {
-  const { data, isLoading } = useBudget(budgetId);
+  const { data, isLoading, error: budgetLoadError, isLoading: budgetLoading, refetch: refetchBudget } = useBudget(budgetId);
+  const loadError = budgetLoadError;
+  if (loadError) return <tr><td colSpan={colSpan}><ErrorState error={loadError} resource="la información" onRetry={() => { if (budgetLoadError) void refetchBudget(); }} /></td></tr>;
+  if (budgetLoading) return <tr><td colSpan={colSpan}><LoadingState label="Cargando la información..." /></td></tr>;
+
   return (
     <tr>
       <td colSpan={colSpan} className="bg-surface-2 px-4 py-4">
-        {isLoading && <p className="text-sm text-muted">Cargando ítems...</p>}
+        {isLoading && <LoadingState label="Cargando ítems..." />}
         {data && <BudgetDetailsEditor details={data.details} saving={saving} onSave={(details) => onSave(budgetId, details)} />}
       </td>
     </tr>
@@ -69,7 +78,7 @@ function EditBudgetRow({ budgetId, colSpan, onSave, saving }: {
 export default function PresupuestosPage() {
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<"todos" | "pendientes">("todos");
-  const { data: budgetsPage, isLoading } = useBudgets({ page, pageSize: 25, status: statusFilter });
+  const { data: budgetsPage, isLoading, error: budgetsLoadError, isLoading: budgetsLoading, refetch: refetchBudgets } = useBudgets({ page, pageSize: 25, status: statusFilter });
   const updateStatus = useUpdateBudgetStatus();
   const updateDetails = useUpdateBudgetDetails();
 
@@ -115,6 +124,10 @@ export default function PresupuestosPage() {
 
   const rows = budgetsPage?.items ?? [];
 
+  const loadError = budgetsLoadError;
+  if (loadError) return <ErrorState error={loadError} resource="los presupuestos" onRetry={() => { if (budgetsLoadError) void refetchBudgets(); }} />;
+  if (budgetsLoading) return <LoadingState label="Cargando los presupuestos..." />;
+
   return (
     <div>
       <h1 className="text-2xl font-bold mb-2">Presupuestos</h1>
@@ -153,7 +166,7 @@ export default function PresupuestosPage() {
             <th></th>
           </THead>
           <TBody>
-            {isLoading && <EmptyRow colSpan={5}>Cargando...</EmptyRow>}
+            {isLoading && <EmptyRow colSpan={5}><LoadingState label="Cargando..." className="py-0" /></EmptyRow>}
             {!isLoading && rows.length === 0 && (
               <EmptyRow colSpan={5}>
                 {statusFilter === "pendientes" ? "No hay presupuestos pendientes." : "No hay presupuestos."}
@@ -209,13 +222,13 @@ export default function PresupuestosPage() {
                       </Button>
                       {pending && (
                         <>
-                          <Button size="sm" disabled={busy} onClick={() => act(b.budgetId, "approved")}>
+                          <Button size="sm" loading={busy} disabled={busy} onClick={() => act(b.budgetId, "approved")}>
                             Aprobar
                           </Button>
                           <Button
                             size="sm"
                             variant="danger"
-                            disabled={busy}
+                            loading={busy} disabled={busy}
                             onClick={() => act(b.budgetId, "rejected")}
                           >
                             Rechazar

@@ -1,6 +1,6 @@
 "use client";
-
 import Link from "next/link";
+import { Button } from "@/components/ui/Button";
 import { usePathname, useRouter } from "next/navigation";
 import { logout } from "@/lib/api/auth";
 import { ROLE_LABELS, type Role } from "@/types/auth";
@@ -101,9 +101,9 @@ export function Sidebar({ userName, role, tenantName, isOpen, onClose }: Props) 
         <p className="text-xs text-muted mb-1 truncate">{userName}</p>
         <p className="text-xs text-accent mb-2">{ROLE_LABELS[role]}</p>
         {tenantName && <p className="text-xs text-muted mb-2 truncate">{tenantName}</p>}
-        <button onClick={handleLogout} className="text-xs text-danger hover:underline">
+        <Button type="button" variant="secondary" size="sm" onClick={handleLogout} className="border-0 px-0 text-danger hover:underline" loadingText="Cerrando sesión...">
           Cerrar sesión
-        </button>
+        </Button>
       </div>
     </aside>
   );

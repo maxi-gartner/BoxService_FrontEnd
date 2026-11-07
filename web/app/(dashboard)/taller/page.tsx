@@ -1,5 +1,6 @@
 "use client";
-
+import { LoadingState } from "@/components/ui/LoadingState";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
@@ -46,7 +47,7 @@ function TallerContent() {
   // Un pedido directo por ID, no la lista completa de vehículos — antes
   // esta pantalla bajaba TODOS los vehículos solo para resolver el
   // deep-link /taller?id=123.
-  const { data: deepLinkVehicle } = useVehicleById(idParam ? Number(idParam) : null);
+  const { data: deepLinkVehicle, error: vehicleByIdLoadError, isLoading: vehicleByIdLoading, refetch: refetchVehicleById } = useVehicleById(idParam && Number.isSafeInteger(Number(idParam)) && Number(idParam) > 0 ? Number(idParam) : null);
   const queryClient = useQueryClient();
 
   const [view, setView] = useState<View>("buscar");
@@ -74,6 +75,12 @@ function TallerContent() {
   function handleChanged() {
     queryClient.invalidateQueries();
   }
+
+  if (idParam !== null && (!Number.isSafeInteger(Number(idParam)) || Number(idParam) <= 0)) return <ErrorState code={400} />;
+
+  const loadError = vehicleByIdLoadError;
+  if (loadError) return <ErrorState error={loadError} resource="el vehículo" onRetry={() => { if (vehicleByIdLoadError) void refetchVehicleById(); }} />;
+  if (vehicleByIdLoading) return <LoadingState label="Cargando el vehículo..." />;
 
   return (
     <div>
@@ -192,7 +199,7 @@ function TallerContent() {
 
 export default function TallerPage() {
   return (
-    <Suspense fallback={<p className="text-muted">Cargando...</p>}>
+    <Suspense fallback={<LoadingState label="Cargando..." />}>
       <TallerContent />
     </Suspense>
   );

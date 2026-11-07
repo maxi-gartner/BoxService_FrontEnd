@@ -93,6 +93,7 @@ export async function handleMockRequest(
   if (segments[0] === "budgets") return handleBudgets(method, segments, searchParams, body, tenantId);
   if (segments[0] === "services") return handleServices(method, segments, searchParams, body, tenantId);
   if (segments[0] === "invoices") return handleInvoices(method, segments, searchParams, body, tenantId);
+  if (segments[0] === "catalog" && method !== "GET" && claims.role !== "owner") return fail(403, "Solo el dueño puede modificar el catálogo.");
   if (segments[0] === "catalog") return handleCatalog(method, segments, body, tenantId);
 
   return fail(404, "Route not found");

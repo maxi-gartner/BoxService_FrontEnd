@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 import { useResetPassword } from "@/hooks/useUsers";
 import { ApiClientError } from "@/lib/api/client";
@@ -48,7 +47,7 @@ export function ResetPasswordButton({ userId, onDone }: { userId: number; onDone
         onChange={(e) => setPassword(e.target.value)}
         className="max-w-40"
       />
-      <Button size="sm" disabled={resetPassword.isPending} onClick={handleSubmit}>
+      <Button size="sm" loading={resetPassword.isPending} disabled={resetPassword.isPending} onClick={handleSubmit}>
         Guardar
       </Button>
       <Button

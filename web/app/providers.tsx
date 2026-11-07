@@ -1,7 +1,8 @@
 "use client";
-
 import { useState, type ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ApiClientError } from "@/lib/api/client";
+import { NetworkActivity } from "@/components/ui/NetworkActivity";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 export function Providers({ children }: { children: ReactNode }) {
@@ -17,7 +18,7 @@ export function Providers({ children }: { children: ReactNode }) {
             // reactivan puntualmente porque ahí sí importa enterarse
             // rápido de un cambio hecho desde otro puesto.
             refetchOnWindowFocus: false,
-            retry: 1,
+            retry: (failureCount, error) => !(error instanceof ApiClientError && error.code >= 400 && error.code < 500) && failureCount < 1,
           },
         },
       }),
@@ -26,6 +27,7 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       {children}
+      <NetworkActivity />
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   );

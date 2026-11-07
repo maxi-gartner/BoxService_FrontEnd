@@ -1,5 +1,6 @@
 "use client";
-
+import { LoadingState } from "@/components/ui/LoadingState";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { useBudgetsByVehicle } from "@/hooks/useBudgets";
 import { useServicesByVehicle } from "@/hooks/useServices";
 import { useInvoicesByVehicle } from "@/hooks/useInvoices";
@@ -11,9 +12,9 @@ import type { Vehicle } from "@/types/entities";
 type Section = "presupuestos" | "historial" | "facturacion" | "nuevo-presupuesto" | "nuevo-service";
 
 export function VehicleOverview({ vehicle, onOpen }: { vehicle: Vehicle; onOpen: (section: Section) => void }) {
-  const { data: vehicleBudgets = [], isLoading: loadingBudgets } = useBudgetsByVehicle(vehicle.vehicleId);
-  const { data: services = [], isLoading: loadingServices } = useServicesByVehicle(vehicle.vehicleId);
-  const { data: vehicleInvoices = [], isLoading: loadingInvoices } = useInvoicesByVehicle(vehicle.vehicleId);
+  const { data: vehicleBudgets = [], isLoading: loadingBudgets, error: budgetsByVehicleLoadError, isLoading: budgetsByVehicleLoading, refetch: refetchBudgetsByVehicle } = useBudgetsByVehicle(vehicle.vehicleId);
+  const { data: services = [], isLoading: loadingServices, error: servicesByVehicleLoadError, isLoading: servicesByVehicleLoading, refetch: refetchServicesByVehicle } = useServicesByVehicle(vehicle.vehicleId);
+  const { data: vehicleInvoices = [], isLoading: loadingInvoices, error: invoicesByVehicleLoadError, isLoading: invoicesByVehicleLoading, refetch: refetchInvoicesByVehicle } = useInvoicesByVehicle(vehicle.vehicleId);
   const vehicleServices = [...services].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   const pendingBudgets = vehicleBudgets.filter((item) => item.status === "draft" || item.status === "sent").length;
   const pendingInvoices = vehicleInvoices.filter((item) => item.status === "issued").length;
@@ -25,6 +26,10 @@ export function VehicleOverview({ vehicle, onOpen }: { vehicle: Vehicle; onOpen:
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
   const loading = loadingBudgets || loadingServices || loadingInvoices;
 
+  const loadError = budgetsByVehicleLoadError ?? servicesByVehicleLoadError ?? invoicesByVehicleLoadError;
+  if (loadError) return <ErrorState error={loadError} resource="la actividad del vehículo" onRetry={() => { if (budgetsByVehicleLoadError) void refetchBudgetsByVehicle(); if (servicesByVehicleLoadError) void refetchServicesByVehicle(); if (invoicesByVehicleLoadError) void refetchInvoicesByVehicle(); }} />;
+  if (budgetsByVehicleLoading || servicesByVehicleLoading || invoicesByVehicleLoading) return <LoadingState label="Cargando la actividad del vehículo..." />;
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -35,7 +40,7 @@ export function VehicleOverview({ vehicle, onOpen }: { vehicle: Vehicle; onOpen:
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-6">
         <Card>
           <CardTitle>Actividad reciente</CardTitle>
-          {loading && <p className="text-sm text-muted">Cargando actividad...</p>}
+          {loading && <LoadingState label="Cargando actividad..." />}
           {!loading && activity.length === 0 && <div className="py-8 text-center"><p className="text-sm text-muted mb-3">Todavía no hay actividad registrada para este vehículo.</p><Button size="sm" onClick={() => onOpen("nuevo-presupuesto")}>Crear primer presupuesto</Button></div>}
           {!loading && activity.map((item) => <div key={item.key} className="grid grid-cols-[90px_1fr_auto] gap-3 items-center py-3 border-b border-border last:border-0"><span className="text-xs text-muted">{formatDate(item.date)}</span><div className="min-w-0"><p className="text-sm font-semibold wrap-break-word">{item.title}</p><p className="text-xs text-muted mt-1 wrap-break-word">{item.detail}</p></div><Button size="sm" variant="secondary" onClick={() => onOpen(item.section)}>Ver</Button></div>)}
         </Card>
