@@ -1,10 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { decodeJwt } from "jose";
 import { handleMockRequest } from "@/lib/mock/router";
 import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE, cookieOptions } from "@/lib/auth/cookies";
 import { normalizeRole } from "@/lib/auth/roles";
 import { isResourceReal } from "@/lib/backend-mode";
 import type { ApiResponse } from "@/types/api";
-import type { LoginResponse, User } from "@/types/auth";
+import type { AccessTokenClaims, LoginResponse, User } from "@/types/auth";
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
@@ -58,10 +59,20 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // El backend real todavía no tiene tabla de usuarios — arma un User
-  // sintético a partir de lo único que devuelve (username/role), así el
-  // resto de React sigue viendo la misma forma que con el mock.
-  const user: User = { id: username, name: username, email: username, role: normalizedRole, tenantId: null };
+  // El login no devuelve tenantId en el body — ya viene en el JWT (claim
+  // "tenantId", ausente para superadmin). Se decodifica acá mismo así el
+  // User que vuelve al cliente ya tiene el tenant correcto sin esperar al
+  // próximo getCurrentUser() (que sí hace el round-trip a /auth/me para
+  // el nombre del tenant, no solo el id).
+  const claims = decodeJwt<AccessTokenClaims>(token);
+  const user: User = {
+    id: username,
+    name: username,
+    email: username,
+    role: normalizedRole,
+    tenantId: claims.tenantId ?? null,
+    tenantName: null,
+  };
 
   const response = NextResponse.json({ success: true, data: { user }, error: null });
   const maxAge = Math.max(1, Math.floor((Date.parse(expiresAt) - Date.now()) / 1000));

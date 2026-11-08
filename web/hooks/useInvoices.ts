@@ -4,10 +4,33 @@ import type { InvoiceCreateRequest, InvoiceStatus } from "@/types/entities";
 
 // Mismo criterio que useBudgets/useServices: cobrar una factura desde otro
 // puesto tiene que verse rápido acá.
-export function useInvoices() {
+export function useInvoices(params: { page?: number; pageSize?: number; status?: "todas" | "por-cobrar" } = {}) {
   return useQuery({
-    queryKey: ["invoices"],
-    queryFn: invoicesApi.list,
+    queryKey: ["invoices", params],
+    queryFn: () => invoicesApi.list(params),
+    staleTime: 15_000,
+    refetchOnWindowFocus: true,
+  });
+}
+
+// Tarjetas de resumen de FacturasPage — agregados server-side, no
+// dependen de qué página/filtro esté mirando el usuario.
+export function useInvoiceStats() {
+  return useQuery({
+    queryKey: ["invoices", "stats"],
+    queryFn: invoicesApi.getStats,
+    staleTime: 15_000,
+    refetchOnWindowFocus: true,
+  });
+}
+
+// Facturas de un vehículo puntual (Taller) — sin paginar, un vehículo
+// nunca acumula miles de facturas propias.
+export function useInvoicesByVehicle(vehicleId: number | null) {
+  return useQuery({
+    queryKey: ["invoices", "byVehicle", vehicleId],
+    queryFn: () => invoicesApi.listByVehicle(vehicleId as number),
+    enabled: vehicleId !== null,
     staleTime: 15_000,
     refetchOnWindowFocus: true,
   });

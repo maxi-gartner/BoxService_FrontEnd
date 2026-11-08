@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { useVehicles } from "@/hooks/useVehicles";
+import { useVehicleById } from "@/hooks/useVehicles";
 import { VehicleSearch } from "@/components/taller/VehicleSearch";
 import { VehicleWorkspaceHeader } from "@/components/taller/VehicleWorkspaceHeader";
 import { VehicleOverview } from "@/components/taller/VehicleOverview";
@@ -32,9 +32,21 @@ const SECTIONS: { id: View; label: string }[] = [
   { id: "facturacion", label: "Facturación" },
 ];
 
+// Mismos tabs que SECTIONS (misma barra, mismo hover/resaltado) en vez de
+// botones aparte arriba — así armar un presupuesto o un service se ve
+// como "entrar a otra sección", no como una acción fuera de lugar.
+const ACTIONS: { id: View; label: string }[] = [
+  { id: "nuevo-presupuesto", label: "+ Nuevo presupuesto" },
+  { id: "nuevo-service", label: "+ Registrar service" },
+];
+
 function TallerContent() {
   const searchParams = useSearchParams();
-  const { data: vehicles } = useVehicles();
+  const idParam = searchParams.get("id");
+  // Un pedido directo por ID, no la lista completa de vehículos — antes
+  // esta pantalla bajaba TODOS los vehículos solo para resolver el
+  // deep-link /taller?id=123.
+  const { data: deepLinkVehicle } = useVehicleById(idParam ? Number(idParam) : null);
   const queryClient = useQueryClient();
 
   const [view, setView] = useState<View>("buscar");
@@ -43,26 +55,16 @@ function TallerContent() {
 
   // Deep-link: /taller?id=123 abre directamente la ficha del vehículo.
   useEffect(() => {
-    const idParam = searchParams.get("id");
+    if (!deepLinkVehicle) return;
 
-    if (!idParam || !vehicles) return;
-
-    const vehicle = vehicles.find(
-      (item) => item.vehicleId === Number(idParam),
-    );
-
-    if (vehicle) {
-      // Deep-link: hay que esperar a que "vehicles" (async, React Query)
-      // esté disponible para poder resolver el vehículo — no se puede
-      // calcular puramente en el render mientras tanto.
-      /* eslint-disable react-hooks/set-state-in-effect */
-      setSelectedVehicle(vehicle);
-      setView("resumen");
-      /* eslint-enable react-hooks/set-state-in-effect */
-    }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [vehicles]);
+    // Hay que esperar a que "deepLinkVehicle" (async, React Query) esté
+    // disponible para poder resolver el vehículo — no se puede calcular
+    // puramente en el render mientras tanto.
+    /* eslint-disable react-hooks/set-state-in-effect */
+    setSelectedVehicle(deepLinkVehicle);
+    setView("resumen");
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [deepLinkVehicle]);
 
   function handleSelect(vehicle: Vehicle) {
     setSelectedVehicle(vehicle);
@@ -105,11 +107,7 @@ function TallerContent() {
 
       {selectedVehicle && view !== "buscar" && (
         <>
-          <VehicleWorkspaceHeader
-            vehicle={selectedVehicle}
-            onNewBudget={() => setView("nuevo-presupuesto")}
-            onNewService={() => setView("nuevo-service")}
-          />
+          <VehicleWorkspaceHeader vehicle={selectedVehicle} />
 
           <div className="flex gap-1 border-b border-border mb-6 overflow-x-auto">
             {SECTIONS.map((section) => (
@@ -126,6 +124,22 @@ function TallerContent() {
                 {section.label}
               </button>
             ))}
+            <div className="ml-auto flex gap-1">
+              {ACTIONS.map((action) => (
+                <button
+                  key={action.id}
+                  onClick={() => setView(action.id)}
+                  className={cn(
+                    "px-4 py-3 text-sm whitespace-nowrap border-b-2 -mb-px transition-colors",
+                    view === action.id
+                      ? "border-accent text-accent"
+                      : "border-transparent text-muted hover:text-light",
+                  )}
+                >
+                  {action.label}
+                </button>
+              ))}
+            </div>
           </div>
         </>
       )}

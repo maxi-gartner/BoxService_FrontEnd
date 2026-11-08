@@ -1,17 +1,18 @@
 "use client";
 
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useState } from "react";
 import Link from "next/link";
-import { useBudgets, useUpdateBudgetStatus, useBudget } from "@/hooks/useBudgets";
-import { useVehicles } from "@/hooks/useVehicles";
+import { useBudgets, useUpdateBudgetStatus, useUpdateBudgetDetails, useBudget } from "@/hooks/useBudgets";
 import { ApiClientError } from "@/lib/api/client";
+import { BudgetDetailsEditor } from "@/components/taller/BudgetDetailsEditor";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { Badge } from "@/components/ui/Badge";
+import { Pagination } from "@/components/ui/Pagination";
 import { TableWrapper, THead, TBody, TR, TD, EmptyRow } from "@/components/ui/Table";
 import { formatDate, formatMoney } from "@/lib/utils";
-import type { Budget } from "@/types/entities";
+import type { Budget, BudgetDetailRequest } from "@/types/entities";
 
 function isCompleted(b: Budget) {
   return b.status === "completed" || (b.status === "approved" && !!b.serviceId);
@@ -48,20 +49,42 @@ function BudgetDetailRow({ budgetId, colSpan }: { budgetId: number; colSpan: num
   );
 }
 
-export default function PresupuestosPage() {
-  const { data: budgets, isLoading } = useBudgets();
-  const { data: vehicles } = useVehicles();
-  const updateStatus = useUpdateBudgetStatus();
-
-  const vehiclesById = useMemo(
-    () => new Map((vehicles ?? []).map((v) => [v.vehicleId, v])),
-    [vehicles],
+function EditBudgetRow({ budgetId, colSpan, onSave, saving }: {
+  budgetId: number;
+  colSpan: number;
+  onSave: (id: number, details: BudgetDetailRequest[]) => void;
+  saving: boolean;
+}) {
+  const { data, isLoading } = useBudget(budgetId);
+  return (
+    <tr>
+      <td colSpan={colSpan} className="bg-surface-2 px-4 py-4">
+        {isLoading && <p className="text-sm text-muted">Cargando ítems...</p>}
+        {data && <BudgetDetailsEditor details={data.details} saving={saving} onSave={(details) => onSave(budgetId, details)} />}
+      </td>
+    </tr>
   );
+}
+
+export default function PresupuestosPage() {
+  const [page, setPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState<"todos" | "pendientes">("todos");
+  const { data: budgetsPage, isLoading } = useBudgets({ page, pageSize: 25, status: statusFilter });
+  const updateStatus = useUpdateBudgetStatus();
+  const updateDetails = useUpdateBudgetDetails();
 
   const [message, setMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
   const [workingId, setWorkingId] = useState<number | null>(null);
   const [expandedId, setExpandedId] = useState<number | null>(null);
-  const [statusFilter, setStatusFilter] = useState<"todos" | "pendientes">("todos");
+  const [editingId, setEditingId] = useState<number | null>(null);
+
+  // Reset de página al cambiar el filtro — ajuste de estado durante el
+  // render (patrón recomendado por React), no un efecto.
+  const [statusFilterForPage, setStatusFilterForPage] = useState(statusFilter);
+  if (statusFilter !== statusFilterForPage) {
+    setStatusFilterForPage(statusFilter);
+    setPage(1);
+  }
 
   async function act(id: number, status: "approved" | "rejected") {
     setWorkingId(id);
@@ -76,11 +99,21 @@ export default function PresupuestosPage() {
     }
   }
 
-  const rows = (budgets ?? [])
-    .filter((b) =>
-      statusFilter === "todos" ? true : b.status === "draft" || b.status === "sent",
-    )
-    .sort((a, b) => b.budgetId - a.budgetId);
+  async function handleSaveDetails(id: number, details: BudgetDetailRequest[]) {
+    setWorkingId(id);
+    setMessage(null);
+    try {
+      await updateDetails.mutateAsync({ id, details });
+      setMessage({ type: "ok", text: "Presupuesto actualizado." });
+      setEditingId(null);
+    } catch (err) {
+      setMessage({ type: "error", text: err instanceof ApiClientError ? err.message : "No se pudo actualizar." });
+    } finally {
+      setWorkingId(null);
+    }
+  }
+
+  const rows = budgetsPage?.items ?? [];
 
   return (
     <div>
@@ -127,11 +160,13 @@ export default function PresupuestosPage() {
               </EmptyRow>
             )}
             {rows.map((b) => {
-              const vehicle = vehiclesById.get(b.vehicleId);
-              const label = vehicle ? `${vehicle.plate} — ${vehicle.brand} ${vehicle.model}` : `Vehículo #${b.vehicleId}`;
+              const label = b.vehiclePlate
+                ? `${b.vehiclePlate} — ${b.vehicleBrand} ${b.vehicleModel}`
+                : `Vehículo #${b.vehicleId}`;
               const completed = isCompleted(b);
               const busy = workingId === b.budgetId;
               const pending = b.status === "draft" || b.status === "sent";
+              const editable = pending || (b.status === "approved" && !completed);
 
               return (
                 <Fragment key={b.budgetId}>
@@ -147,13 +182,24 @@ export default function PresupuestosPage() {
                       <Badge status={completed ? "completed" : b.status} />
                     </TD>
                     <TD className="flex flex-wrap gap-2">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => setExpandedId(expandedId === b.budgetId ? null : b.budgetId)}
-                      >
-                        {expandedId === b.budgetId ? "Ocultar" : "Ver detalle"}
-                      </Button>
+                      {!editable && (
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => setExpandedId(expandedId === b.budgetId ? null : b.budgetId)}
+                        >
+                          {expandedId === b.budgetId ? "Ocultar" : "Ver detalle"}
+                        </Button>
+                      )}
+                      {editable && (
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => setEditingId(editingId === b.budgetId ? null : b.budgetId)}
+                        >
+                          {editingId === b.budgetId ? "Cerrar" : "Editar"}
+                        </Button>
+                      )}
                       <Button
                         size="sm"
                         variant="secondary"
@@ -179,11 +225,22 @@ export default function PresupuestosPage() {
                     </TD>
                   </TR>
                   {expandedId === b.budgetId && <BudgetDetailRow budgetId={b.budgetId} colSpan={5} />}
+                  {editingId === b.budgetId && (
+                    <EditBudgetRow budgetId={b.budgetId} colSpan={5} onSave={handleSaveDetails} saving={busy} />
+                  )}
                 </Fragment>
               );
             })}
           </TBody>
         </TableWrapper>
+        {budgetsPage && (
+          <Pagination
+            page={budgetsPage.page}
+            totalPages={budgetsPage.totalPages}
+            totalCount={budgetsPage.totalCount}
+            onPageChange={setPage}
+          />
+        )}
       </Card>
     </div>
   );

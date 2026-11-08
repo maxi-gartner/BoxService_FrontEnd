@@ -11,7 +11,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (!user) redirect("/login");
 
   return (
-    <DashboardShell userName={user.name} role={user.role}>
+    <DashboardShell userName={user.name} role={user.role} tenantName={user.tenantName}>
       {children}
     </DashboardShell>
   );

@@ -13,9 +13,9 @@ import type {
   CatalogItem,
   Client,
   Invoice,
+  MockTenant,
   Service,
   ServiceDetail,
-  Tenant,
   Vehicle,
 } from "@/types/entities";
 import type { Role } from "@/types/auth";
@@ -32,7 +32,7 @@ export type MockUser = {
 const TENANT_A = "t-lubricentro-sur";
 
 export const db = {
-  tenants: [{ tenantId: TENANT_A, name: "Lubricentro Sur", createdAt: "2026-01-01" }] as Tenant[],
+  tenants: [{ tenantId: TENANT_A, name: "Lubricentro Sur", createdAt: "2026-01-01" }] as MockTenant[],
 
   users: [
     {
@@ -67,8 +67,8 @@ export const db = {
   ] as Client[],
 
   vehicles: [
-    { vehicleId: 1, tenantId: TENANT_A, clientId: 1, brand: "Toyota", model: "Corolla", year: 2020, plate: "AA111AA", currentMileage: 55000, createdAt: "2026-02-01" },
-    { vehicleId: 2, tenantId: TENANT_A, clientId: 2, brand: "Ford", model: "Focus", year: 2018, plate: "AB222AB", currentMileage: 82000, createdAt: "2026-02-03" },
+    { vehicleId: 1, tenantId: TENANT_A, clientId: 1, brand: "Toyota", model: "Corolla", version: null, year: 2020, plate: "AA111AA", currentMileage: 55000, createdAt: "2026-02-01" },
+    { vehicleId: 2, tenantId: TENANT_A, clientId: 2, brand: "Ford", model: "Focus", version: null, year: 2018, plate: "AB222AB", currentMileage: 82000, createdAt: "2026-02-03" },
   ] as Vehicle[],
 
   budgets: [] as Budget[],

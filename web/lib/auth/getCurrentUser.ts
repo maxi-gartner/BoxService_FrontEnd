@@ -33,10 +33,34 @@ export async function getCurrentUser(): Promise<User | null> {
     return body.success ? body.data : null;
   }
 
-  // Backend real: todavía no hay tabla de usuarios (ver login/route.ts),
-  // así que no hay un /users/me real que consultar — hay GET /auth/me,
-  // pero devuelve lo mismo que ya está en el JWT que getSession() acaba
-  // de validar. Se arma el mismo User sintético que en el login, sin un
-  // round-trip de más.
-  return { id: session.userId, name: session.userId, email: session.userId, role: session.role, tenantId: null };
+  // Backend real: GET /auth/me devuelve el tenant real (nombre incluido)
+  // — antes esto armaba un User sintético solo con lo que ya estaba en el
+  // JWT porque no había tabla de usuarios/tenants que consultar.
+  const token = (await cookies()).get(ACCESS_TOKEN_COOKIE)?.value;
+  if (!token) return null;
+
+  try {
+    const res = await fetch(`${process.env.BACKEND_URL}/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+
+    const body = (await res.json()) as {
+      success: boolean;
+      data: { username: string; role: string; tenantId: number | null; tenantName: string | null } | null;
+    };
+    if (!body.success || !body.data) return null;
+
+    return {
+      id: session.userId,
+      name: body.data.username,
+      email: body.data.username,
+      role: session.role,
+      tenantId: body.data.tenantId === null ? null : String(body.data.tenantId),
+      tenantName: body.data.tenantName,
+    };
+  } catch {
+    return null;
+  }
 }

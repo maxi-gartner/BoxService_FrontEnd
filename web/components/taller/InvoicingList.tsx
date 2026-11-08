@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useServices } from "@/hooks/useServices";
-import { useInvoices, useCreateInvoice, useUpdateInvoiceStatus } from "@/hooks/useInvoices";
-import { useBudgets } from "@/hooks/useBudgets";
+import { useServicesByVehicle } from "@/hooks/useServices";
+import { useInvoicesByVehicle, useCreateInvoice, useUpdateInvoiceStatus } from "@/hooks/useInvoices";
+import { useBudgetsByVehicle } from "@/hooks/useBudgets";
 import { ApiClientError } from "@/lib/api/client";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -13,18 +13,16 @@ import { formatDate, formatMoney } from "@/lib/utils";
 import type { Vehicle } from "@/types/entities";
 
 export function InvoicingList({ vehicle }: { vehicle: Vehicle }) {
-  const { data: services, isLoading } = useServices();
-  const { data: invoices } = useInvoices();
-  const { data: budgets } = useBudgets();
+  const { data: services, isLoading } = useServicesByVehicle(vehicle.vehicleId);
+  const { data: invoices } = useInvoicesByVehicle(vehicle.vehicleId);
+  const { data: budgets } = useBudgetsByVehicle(vehicle.vehicleId);
   const createInvoice = useCreateInvoice();
   const updateStatus = useUpdateInvoiceStatus();
 
   const [message, setMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
   const [workingId, setWorkingId] = useState<number | null>(null);
 
-  const mine = (services ?? [])
-    .filter((s) => s.vehicleId === vehicle.vehicleId)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const mine = (services ?? []).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   async function handleInvoice(serviceId: number) {
     setWorkingId(serviceId);

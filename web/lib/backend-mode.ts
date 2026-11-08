@@ -21,10 +21,16 @@ const REAL_BACKEND_RESOURCES = new Set([
   "services",
   "invoices",
   "catalog",
+  "tenants",
+  "sucursales",
+  "users",
+  "admin",
+  "metrics",
+  "vehicle-catalog",
 ]);
 
-// Para mostrar en UI (ej. el badge "Modo backend" del dashboard) — no usar
-// para decidir ruteo, para eso está isResourceReal.
+// Para mostrar en UI si hiciera falta — no usar para decidir ruteo, para
+// eso está isResourceReal.
 export const REAL_BACKEND_RESOURCE_NAMES = [...REAL_BACKEND_RESOURCES];
 
 export function isResourceReal(resource: string): boolean {

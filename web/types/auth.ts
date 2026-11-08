@@ -21,8 +21,9 @@ export type User = {
   name: string;
   email: string;
   role: Role;
-  /** null solo para superadmin operando sin tenant seleccionado. */
+  /** null solo para superadmin — administra talleres, no pertenece a uno. */
   tenantId: string | null;
+  tenantName: string | null;
 };
 
 export type LoginRequest = {
@@ -47,6 +48,18 @@ export type LoginResponse = {
 export type RefreshResponse = {
   token: string;
   expiresAt: string;
+};
+
+export type AuthAuditEvent = {
+  eventType: string;
+  outcome: string;
+  actorUserId: number | null;
+  targetUserId: number | null;
+  tenantId: number | null;
+  sourceIp: string | null;
+  httpMethod: string | null;
+  resourcePath: string | null;
+  createdAt: string;
 };
 
 /** Claims mínimos que el access token trae codificados (ver contrato). */

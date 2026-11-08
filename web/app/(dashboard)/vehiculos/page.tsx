@@ -1,23 +1,31 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState, type ChangeEvent } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useVehicles, useCreateVehicle } from "@/hooks/useVehicles";
 import { useClients } from "@/hooks/useClients";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { useVehicleBrands, useVehicleModels, useVehicleVersions } from "@/hooks/useVehicleCatalog";
 import { ApiClientError } from "@/lib/api/client";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input, Label, Select } from "@/components/ui/Input";
 import { Alert } from "@/components/ui/Alert";
+import { Pagination } from "@/components/ui/Pagination";
 import { TableWrapper, THead, TBody, TR, TD, EmptyRow } from "@/components/ui/Table";
+
+const OTHER_BRAND = "__otra__";
+const OTHER_MODEL = "__otro__";
+const OTHER_VERSION = "__otra_version__";
 
 const schema = z.object({
   clientId: z.string().min(1, "Elegí un cliente"),
   plate: z.string().min(1, "Ingresá la patente"),
   brand: z.string().min(1, "Ingresá la marca"),
   model: z.string().min(1, "Ingresá el modelo"),
+  version: z.string().optional(),
   year: z
     .string()
     .optional()
@@ -30,25 +38,88 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export default function VehiculosPage() {
-  const { data: vehicles, isLoading } = useVehicles();
-  const { data: clients } = useClients();
-  const createVehicle = useCreateVehicle();
-
-  const clientsById = useMemo(
-    () => new Map((clients ?? []).map((c) => [c.clientId, c.name])),
-    [clients],
-  );
-
+  const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
+  const { data: vehiclesPage, isLoading } = useVehicles({ page, pageSize: 25, search: debouncedSearch || undefined });
+  const vehicles = vehiclesPage?.items;
+  // El picker de "Cliente" del alta necesita la lista completa (combo),
+  // no una página — ver comentario en ClientService.ListPaged.
+  const { data: clientsPage } = useClients({ pageSize: 200 });
+  const clients = clientsPage?.items;
+  const createVehicle = useCreateVehicle();
+  const { data: brands } = useVehicleBrands();
+
+  // Reset de página al cambiar el buscador — ajuste de estado durante el
+  // render (patrón recomendado por React), no un efecto.
+  const [searchForPage, setSearchForPage] = useState(debouncedSearch);
+  if (debouncedSearch !== searchForPage) {
+    setSearchForPage(debouncedSearch);
+    setPage(1);
+  }
+
   const [formError, setFormError] = useState("");
   const [formOk, setFormOk] = useState("");
+  const [customBrand, setCustomBrand] = useState(false);
+  const [customModel, setCustomModel] = useState(false);
+  const [customVersion, setCustomVersion] = useState(false);
 
   const {
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({ resolver: zodResolver(schema) });
+
+  // Modelo y versión dependen en cascada de la marca/modelo elegidos —
+  // se resuelven por nombre contra el catálogo de ArgAutos (los <select>
+  // solo manejan el nombre, no el ID interno).
+  const watchedBrand = watch("brand");
+  const watchedModel = watch("model");
+  const watchedVersion = watch("version");
+  const brandId = brands?.find((b) => b.name === watchedBrand)?.id ?? null;
+  const { data: models } = useVehicleModels(brandId);
+  const modelId = models?.find((m) => m.name === watchedModel)?.id ?? null;
+  const { data: versions } = useVehicleVersions(brandId, modelId);
+
+  function resetModelAndVersion() {
+    setValue("model", "");
+    setValue("version", "");
+    setCustomModel(false);
+    setCustomVersion(false);
+  }
+
+  function handleBrandSelect(e: ChangeEvent<HTMLSelectElement>) {
+    if (e.target.value === OTHER_BRAND) {
+      setCustomBrand(true);
+      setValue("brand", "");
+    } else {
+      setValue("brand", e.target.value, { shouldValidate: true });
+    }
+    resetModelAndVersion();
+  }
+
+  function handleModelSelect(e: ChangeEvent<HTMLSelectElement>) {
+    if (e.target.value === OTHER_MODEL) {
+      setCustomModel(true);
+      setValue("model", "");
+    } else {
+      setValue("model", e.target.value, { shouldValidate: true });
+    }
+    setValue("version", "");
+    setCustomVersion(false);
+  }
+
+  function handleVersionSelect(e: ChangeEvent<HTMLSelectElement>) {
+    if (e.target.value === OTHER_VERSION) {
+      setCustomVersion(true);
+      setValue("version", "");
+    } else {
+      setValue("version", e.target.value);
+    }
+  }
 
   async function onSubmit(values: FormValues) {
     setFormError("");
@@ -59,22 +130,19 @@ export default function VehiculosPage() {
         plate: values.plate.trim().toUpperCase(),
         brand: values.brand.trim(),
         model: values.model.trim(),
+        version: values.version?.trim() || undefined,
         year: values.year ? Number(values.year) : null,
         currentMileage: values.currentMileage ? Number(values.currentMileage) : 0,
       });
       setFormOk(`Vehículo ${created.plate} registrado.`);
       reset();
+      setCustomBrand(false);
+      setCustomModel(false);
+      setCustomVersion(false);
     } catch (err) {
       setFormError(err instanceof ApiClientError ? err.message : "No se pudo registrar el vehículo.");
     }
   }
-
-  const term = search.trim().toLowerCase();
-  const filtered = (vehicles ?? []).filter((v) => {
-    if (!term) return true;
-    const clientName = clientsById.get(v.clientId) ?? "";
-    return [v.plate, v.brand, v.model, clientName].join(" ").toLowerCase().includes(term);
-  });
 
   return (
     <div>
@@ -110,16 +178,99 @@ export default function VehiculosPage() {
                 {errors.year && <p className="mt-1 text-xs text-danger">{errors.year.message}</p>}
               </div>
             </div>
+            <div>
+              <Label>Marca</Label>
+              {customBrand || !brands?.length ? (
+                <Input placeholder="Toyota" {...register("brand")} />
+              ) : (
+                <Select value={watchedBrand ?? ""} onChange={handleBrandSelect}>
+                  <option value="" disabled>
+                    Elegí una marca…
+                  </option>
+                  {brands.map((b) => (
+                    <option key={b.id} value={b.name}>
+                      {b.name}
+                    </option>
+                  ))}
+                  <option value={OTHER_BRAND}>Otra (escribir)…</option>
+                </Select>
+              )}
+              {customBrand && (
+                <button
+                  type="button"
+                  className="mt-1 text-xs text-accent hover:underline"
+                  onClick={() => {
+                    setCustomBrand(false);
+                    setValue("brand", "");
+                    resetModelAndVersion();
+                  }}
+                >
+                  Elegir de la lista
+                </button>
+              )}
+              {errors.brand && <p className="mt-1 text-xs text-danger">{errors.brand.message}</p>}
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label>Marca</Label>
-                <Input placeholder="Toyota" {...register("brand")} />
-                {errors.brand && <p className="mt-1 text-xs text-danger">{errors.brand.message}</p>}
+                <Label>Modelo</Label>
+                {customModel || !brandId || !models?.length ? (
+                  <Input placeholder="Corolla" {...register("model")} />
+                ) : (
+                  <Select value={watchedModel ?? ""} onChange={handleModelSelect}>
+                    <option value="" disabled>
+                      Elegí un modelo…
+                    </option>
+                    {models.map((m) => (
+                      <option key={m.id} value={m.name}>
+                        {m.name}
+                      </option>
+                    ))}
+                    <option value={OTHER_MODEL}>Otro (escribir)…</option>
+                  </Select>
+                )}
+                {customModel && brandId && !!models?.length && (
+                  <button
+                    type="button"
+                    className="mt-1 text-xs text-accent hover:underline"
+                    onClick={() => {
+                      setCustomModel(false);
+                      setValue("model", "");
+                      setValue("version", "");
+                      setCustomVersion(false);
+                    }}
+                  >
+                    Elegir de la lista
+                  </button>
+                )}
+                {errors.model && <p className="mt-1 text-xs text-danger">{errors.model.message}</p>}
               </div>
               <div>
-                <Label>Modelo</Label>
-                <Input placeholder="Corolla" {...register("model")} />
-                {errors.model && <p className="mt-1 text-xs text-danger">{errors.model.message}</p>}
+                <Label>Versión (opcional)</Label>
+                {customVersion || !modelId || !versions?.length ? (
+                  <Input placeholder="XEI 1.8" {...register("version")} />
+                ) : (
+                  <Select value={watchedVersion ?? ""} onChange={handleVersionSelect}>
+                    <option value="">Sin especificar</option>
+                    {versions.map((v) => (
+                      <option key={v.id} value={v.name}>
+                        {v.name}
+                      </option>
+                    ))}
+                    <option value={OTHER_VERSION}>Otra (escribir)…</option>
+                  </Select>
+                )}
+                {customVersion && modelId && !!versions?.length && (
+                  <button
+                    type="button"
+                    className="mt-1 text-xs text-accent hover:underline"
+                    onClick={() => {
+                      setCustomVersion(false);
+                      setValue("version", "");
+                    }}
+                  >
+                    Elegir de la lista
+                  </button>
+                )}
               </div>
             </div>
             <div>
@@ -154,24 +305,33 @@ export default function VehiculosPage() {
             </THead>
             <TBody>
               {isLoading && <EmptyRow colSpan={5}>Cargando...</EmptyRow>}
-              {!isLoading && filtered.length === 0 && (
+              {!isLoading && vehicles?.length === 0 && (
                 <EmptyRow colSpan={5}>
-                  {term ? "Ningún vehículo coincide con la búsqueda." : "No hay vehículos registrados."}
+                  {debouncedSearch ? "Ningún vehículo coincide con la búsqueda." : "No hay vehículos registrados."}
                 </EmptyRow>
               )}
-              {filtered.map((v) => (
+              {vehicles?.map((v) => (
                 <TR key={v.vehicleId}>
                   <TD className="text-accent">{v.plate}</TD>
                   <TD>
                     {v.brand} {v.model}
+                    {v.version && <p className="text-xs text-muted">{v.version}</p>}
                   </TD>
                   <TD>{v.year ?? "-"}</TD>
                   <TD>{v.currentMileage.toLocaleString("es-AR")}</TD>
-                  <TD>{clientsById.get(v.clientId) ?? `Cliente #${v.clientId}`}</TD>
+                  <TD>{v.clientName ?? `Cliente #${v.clientId}`}</TD>
                 </TR>
               ))}
             </TBody>
           </TableWrapper>
+          {vehiclesPage && (
+            <Pagination
+              page={vehiclesPage.page}
+              totalPages={vehiclesPage.totalPages}
+              totalCount={vehiclesPage.totalCount}
+              onPageChange={setPage}
+            />
+          )}
         </Card>
       </div>
     </div>
