@@ -5,6 +5,7 @@ import { useBudgetsByVehicle, useBudget, useUpdateBudgetStatus, useAssignService
 import { useInvoicesByVehicle, useCreateInvoice } from "@/hooks/useInvoices";
 import { useCreateService, useCreateServiceDetail } from "@/hooks/useServices";
 import { ApiClientError } from "@/lib/api/client";
+import { createServiceFromBudget } from "@/lib/use-cases/createServiceFromBudget";
 import { BudgetDetailsEditor } from "@/components/taller/BudgetDetailsEditor";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -122,19 +123,14 @@ export function BudgetsList({ vehicle, onChanged }: { vehicle: Vehicle; onChange
       const descriptions = details.map((d) => d.description).filter((d) => d.length > 0);
       if (!descriptions.length) throw new Error("El presupuesto no tiene ítems para cargar en el service.");
 
-      const service = await createService.mutateAsync({
-        vehicleId: budget.vehicleId,
-        date: new Date().toISOString().slice(0, 10),
-        mileage,
-        serviceType: "Service desde presupuesto",
-        notes: `Generado desde presupuesto ${budget.number}.`,
-      });
-
-      for (const description of descriptions) {
-        await createServiceDetail.mutateAsync({ serviceId: service.serviceId, data: { description, done: true } });
-      }
-
-      await assignService.mutateAsync({ budgetId: budget.budgetId, serviceId: service.serviceId });
+      await createServiceFromBudget(
+        { budget, mileage, descriptions },
+        {
+          createService: createService.mutateAsync,
+          createServiceDetail: createServiceDetail.mutateAsync,
+          assignService: assignService.mutateAsync,
+        },
+      );
 
       setMessage({ type: "ok", text: "Service creado correctamente desde el presupuesto aprobado." });
       setEditingId(null);
