@@ -86,6 +86,7 @@ export async function handleMockRequest(
   const tenantId = claims.tenantId;
   if (!tenantId) return fail(403, "No tenant selected");
 
+  if (segments[0] === "service-reminders") return fail(501, "Los recordatorios requieren configurar el backend real.");
   if (segments[0] === "users") return handleUsers(method, segments, claims);
   if (segments[0] === "clients") return handleClients(method, segments, body, tenantId);
   if (segments[0] === "vehicles") return handleVehicles(method, segments, searchParams, body, tenantId);

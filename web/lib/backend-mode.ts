@@ -19,6 +19,7 @@ const REAL_BACKEND_RESOURCES = new Set([
   "vehicles",
   "budgets",
   "services",
+  "service-reminders",
   "invoices",
   "catalog",
   "tenants",
