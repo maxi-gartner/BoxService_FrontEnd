@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import Link from "next/link";
 import { login } from "@/lib/api/auth";
 import { ApiClientError } from "@/lib/api/client";
 import { Button } from "@/components/ui/Button";
@@ -28,7 +29,9 @@ function LoginForm() {
   const searchParams = useSearchParams();
 
   const [serverError, setServerError] = useState("");
-  const [infoMessage, setInfoMessage] = useState("");
+  const infoMessage = searchParams.get("passwordReset") === "1"
+    ? "Contraseña actualizada. Ya podés iniciar sesión."
+    : "";
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -41,7 +44,6 @@ function LoginForm() {
 
   async function onSubmit(values: FormValues) {
     setServerError("");
-    setInfoMessage("");
 
     try {
       const user = await login(values);
@@ -59,14 +61,6 @@ function LoginForm() {
           : "No se pudo iniciar sesión.",
       );
     }
-  }
-
-  function handleForgotPassword() {
-    // No es un error de login — usa su propio estado y el estilo "ok"
-    // del Alert para no confundirlo con una credencial inválida, y para
-    // no pisar silenciosamente un error real que ya estuviera mostrado.
-    setServerError("");
-    setInfoMessage("La recuperación de contraseña todavía no está disponible.");
   }
 
   return (
@@ -184,13 +178,12 @@ function LoginForm() {
                   )}
 
                   <div className="flex justify-end mt-4">
-                    <button
-                      type="button"
-                      onClick={handleForgotPassword}
+                    <Link
+                      href="/forgot-password"
                       className="text-xs text-accent hover:underline cursor-pointer"
                     >
                       ¿Olvidaste tu contraseña?
-                    </button>
+                    </Link>
                   </div>
                 </div>
 
