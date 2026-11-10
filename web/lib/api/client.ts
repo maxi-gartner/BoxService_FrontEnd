@@ -1,6 +1,7 @@
 "use client";
 
 import type { ApiResponse } from "@/types/api";
+import { apiErrorMessage } from "./error-messages";
 
 /**
  * Cliente HTTP para el browser. Le habla siempre a /api/proxy/* (mismo
@@ -11,11 +12,16 @@ import type { ApiResponse } from "@/types/api";
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
   const isFormData = body instanceof FormData;
 
-  const res = await fetch(`/api/proxy/${path}`, {
-    method,
-    headers: body !== undefined && !isFormData ? { "Content-Type": "application/json" } : undefined,
-    body: body === undefined ? undefined : isFormData ? body : JSON.stringify(body),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`/api/proxy/${path}`, {
+      method,
+      headers: body !== undefined && !isFormData ? { "Content-Type": "application/json" } : undefined,
+      body: body === undefined ? undefined : isFormData ? body : JSON.stringify(body),
+    });
+  } catch {
+    throw new ApiClientError(apiErrorMessage(503), 503);
+  }
 
   if (res.status === 401) {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -23,12 +29,14 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
     throw new ApiClientError("Sesión expirada", 401);
   }
 
-  const json = (await res.json()) as ApiResponse<T>;
+  let json: ApiResponse<T>;
+  try { json = await res.json(); }
+  catch { throw new ApiClientError(apiErrorMessage(res.ok ? 502 : res.status), res.ok ? 502 : res.status); }
 
-  if (!json.success) {
-    throw new ApiClientError(json.error.message, json.error.code);
+  if (!json || typeof json !== "object" || !res.ok || json.success !== true) {
+    const code = !res.ok ? res.status : (json?.error?.code ?? 502);
+    throw new ApiClientError(apiErrorMessage(code, json?.error?.message), code);
   }
-
   return json.data;
 }
 

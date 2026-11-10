@@ -1,5 +1,6 @@
 "use client";
-
+import { LoadingState } from "@/components/ui/LoadingState";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -12,30 +13,32 @@ import { formatDate } from "@/lib/utils";
 function TicketContent() {
   const serviceId = Number(useSearchParams().get("serviceId"));
 
-  const { data: service } = useQuery({
+  const { data: service, error: serviceLoadError, isLoading: serviceLoading } = useQuery({
     queryKey: ["services", serviceId],
     queryFn: () => servicesApi.getById(serviceId),
-    enabled: !!serviceId,
+    enabled: Number.isSafeInteger(serviceId) && serviceId > 0,
   });
-  const { data: details } = useQuery({
+  const { data: details, error: detailsLoadError, isLoading: detailsLoading } = useQuery({
     queryKey: ["services", serviceId, "details"],
     queryFn: () => servicesApi.getDetails(serviceId),
-    enabled: !!serviceId,
+    enabled: Number.isSafeInteger(serviceId) && serviceId > 0,
   });
-  const { data: vehicle } = useQuery({
+  const { data: vehicle, error: vehicleLoadError, isLoading: vehicleLoading } = useQuery({
     queryKey: ["vehicles", service?.vehicleId],
     queryFn: () => vehiclesApi.getById(service!.vehicleId),
     enabled: !!service,
   });
-  const { data: client } = useQuery({
+  const { data: client, error: clientLoadError, isLoading: clientLoading } = useQuery({
     queryKey: ["clients", vehicle?.clientId],
     queryFn: () => clientsApi.getById(vehicle!.clientId),
     enabled: !!vehicle,
   });
 
-  if (!service || !vehicle || !client) {
-    return <p className="text-muted text-center mt-20">Cargando...</p>;
-  }
+  if (!Number.isSafeInteger(serviceId) || serviceId <= 0) return <ErrorState code={400} fullPage />;
+  const queryError = serviceLoadError ?? detailsLoadError ?? vehicleLoadError ?? clientLoadError;
+  if (queryError) return <ErrorState error={queryError} resource="el comprobante de trabajo" notFoundTitle="Comprobante no encontrado o sin acceso" fullPage />;
+  if (serviceLoading || detailsLoading || vehicleLoading || clientLoading) return <LoadingState label="Cargando comprobante..." className="min-h-[60vh]" />;
+  if (!service || !vehicle || !client) return <ErrorState code={404} fullPage />;
 
   const row = (label: string, value: string) => (
     <div className="flex justify-between py-2 border-b border-border-light text-sm">
@@ -93,7 +96,7 @@ function TicketContent() {
 
 export default function TicketPage() {
   return (
-    <Suspense fallback={<p className="text-muted text-center mt-20">Cargando...</p>}>
+    <Suspense fallback={<LoadingState label="Cargando..." />}>
       <TicketContent />
     </Suspense>
   );

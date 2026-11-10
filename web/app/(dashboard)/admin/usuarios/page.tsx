@@ -1,5 +1,6 @@
 "use client";
-
+import { LoadingState } from "@/components/ui/LoadingState";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { useState } from "react";
 import { useUsers, useUpdateUser } from "@/hooks/useUsers";
 import { useAdminClients } from "@/hooks/useAdminClients";
@@ -13,8 +14,8 @@ import { ResetPasswordButton } from "@/components/admin/ResetPasswordButton";
 const ROLE_LABEL: Record<string, string> = { dueno: "Dueño", empleado: "Empleado", superadmin: "Superadmin" };
 
 export default function UsuariosPage() {
-  const { data: users, isLoading: usersLoading } = useUsers();
-  const { data: clientRows, isLoading: clientsLoading } = useAdminClients();
+  const { data: users, isLoading: usersLoading, error: usersLoadError, refetch: refetchUsers } = useUsers();
+  const { data: clientRows, isLoading: clientsLoading, error: adminClientsLoadError, isLoading: adminClientsLoading, refetch: refetchAdminClients } = useAdminClients();
   const updateUser = useUpdateUser();
   const [message, setMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
   const [workingId, setWorkingId] = useState<number | null>(null);
@@ -30,6 +31,10 @@ export default function UsuariosPage() {
       setWorkingId(null);
     }
   }
+
+  const loadError = usersLoadError ?? adminClientsLoadError;
+  if (loadError) return <ErrorState error={loadError} resource="la información" onRetry={() => { if (usersLoadError) void refetchUsers(); if (adminClientsLoadError) void refetchAdminClients(); }} />;
+  if (usersLoading || adminClientsLoading) return <LoadingState label="Cargando la información..." />;
 
   return (
     <div className="space-y-8">
@@ -50,7 +55,7 @@ export default function UsuariosPage() {
               <th></th>
             </THead>
             <TBody>
-              {usersLoading && <EmptyRow colSpan={6}>Cargando...</EmptyRow>}
+              {usersLoading && <EmptyRow colSpan={6}><LoadingState label="Cargando..." className="py-0" /></EmptyRow>}
               {!usersLoading && users?.length === 0 && <EmptyRow colSpan={6}>No hay usuarios todavía.</EmptyRow>}
               {users
                 ?.filter((u) => u.role !== "superadmin")
@@ -90,7 +95,7 @@ export default function UsuariosPage() {
               <th>Taller</th>
             </THead>
             <TBody>
-              {clientsLoading && <EmptyRow colSpan={4}>Cargando...</EmptyRow>}
+              {clientsLoading && <EmptyRow colSpan={4}><LoadingState label="Cargando..." className="py-0" /></EmptyRow>}
               {!clientsLoading && clientRows?.length === 0 && <EmptyRow colSpan={4}>No hay clientes todavía.</EmptyRow>}
               {clientRows?.map((row) => (
                 <TR key={row.client.clientId}>

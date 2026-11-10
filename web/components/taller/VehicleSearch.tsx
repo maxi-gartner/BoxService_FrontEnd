@@ -1,5 +1,6 @@
 "use client";
-
+import { LoadingState } from "@/components/ui/LoadingState";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { useState } from "react";
 import { useVehicles } from "@/hooks/useVehicles";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
@@ -23,7 +24,7 @@ export function VehicleSearch({
   // Búsqueda server-side (patente/marca/modelo/cliente, ver
   // VehicleRepository.GetPaged) — antes esto bajaba TODOS los vehículos
   // del tenant para filtrar acá en el navegador.
-  const { data: vehiclesPage, isLoading } = useVehicles({ page, pageSize: 20, search: debouncedTerm || undefined });
+  const { data: vehiclesPage, isLoading, error: vehiclesLoadError, isLoading: vehiclesLoading, refetch: refetchVehicles } = useVehicles({ page, pageSize: 20, search: debouncedTerm || undefined });
   const vehicles = vehiclesPage?.items ?? [];
 
   // Reset de página al cambiar el buscador — ajuste de estado durante el
@@ -33,6 +34,10 @@ export function VehicleSearch({
     setTermForPage(debouncedTerm);
     setPage(1);
   }
+
+  const loadError = vehiclesLoadError;
+  if (loadError) return <ErrorState error={loadError} resource="los vehículos" onRetry={() => { if (vehiclesLoadError) void refetchVehicles(); }} />;
+  if (vehiclesLoading) return <LoadingState label="Cargando los vehículos..." />;
 
   return (
     <Card>
@@ -53,7 +58,7 @@ export function VehicleSearch({
           <th></th>
         </THead>
         <TBody>
-          {isLoading && <EmptyRow colSpan={5}>Cargando...</EmptyRow>}
+          {isLoading && <EmptyRow colSpan={5}><LoadingState label="Cargando..." className="py-0" /></EmptyRow>}
           {!isLoading && vehicles.length === 0 && <EmptyRow colSpan={5}>No se encontraron vehículos.</EmptyRow>}
           {vehicles.map((v) => {
             const isSelected = v.vehicleId === selectedVehicleId;

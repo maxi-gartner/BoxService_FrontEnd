@@ -1,9 +1,10 @@
 "use client";
-
 import Link from "next/link";
+import { Button } from "@/components/ui/Button";
 import { usePathname, useRouter } from "next/navigation";
 import { logout } from "@/lib/api/auth";
 import { ROLE_LABELS, type Role } from "@/types/auth";
+import { useServiceReminders } from "@/hooks/useServiceReminders";
 import { cn } from "@/lib/utils";
 
 type NavItem = { href: string; label: string; icon: string; roles?: Role[] };
@@ -12,6 +13,7 @@ type NavItem = { href: string; label: string; icon: string; roles?: Role[] };
 // no opera un taller, administra talleres — no tiene sentido acá.
 const STAFF_NAV_ITEMS: NavItem[] = [
   { href: "/taller", label: "Taller", icon: "🔧" },
+  { href: "/recordatorios", label: "Recordatorios", icon: "🔔" },
   { href: "/clientes", label: "Clientes", icon: "👤" },
   { href: "/vehiculos", label: "Vehículos", icon: "🚗" },
   { href: "/presupuestos", label: "Presupuestos", icon: "📋" },
@@ -45,6 +47,7 @@ type Props = {
 export function Sidebar({ userName, role, tenantName, isOpen, onClose }: Props) {
   const pathname = usePathname();
   const router = useRouter();
+  const reminders = useServiceReminders(role !== "superadmin");
 
   async function handleLogout() {
     await logout();
@@ -88,6 +91,7 @@ export function Sidebar({ userName, role, tenantName, isOpen, onClose }: Props) 
             >
               <span>{item.icon}</span>
               <span>{item.label}</span>
+              {item.href === "/recordatorios" && !!reminders.data?.pendingCount && <span className="ml-auto rounded-full bg-accent px-2 text-xs font-bold text-[#0d1117]">{reminders.data.pendingCount}</span>}
             </Link>
           );
         })}
@@ -97,9 +101,9 @@ export function Sidebar({ userName, role, tenantName, isOpen, onClose }: Props) 
         <p className="text-xs text-muted mb-1 truncate">{userName}</p>
         <p className="text-xs text-accent mb-2">{ROLE_LABELS[role]}</p>
         {tenantName && <p className="text-xs text-muted mb-2 truncate">{tenantName}</p>}
-        <button onClick={handleLogout} className="text-xs text-danger hover:underline">
+        <Button type="button" variant="secondary" size="sm" onClick={handleLogout} className="border-0 px-0 text-danger hover:underline" loadingText="Cerrando sesión...">
           Cerrar sesión
-        </button>
+        </Button>
       </div>
     </aside>
   );

@@ -1,5 +1,6 @@
 "use client";
-
+import { LoadingState } from "@/components/ui/LoadingState";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -13,25 +14,27 @@ import { formatDate, formatMoney } from "@/lib/utils";
 function PresupuestoContent() {
   const budgetId = Number(useSearchParams().get("id"));
 
-  const { data, isLoading } = useQuery({
+  const { data, error: documentLoadError, isLoading: documentLoading } = useQuery({
     queryKey: ["budgets", budgetId],
     queryFn: () => budgetsApi.getById(budgetId),
-    enabled: !!budgetId,
+    enabled: Number.isSafeInteger(budgetId) && budgetId > 0,
   });
-  const { data: vehicle } = useQuery({
+  const { data: vehicle, error: vehicleLoadError, isLoading: vehicleLoading } = useQuery({
     queryKey: ["vehicles", data?.budget.vehicleId],
     queryFn: () => vehiclesApi.getById(data!.budget.vehicleId),
     enabled: !!data,
   });
-  const { data: client } = useQuery({
+  const { data: client, error: clientLoadError, isLoading: clientLoading } = useQuery({
     queryKey: ["clients", vehicle?.clientId],
     queryFn: () => clientsApi.getById(vehicle!.clientId),
     enabled: !!vehicle,
   });
 
-  if (isLoading || !data || !vehicle || !client) {
-    return <p className="text-muted text-center mt-20">Cargando...</p>;
-  }
+  if (!Number.isSafeInteger(budgetId) || budgetId <= 0) return <ErrorState code={400} fullPage href="/presupuestos" backLabel="Volver a Presupuestos" />;
+  const queryError = documentLoadError ?? vehicleLoadError ?? clientLoadError;
+  if (queryError) return <ErrorState error={queryError} resource="el presupuesto" notFoundTitle="Presupuesto no encontrado o sin acceso" fullPage href="/presupuestos" backLabel="Volver a Presupuestos" />;
+  if (documentLoading || vehicleLoading || clientLoading) return <LoadingState label="Cargando presupuesto..." className="min-h-[60vh]" />;
+  if (!data || !vehicle || !client) return <ErrorState code={404} fullPage href="/presupuestos" backLabel="Volver a Presupuestos" />;
 
   const { budget, details, total } = data;
 
@@ -132,7 +135,7 @@ function PresupuestoContent() {
 
 export default function PresupuestoPage() {
   return (
-    <Suspense fallback={<p className="text-muted text-center mt-20">Cargando...</p>}>
+    <Suspense fallback={<LoadingState label="Cargando..." />}>
       <PresupuestoContent />
     </Suspense>
   );

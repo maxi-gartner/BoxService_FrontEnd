@@ -1,6 +1,8 @@
 "use client";
-
+import { ErrorState } from "@/components/ui/ErrorState";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { Suspense } from "react";
+import { ApiClientError } from "@/lib/api/client";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { invoicesApi } from "@/lib/api/invoices";
@@ -12,40 +14,59 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { formatDate, formatMoney } from "@/lib/utils";
 
+function InvoiceUnavailable({ code }: { code?: number }) {
+  return <ErrorState code={code} resource="la factura" notFoundTitle="Factura no encontrada o sin acceso" fullPage href="/facturas" backLabel="Volver a Facturas" />;
+}
+
 function FacturaContent() {
   const invoiceId = Number(useSearchParams().get("id"));
 
-  const { data: invoice, isLoading } = useQuery({
+  const validId = Number.isSafeInteger(invoiceId) && invoiceId > 0;
+
+  const { data: invoice, isLoading, error: invoiceError } = useQuery({
     queryKey: ["invoices", invoiceId],
     queryFn: () => invoicesApi.getById(invoiceId),
-    enabled: !!invoiceId,
+    enabled: validId,
+    retry: false,
   });
-  const { data: service } = useQuery({
+  const { data: service, isLoading: loadingService, error: serviceError } = useQuery({
     queryKey: ["services", invoice?.serviceId],
     queryFn: () => servicesApi.getById(invoice!.serviceId),
     enabled: !!invoice,
+    retry: false,
   });
-  const { data: vehicle } = useQuery({
+  const { data: vehicle, isLoading: loadingVehicle, error: vehicleError } = useQuery({
     queryKey: ["vehicles", service?.vehicleId],
     queryFn: () => vehiclesApi.getById(service!.vehicleId),
     enabled: !!service,
+    retry: false,
   });
-  const { data: client } = useQuery({
+  const { data: client, isLoading: loadingClient, error: clientError } = useQuery({
     queryKey: ["clients", vehicle?.clientId],
     queryFn: () => clientsApi.getById(vehicle!.clientId),
     enabled: !!vehicle,
+    retry: false,
   });
-  // No todas las facturas vienen de un presupuesto — sin budgetId no hay
-  // de dónde sacar el detalle por ítem (ver API_CONTRACT.md).
-  const { data: budget } = useQuery({
+  // Las nuevas facturas conservan sus propios conceptos. El presupuesto
+  // solo se consulta como respaldo para facturas anteriores sin copia del detalle.
+  const { data: budget, isLoading: loadingBudget, error: budgetError } = useQuery({
     queryKey: ["budgets", invoice?.budgetId],
     queryFn: () => budgetsApi.getById(invoice!.budgetId as number),
-    enabled: !!invoice?.budgetId,
+    enabled: !!invoice?.budgetId && !invoice.details?.length,
+    retry: false,
   });
 
-  if (isLoading || !invoice || !service || !vehicle || !client) {
-    return <p className="text-muted text-center mt-20">Cargando...</p>;
+  if (!validId) return <InvoiceUnavailable code={400} />;
+
+  const error = invoiceError ?? serviceError ?? vehicleError ?? clientError ?? budgetError;
+  if (error) return <InvoiceUnavailable code={error instanceof ApiClientError ? error.code : undefined} />;
+
+  if (isLoading || loadingService || loadingVehicle || loadingClient || loadingBudget) {
+    return <LoadingState label="Cargando..." />;
   }
+  if (!invoice || !service || !vehicle || !client) return <InvoiceUnavailable code={404} />;
+
+  const details = invoice.details?.length ? invoice.details : budget?.details ?? [];
 
   return (
     <div className="min-h-screen flex justify-center py-10 px-4 bg-bg">
@@ -95,14 +116,14 @@ function FacturaContent() {
             <thead>
               <tr className="border-b border-border text-xs uppercase tracking-wide text-muted">
                 <th className="text-left py-2 font-medium">Descripción</th>
-                {budget && <th className="text-center py-2 font-medium w-20">Cant.</th>}
-                {budget && <th className="text-right py-2 font-medium w-28">Precio unit.</th>}
+                {details.length > 0 && <th className="text-center py-2 font-medium w-20">Cant.</th>}
+                {details.length > 0 && <th className="text-right py-2 font-medium w-28">Precio unit.</th>}
                 <th className="text-right py-2 font-medium w-28">Subtotal</th>
               </tr>
             </thead>
             <tbody>
-              {budget ? (
-                budget.details.map((d) => (
+              {details.length > 0 ? (
+                details.map((d) => (
                   <tr key={d.detailId} className="border-b border-border-light">
                     <td className="py-2 text-light">{d.description}</td>
                     <td className="py-2 text-center text-muted">{d.quantity}</td>
@@ -137,7 +158,7 @@ function FacturaContent() {
 
 export default function FacturaPage() {
   return (
-    <Suspense fallback={<p className="text-muted text-center mt-20">Cargando...</p>}>
+    <Suspense fallback={<LoadingState label="Cargando..." />}>
       <FacturaContent />
     </Suspense>
   );

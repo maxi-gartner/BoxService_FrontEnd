@@ -46,6 +46,7 @@ async function handle(req: NextRequest, path: string[]) {
   const hasBody = req.method !== "GET" && req.method !== "HEAD";
   const rawBody = hasBody ? await req.arrayBuffer() : undefined;
 
+  try {
   const upstreamResponse = await fetch(upstreamUrl, {
     method: req.method,
     headers: {
@@ -60,6 +61,9 @@ async function handle(req: NextRequest, path: string[]) {
     status: upstreamResponse.status,
     headers: { "Content-Type": "application/json" },
   });
+  } catch {
+    return NextResponse.json({ success: false, data: null, error: { code: 503, message: "No pudimos conectar con el servidor." } }, { status: 503 });
+  }
 }
 
 type Ctx = { params: Promise<{ path: string[] }> };

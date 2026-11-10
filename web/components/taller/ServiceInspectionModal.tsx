@@ -1,6 +1,8 @@
 "use client";
-
 import { useEffect, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { ErrorState } from "@/components/ui/ErrorState";
+import { LoadingState } from "@/components/ui/LoadingState";
 import {
   useDeleteInspectionPhoto,
   useSaveServiceInspection,
@@ -65,6 +67,13 @@ export function ServiceInspectionModal({
   const inspectionQuery = useServiceInspection(service.serviceId);
   const isNotFound =
     inspectionQuery.error instanceof ApiClientError && inspectionQuery.error.code === 404;
+  const serviceAccess = useQuery({
+    queryKey: ["inspection-service-access", service.serviceId],
+    queryFn: () => servicesApi.getById(service.serviceId),
+    enabled: isNotFound,
+    staleTime: 0,
+    retry: false,
+  });
 
   useEffect(() => {
     function closeOnEscape(event: KeyboardEvent) {
@@ -101,22 +110,13 @@ export function ServiceInspectionModal({
         </header>
 
         <div className="p-4 sm:p-6">
-          {inspectionQuery.isLoading && <p className="py-12 text-center text-muted">Cargando inspección...</p>}
-
-          {inspectionQuery.isError && !isNotFound && (
-            <div className="space-y-4">
-              <Alert type="error">
-                {inspectionQuery.error instanceof ApiClientError
-                  ? inspectionQuery.error.message
-                  : "No se pudo cargar la inspección."}
-              </Alert>
-              <Button type="button" variant="secondary" onClick={() => inspectionQuery.refetch()}>
-                Reintentar
-              </Button>
-            </div>
+          {(inspectionQuery.isLoading || (isNotFound && serviceAccess.isFetching)) && <LoadingState label="Cargando inspección..." />}
+          {((inspectionQuery.isError && !isNotFound) || (isNotFound && serviceAccess.isError)) && (
+            <ErrorState error={serviceAccess.error ?? inspectionQuery.error} resource="la inspección"
+              notFoundTitle="Inspección no encontrada o sin acceso" href="/taller" backLabel="Volver a Taller"
+              onRetry={() => { void inspectionQuery.refetch(); if (isNotFound) void serviceAccess.refetch(); }} />
           )}
-
-          {isNotFound && (
+          {isNotFound && serviceAccess.isSuccess && !serviceAccess.isFetching && (
             <InspectionEditor key={`new-${service.serviceId}`} service={service} />
           )}
 
@@ -267,7 +267,7 @@ function InspectionEditor({
       </section>
 
       <div className="flex justify-end">
-        <Button type="button" disabled={saveInspection.isPending} onClick={handleSave}>
+        <Button type="button" loading={saveInspection.isPending} disabled={saveInspection.isPending} onClick={handleSave}>
           {saveInspection.isPending ? "Guardando..." : inspection ? "Guardar cambios" : "Crear inspección"}
         </Button>
       </div>
@@ -389,7 +389,7 @@ function InspectionPhotos({
                   type="button"
                   size="sm"
                   variant="secondary"
-                  disabled={viewingPhotoId === photo.photoId}
+                  loading={viewingPhotoId === photo.photoId} disabled={viewingPhotoId === photo.photoId}
                   onClick={() => handleView(photo.photoId)}
                 >
                   {viewingPhotoId === photo.photoId ? "Abriendo..." : "Ver foto"}
@@ -398,7 +398,7 @@ function InspectionPhotos({
                   type="button"
                   size="sm"
                   variant="danger"
-                  disabled={deletePhoto.isPending}
+                  loading={deletePhoto.isPending} disabled={deletePhoto.isPending}
                   onClick={() => handleDelete(photo.photoId)}
                 >
                   Eliminar
@@ -443,7 +443,7 @@ function InspectionPhotos({
           />
         </div>
         <div className="md:col-span-2 flex justify-end">
-          <Button type="submit" disabled={!file || uploadPhoto.isPending}>
+          <Button type="submit" loading={uploadPhoto.isPending} disabled={!file || uploadPhoto.isPending}>
             {uploadPhoto.isPending ? "Subiendo..." : "Subir foto"}
           </Button>
         </div>

@@ -1,5 +1,6 @@
 "use client";
-
+import { LoadingState } from "@/components/ui/LoadingState";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { Fragment, useState } from "react";
 import { useBudgetsByVehicle, useBudget, useUpdateBudgetStatus, useAssignServiceToBudget, useUpdateBudgetDetails } from "@/hooks/useBudgets";
 import { useInvoicesByVehicle, useCreateInvoice } from "@/hooks/useInvoices";
@@ -25,11 +26,15 @@ function EditableBudgetRow({ budgetId, colSpan, canFinalize, onSave, onFinalize,
   onFinalize: (budgetId: number, details: BudgetDetailRequest[]) => void;
   busy: boolean;
 }) {
-  const { data, isLoading } = useBudget(budgetId);
+  const { data, isLoading, error: budgetLoadError, isLoading: budgetLoading, refetch: refetchBudget } = useBudget(budgetId);
+  const loadError = budgetLoadError;
+  if (loadError) return <tr><td colSpan={colSpan}><ErrorState error={loadError} resource="la información" onRetry={() => { if (budgetLoadError) void refetchBudget(); }} /></td></tr>;
+  if (budgetLoading) return <tr><td colSpan={colSpan}><LoadingState label="Cargando la información..." /></td></tr>;
+
   return (
     <tr>
       <td colSpan={colSpan} className="bg-surface-2 px-4 py-4">
-        {isLoading && <p className="text-sm text-muted">Cargando ítems...</p>}
+        {isLoading && <LoadingState label="Cargando ítems..." />}
         {data && (
           <BudgetDetailsEditor
             details={data.details}
@@ -45,8 +50,8 @@ function EditableBudgetRow({ budgetId, colSpan, canFinalize, onSave, onFinalize,
 }
 
 export function BudgetsList({ vehicle, onChanged }: { vehicle: Vehicle; onChanged: () => void }) {
-  const { data: budgets, isLoading } = useBudgetsByVehicle(vehicle.vehicleId);
-  const { data: invoices } = useInvoicesByVehicle(vehicle.vehicleId);
+  const { data: budgets, isLoading, error: budgetsByVehicleLoadError, isLoading: budgetsByVehicleLoading, refetch: refetchBudgetsByVehicle } = useBudgetsByVehicle(vehicle.vehicleId);
+  const { data: invoices, error: invoicesByVehicleLoadError, isLoading: invoicesByVehicleLoading, refetch: refetchInvoicesByVehicle } = useInvoicesByVehicle(vehicle.vehicleId);
   const updateStatus = useUpdateBudgetStatus();
   const assignService = useAssignServiceToBudget();
   const createInvoice = useCreateInvoice();
@@ -166,6 +171,10 @@ export function BudgetsList({ vehicle, onChanged }: { vehicle: Vehicle; onChange
     setTimeout(() => row?.classList.remove("bg-accent-dim"), 2000);
   }
 
+  const loadError = budgetsByVehicleLoadError ?? invoicesByVehicleLoadError;
+  if (loadError) return <ErrorState error={loadError} resource="los presupuestos" onRetry={() => { if (budgetsByVehicleLoadError) void refetchBudgetsByVehicle(); if (invoicesByVehicleLoadError) void refetchInvoicesByVehicle(); }} />;
+  if (budgetsByVehicleLoading || invoicesByVehicleLoading) return <LoadingState label="Cargando los presupuestos..." />;
+
   return (
     <div>
       {message && <Alert type={message.type}>{message.text}</Alert>}
@@ -178,7 +187,7 @@ export function BudgetsList({ vehicle, onChanged }: { vehicle: Vehicle; onChange
           <th></th>
         </THead>
         <TBody>
-          {isLoading && <EmptyRow colSpan={4}>Cargando presupuestos...</EmptyRow>}
+          {isLoading && <EmptyRow colSpan={4}><LoadingState label="Cargando presupuestos..." className="py-0" /></EmptyRow>}
           {!isLoading && mine.length === 0 && <EmptyRow colSpan={4}>Este vehículo todavía no tiene presupuestos.</EmptyRow>}
           {mine.map((b) => {
             const completed = isCompleted(b);
@@ -197,16 +206,16 @@ export function BudgetsList({ vehicle, onChanged }: { vehicle: Vehicle; onChange
                   <TD className="flex flex-wrap gap-2">
                     {(b.status === "draft" || b.status === "sent") && (
                       <>
-                        <Button size="sm" disabled={busy} onClick={() => handleApprove(b.budgetId)}>
+                        <Button size="sm" loading={busy} disabled={busy} onClick={() => handleApprove(b.budgetId)}>
                           Aprobar
                         </Button>
-                        <Button size="sm" variant="danger" disabled={busy} onClick={() => handleReject(b.budgetId, false)}>
+                        <Button size="sm" variant="danger" loading={busy} disabled={busy} onClick={() => handleReject(b.budgetId, false)}>
                           Rechazar
                         </Button>
                       </>
                     )}
                     {b.status === "approved" && !completed && (
-                      <Button size="sm" variant="danger" disabled={busy} onClick={() => handleReject(b.budgetId, true)}>
+                      <Button size="sm" variant="danger" loading={busy} disabled={busy} onClick={() => handleReject(b.budgetId, true)}>
                         Cancelar
                       </Button>
                     )}
@@ -230,7 +239,7 @@ export function BudgetsList({ vehicle, onChanged }: { vehicle: Vehicle; onChange
                             Ver factura
                           </Button>
                         ) : (
-                          <Button size="sm" disabled={busy} onClick={() => handleInvoice(b)}>
+                          <Button size="sm" loading={busy} disabled={busy} onClick={() => handleInvoice(b)}>
                             Facturar
                           </Button>
                         )}
