@@ -209,10 +209,20 @@ function LoginForm() {
               </form>
 
               <div className="mt-8 border-t border-border pt-5">
-                <p className="text-center text-xs text-muted">
-                  Desarrollo: superadmin / boxservice123
-                  {" "}
-                  (o, con el mock: maxi@boxservice.com / boxservice123)
+                <p className="text-center text-xs font-semibold text-muted mb-2">
+                  Usuarios de prueba
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-xs text-muted">
+                  <p><span className="text-light">administrador</span> — superadmin</p>
+                  <p><span className="text-light">tenant1</span> — dueño (taller con datos)</p>
+                  <p><span className="text-light">empleado1</span> — empleado</p>
+                  <p><span className="text-light">empleado2</span> — empleado</p>
+                  <p><span className="text-light">tenant2</span> — dueño (taller vacío)</p>
+                </div>
+
+                <p className="text-center text-xs text-muted mt-3">
+                  Contraseña para todos: <span className="text-light">boxservice123</span>
                 </p>
               </div>
             </div>
