@@ -50,6 +50,18 @@ export type RefreshResponse = {
   expiresAt: string;
 };
 
+export type AuthAuditEvent = {
+  eventType: string;
+  outcome: string;
+  actorUserId: number | null;
+  targetUserId: number | null;
+  tenantId: number | null;
+  sourceIp: string | null;
+  httpMethod: string | null;
+  resourcePath: string | null;
+  createdAt: string;
+};
+
 /** Claims mínimos que el access token trae codificados (ver contrato). */
 export type AccessTokenClaims = {
   sub: string; // userId

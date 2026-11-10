@@ -45,6 +45,22 @@ el navegador nunca los toca directamente.
 ambiente desplegado (no solo `localhost:3000`) o el botón de Google
 falla en producción.
 
+## Recuperación de contraseña y auditoría
+
+El enlace de login abre `/forgot-password`; el correo debe apuntar a
+`/reset-password` en el mismo ambiente. Configurá
+`PasswordReset__FrontendUrl` en el backend de desarrollo con la URL del
+frontend de desarrollo más esa ruta, y configurá SMTP solo en el backend.
+Las páginas de recuperación usan rutas BFF públicas de Next.js y el
+backend responde con un mensaje genérico para no revelar si un email tiene
+cuenta asociada. Si `BACKEND_MODE` no es `real`, el flujo no envía emails.
+
+El registro se consulta en `/admin/auditoria`, visible para superadmin.
+Guarda eventos de autenticación y cambios de datos con resultado,
+identidad disponible, IP, método y ruta; no registra cuerpos de requests,
+contraseñas ni tokens. Aplicá las migraciones del backend antes de usarlo,
+en especial `016_ampliar_auditoria_api.sql`.
+
 ## CI
 
 `.github/workflows/ci.yml` corre en cada push/PR a `develop`/`main`:

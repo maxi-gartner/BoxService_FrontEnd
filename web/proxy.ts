@@ -19,7 +19,7 @@ import type { AccessTokenClaims } from "@/types/auth";
 // staff, pero tampoco rebota a un miembro del staff logueado fuera de
 // ahí (a diferencia de /login, que si ya tenés sesión no tiene sentido
 // mostrarlo de nuevo).
-const STAFF_AUTH_EXEMPT_ROUTES = ["/login", "/portal"];
+const STAFF_AUTH_EXEMPT_ROUTES = ["/login", "/forgot-password", "/reset-password", "/portal"];
 const REDIRECT_IF_LOGGED_IN_ROUTES = ["/login"];
 
 export function proxy(request: NextRequest) {

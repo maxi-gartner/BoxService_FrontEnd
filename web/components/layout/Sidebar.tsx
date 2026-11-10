@@ -32,6 +32,7 @@ const SUPERADMIN_NAV_ITEMS: NavItem[] = [
   { href: "/admin/tenants", label: "Talleres", icon: "🏢" },
   { href: "/admin/usuarios", label: "Usuarios", icon: "👥" },
   { href: "/admin/pagos", label: "Pagos", icon: "💰" },
+  { href: "/admin/auditoria", label: "Auditoría", icon: "🧾" },
 ];
 
 type Props = {
