@@ -25,6 +25,18 @@ export function useCreateVehicle() {
   });
 }
 
+export function useTransferVehicle() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ vehicleId, newClientId }: { vehicleId: number; newClientId: number }) =>
+      vehiclesApi.transfer(vehicleId, newClientId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
+    },
+  });
+}
+
 export function useVehicleHistory(vehicleId: number | null) {
   return useQuery({
     queryKey: ["vehicles", vehicleId, "history"],

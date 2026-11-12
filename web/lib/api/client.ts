@@ -35,16 +35,22 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 
   if (!json || typeof json !== "object" || !res.ok || json.success !== true) {
     const code = !res.ok ? res.status : (json?.error?.code ?? 502);
-    throw new ApiClientError(apiErrorMessage(code, json?.error?.message), code);
+    throw new ApiClientError(apiErrorMessage(code, json?.error?.message), code, json?.data);
   }
   return json.data;
 }
 
 export class ApiClientError extends Error {
   code: number;
-  constructor(message: string, code: number) {
+  // Payload extra que algunos errores traen además del mensaje (ej: el
+  // 409 de patente duplicada trae el vehículo/cliente existente para que
+  // el caller pueda ofrecer una transferencia en vez de solo mostrar el
+  // mensaje). La mayoría de los callers lo ignoran.
+  data?: unknown;
+  constructor(message: string, code: number, data?: unknown) {
     super(message);
     this.code = code;
+    this.data = data;
   }
 }
 

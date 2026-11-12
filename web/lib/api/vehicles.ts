@@ -8,4 +8,6 @@ export const vehiclesApi = {
   findByPlate: (plate: string) => api.get<Vehicle>(`vehicles?plate=${encodeURIComponent(plate)}`),
   getHistory: (id: number) => api.get<Service[]>(`vehicles/${id}/history`),
   create: (data: VehicleCreateRequest) => api.post<Vehicle>("vehicles", data),
+  transfer: (vehicleId: number, newClientId: number) =>
+    api.post<Vehicle>(`vehicles/${vehicleId}/transfer`, { newClientId }),
 };

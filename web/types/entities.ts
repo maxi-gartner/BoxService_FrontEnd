@@ -194,6 +194,14 @@ export type Vehicle = {
   clientName?: string | null;
 };
 
+// Payload del error 409 de POST /vehicles cuando la patente ya existe
+// para otro cliente de este mismo taller (ver ApiClientError.data).
+export type VehiclePlateConflict = {
+  existingVehicleId: number;
+  existingClientId: number;
+  existingClientName: string;
+};
+
 export type VehicleCreateRequest = {
   clientId: number;
   brand: string;

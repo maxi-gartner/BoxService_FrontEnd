@@ -11,7 +11,10 @@ export type ApiSuccess<T> = {
 
 export type ApiError = {
   success: false;
-  data: null;
+  // Normalmente null — algunos errores (ej: conflicto de patente
+  // duplicada en POST /vehicles) traen acá info extra para que el caller
+  // pueda ofrecer una acción en vez de solo mostrar el mensaje.
+  data?: unknown;
   error: {
     code: number;
     message: string;

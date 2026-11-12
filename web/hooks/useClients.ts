@@ -2,8 +2,15 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { clientsApi } from "@/lib/api/clients";
 import type { ClientCreateRequest } from "@/types/entities";
 
-export function useClients(params: { page?: number; pageSize?: number; search?: string } = {}) {
-  return useQuery({ queryKey: ["clients", params], queryFn: () => clientsApi.list(params) });
+export function useClients(
+  params: { page?: number; pageSize?: number; search?: string } = {},
+  options: { enabled?: boolean } = {},
+) {
+  return useQuery({
+    queryKey: ["clients", params],
+    queryFn: () => clientsApi.list(params),
+    enabled: options.enabled ?? true,
+  });
 }
 
 export function useClientVehicles(clientId: number | null) {
