@@ -26,6 +26,14 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
+const DEMO_USERS = [
+  { username: "administrador", label: "Entrar como administrador" },
+  { username: "tenant1", label: "Entrar como dueño de prueba 1" },
+  { username: "tenant2", label: "Entrar como dueño de prueba 2" },
+  { username: "empleado1", label: "Entrar como empleado 1 de dueño 1" },
+  { username: "empleado2", label: "Entrar como empleado 2 de dueño 1" },
+];
+
 function LoginForm() {
   const router = useRouter();
   const [navigating, startNavigation] = useTransition();
@@ -36,6 +44,7 @@ function LoginForm() {
     ? "Contraseña actualizada. Ya podés iniciar sesión."
     : "";
   const [showPassword, setShowPassword] = useState(false);
+  const [quickLoginUser, setQuickLoginUser] = useState<string | null>(null);
 
   const {
     register,
@@ -62,6 +71,28 @@ function LoginForm() {
           ? err.message
           : "No se pudo iniciar sesión.",
       );
+    }
+  }
+
+  async function handleQuickLogin(username: string) {
+    setServerError("");
+    setQuickLoginUser(username);
+    try {
+      const user = await login({ username, password: "boxservice123" });
+      const home = user.role === "superadmin" ? "/admin/tenants" : "/taller";
+
+      startNavigation(() => {
+        router.push(searchParams.get("next") ?? home);
+        router.refresh();
+      });
+    } catch (err) {
+      setServerError(
+        err instanceof ApiClientError
+          ? err.message
+          : "No se pudo iniciar sesión.",
+      );
+    } finally {
+      setQuickLoginUser(null);
     }
   }
 
@@ -209,20 +240,29 @@ function LoginForm() {
               </form>
 
               <div className="mt-8 border-t border-border pt-5">
-                <p className="text-center text-xs font-semibold text-muted mb-2">
+                <p className="text-center text-xs font-semibold text-muted mb-3">
                   Usuarios de prueba
                 </p>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-xs text-muted">
-                  <p><span className="text-light">administrador</span> — superadmin</p>
-                  <p><span className="text-light">tenant1</span> — dueño (taller con datos)</p>
-                  <p><span className="text-light">empleado1</span> — empleado</p>
-                  <p><span className="text-light">empleado2</span> — empleado</p>
-                  <p><span className="text-light">tenant2</span> — dueño (taller vacío)</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {DEMO_USERS.map((demoUser) => (
+                    <Button
+                      key={demoUser.username}
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      loading={quickLoginUser === demoUser.username}
+                      disabled={quickLoginUser !== null || isSubmitting || navigating}
+                      onClick={() => handleQuickLogin(demoUser.username)}
+                      className="cursor-pointer disabled:cursor-not-allowed"
+                    >
+                      {demoUser.label}
+                    </Button>
+                  ))}
                 </div>
 
                 <p className="text-center text-xs text-muted mt-3">
-                  Contraseña para todos: <span className="text-light">boxservice123</span>
+                  Dueño de prueba 2 es un taller vacío. Contraseña de todos: <span className="text-light">boxservice123</span>
                 </p>
               </div>
             </div>
