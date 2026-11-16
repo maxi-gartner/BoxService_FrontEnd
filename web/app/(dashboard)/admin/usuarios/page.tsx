@@ -7,11 +7,18 @@ import { useAdminClients } from "@/hooks/useAdminClients";
 import { ApiClientError } from "@/lib/api/client";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { Alert } from "@/components/ui/Alert";
 import { TableWrapper, THead, TBody, TR, TD, EmptyRow } from "@/components/ui/Table";
 import { ResetPasswordButton } from "@/components/admin/ResetPasswordButton";
 
 const ROLE_LABEL: Record<string, string> = { dueno: "Dueño", empleado: "Empleado", superadmin: "Superadmin" };
+
+function matches(term: string, ...values: (string | null | undefined)[]) {
+  if (!term) return true;
+  const needle = term.trim().toLowerCase();
+  return values.some((v) => v?.toLowerCase().includes(needle));
+}
 
 export default function UsuariosPage() {
   const { data: users, isLoading: usersLoading, error: usersLoadError, refetch: refetchUsers } = useUsers();
@@ -19,6 +26,8 @@ export default function UsuariosPage() {
   const updateUser = useUpdateUser();
   const [message, setMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
   const [workingId, setWorkingId] = useState<number | null>(null);
+  const [userSearch, setUserSearch] = useState("");
+  const [clientSearch, setClientSearch] = useState("");
 
   async function toggleActive(id: number, active: boolean) {
     setWorkingId(id);
@@ -43,7 +52,15 @@ export default function UsuariosPage() {
       {message && <Alert type={message.type}>{message.text}</Alert>}
 
       <section>
-        <h2 className="text-lg font-semibold text-light mb-3">Dueños y empleados</h2>
+        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="text-lg font-semibold text-light">Dueños y empleados</h2>
+          <Input
+            placeholder="Buscar por nombre, usuario o taller…"
+            value={userSearch}
+            onChange={(e) => setUserSearch(e.target.value)}
+            className="w-full sm:max-w-xs"
+          />
+        </div>
         <Card>
           <TableWrapper>
             <THead>
@@ -56,9 +73,14 @@ export default function UsuariosPage() {
             </THead>
             <TBody>
               {usersLoading && <EmptyRow colSpan={6}><LoadingState label="Cargando..." className="py-0" /></EmptyRow>}
-              {!usersLoading && users?.length === 0 && <EmptyRow colSpan={6}>No hay usuarios todavía.</EmptyRow>}
+              {!usersLoading && users?.filter((u) => u.role !== "superadmin").length === 0 && (
+                <EmptyRow colSpan={6}>No hay usuarios todavía.</EmptyRow>
+              )}
+              {!usersLoading && !!users?.filter((u) => u.role !== "superadmin").length && users.filter((u) => u.role !== "superadmin" && matches(userSearch, u.name, u.username, u.tenantName)).length === 0 && (
+                <EmptyRow colSpan={6}>Ningún usuario coincide con la búsqueda.</EmptyRow>
+              )}
               {users
-                ?.filter((u) => u.role !== "superadmin")
+                ?.filter((u) => u.role !== "superadmin" && matches(userSearch, u.name, u.username, u.tenantName))
                 .map((u) => (
                   <TR key={u.userId}>
                     <TD>{u.name}</TD>
@@ -85,7 +107,15 @@ export default function UsuariosPage() {
       </section>
 
       <section>
-        <h2 className="text-lg font-semibold text-light mb-3">Clientes</h2>
+        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="text-lg font-semibold text-light">Clientes</h2>
+          <Input
+            placeholder="Buscar por nombre, teléfono, email o taller…"
+            value={clientSearch}
+            onChange={(e) => setClientSearch(e.target.value)}
+            className="w-full sm:max-w-xs"
+          />
+        </div>
         <Card>
           <TableWrapper>
             <THead>
@@ -97,7 +127,12 @@ export default function UsuariosPage() {
             <TBody>
               {clientsLoading && <EmptyRow colSpan={4}><LoadingState label="Cargando..." className="py-0" /></EmptyRow>}
               {!clientsLoading && clientRows?.length === 0 && <EmptyRow colSpan={4}>No hay clientes todavía.</EmptyRow>}
-              {clientRows?.map((row) => (
+              {!clientsLoading && !!clientRows?.length && clientRows.filter((row) => matches(clientSearch, row.client.name, row.client.phone, row.client.email, row.tenantName)).length === 0 && (
+                <EmptyRow colSpan={4}>Ningún cliente coincide con la búsqueda.</EmptyRow>
+              )}
+              {clientRows
+                ?.filter((row) => matches(clientSearch, row.client.name, row.client.phone, row.client.email, row.tenantName))
+                .map((row) => (
                 <TR key={row.client.clientId}>
                   <TD>{row.client.name}</TD>
                   <TD className="text-muted">{row.client.phone}</TD>

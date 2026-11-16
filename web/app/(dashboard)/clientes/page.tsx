@@ -8,7 +8,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useClients, useClientVehicles, useCreateClient, useInvitePortal } from "@/hooks/useClients";
+import { useClients, useClientVehicles, useCreateClient, useUpdateClient, useInvitePortal } from "@/hooks/useClients";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { ApiClientError } from "@/lib/api/client";
 import { Card, CardTitle } from "@/components/ui/Card";
@@ -17,6 +17,7 @@ import { Input, Label } from "@/components/ui/Input";
 import { Alert } from "@/components/ui/Alert";
 import { Pagination } from "@/components/ui/Pagination";
 import { TableWrapper, THead, TBody, TR, TD, EmptyRow } from "@/components/ui/Table";
+import type { Client } from "@/types/entities";
 
 const schema = z.object({
   name: z.string().min(1, "Ingresá el nombre"),
@@ -24,6 +25,51 @@ const schema = z.object({
   email: z.string().email("Email inválido").optional().or(z.literal("")),
 });
 type FormValues = z.infer<typeof schema>;
+
+function EditClientRow({
+  client,
+  onDone,
+}: {
+  client: Client;
+  onDone: (msg: { type: "ok" | "error"; text: string } | null) => void;
+}) {
+  const updateClient = useUpdateClient();
+  const [name, setName] = useState(client.name);
+  const [phone, setPhone] = useState(client.phone);
+  const [email, setEmail] = useState(client.email);
+
+  async function save() {
+    try {
+      await updateClient.mutateAsync({ id: client.clientId, data: { name, phone, email } });
+      onDone({ type: "ok", text: `"${name}" actualizado.` });
+    } catch (err) {
+      onDone({ type: "error", text: err instanceof ApiClientError ? err.message : "No se pudo actualizar el cliente." });
+    }
+  }
+
+  return (
+    <TR className="bg-surface-2">
+      <TD className="text-muted">{client.clientId}</TD>
+      <TD>
+        <Input value={name} onChange={(e) => setName(e.target.value)} />
+      </TD>
+      <TD>
+        <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
+      </TD>
+      <TD>
+        <Input value={email} onChange={(e) => setEmail(e.target.value)} />
+      </TD>
+      <TD className="flex gap-2">
+        <Button size="sm" loading={updateClient.isPending} disabled={updateClient.isPending} onClick={save}>
+          Guardar
+        </Button>
+        <Button size="sm" variant="secondary" onClick={() => onDone(null)}>
+          Cancelar
+        </Button>
+      </TD>
+    </TR>
+  );
+}
 
 export default function ClientesPage() {
   const [page, setPage] = useState(1);
@@ -38,6 +84,8 @@ export default function ClientesPage() {
   const { data: vehicles, isLoading: loadingVehicles, error: clientVehiclesLoadError, isLoading: clientVehiclesLoading, refetch: refetchClientVehicles } = useClientVehicles(selectedClientId);
   const [inviteError, setInviteError] = useState("");
   const [invitingClientId, setInvitingClientId] = useState<number | null>(null);
+  const [editingClientId, setEditingClientId] = useState<number | null>(null);
+  const [editMessage, setEditMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
 
   // Reset de página al cambiar el buscador — ajuste de estado durante el
   // render (patrón recomendado por React), no un efecto.
@@ -129,6 +177,7 @@ export default function ClientesPage() {
             />
           </div>
           <Alert type="error">{inviteError}</Alert>
+          {editMessage && <Alert type={editMessage.type}>{editMessage.text}</Alert>}
           <TableWrapper>
             <THead>
               <th>ID</th>
@@ -144,7 +193,17 @@ export default function ClientesPage() {
                   {debouncedSearch ? "Ningún cliente coincide con la búsqueda." : "No hay clientes cargados."}
                 </EmptyRow>
               )}
-              {clients?.map((client) => (
+              {clients?.map((client) =>
+                editingClientId === client.clientId ? (
+                  <EditClientRow
+                    key={client.clientId}
+                    client={client}
+                    onDone={(msg) => {
+                      setEditingClientId(null);
+                      if (msg) setEditMessage(msg);
+                    }}
+                  />
+                ) : (
                 <TR key={client.clientId}>
                   <TD>{client.clientId}</TD>
                   <TD>{client.name}</TD>
@@ -162,6 +221,15 @@ export default function ClientesPage() {
                         Ver vehículos
                       </button>
                       <button
+                        onClick={() => {
+                          setEditMessage(null);
+                          setEditingClientId(client.clientId);
+                        }}
+                        className="text-xs text-accent hover:underline"
+                      >
+                        Editar
+                      </button>
+                      <button
                         onClick={() => handleInvite(client.clientId)}
                         disabled={invitingClientId === client.clientId}
                         className="text-xs text-accent hover:underline disabled:opacity-50"
@@ -172,7 +240,8 @@ export default function ClientesPage() {
                     </div>
                   </TD>
                 </TR>
-              ))}
+                ),
+              )}
             </TBody>
           </TableWrapper>
           {clientsPage && (

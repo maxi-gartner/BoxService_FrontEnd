@@ -2,7 +2,7 @@ import { api, buildQuery } from "./client";
 import type { Invoice, InvoiceCreateRequest, InvoiceStatus, PagedResult } from "@/types/entities";
 
 export const invoicesApi = {
-  list: (params: { page?: number; pageSize?: number; status?: "todas" | "por-cobrar" } = {}) =>
+  list: (params: { page?: number; pageSize?: number; status?: "todas" | "por-cobrar"; search?: string } = {}) =>
     api.get<PagedResult<Invoice>>(`invoices${buildQuery(params)}`),
   // Sin paginar — todas las facturas de un vehículo puntual (lo usa
   // InvoicingList en el Taller en vez de pedir el listado global).

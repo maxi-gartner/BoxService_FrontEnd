@@ -5,7 +5,7 @@ import type { BudgetCreateRequest, BudgetDetailRequest, BudgetStatus } from "@/t
 // Estado del taller en vivo: más de un puesto puede aprobar/cambiar un
 // presupuesto al mismo tiempo que otro lo está mirando — acá sí vale la
 // pena refetchear al volver a la pestaña, a diferencia del default global.
-export function useBudgets(params: { page?: number; pageSize?: number; status?: "todos" | "pendientes" } = {}) {
+export function useBudgets(params: { page?: number; pageSize?: number; status?: "todos" | "pendientes"; search?: string } = {}) {
   return useQuery({
     queryKey: ["budgets", params],
     queryFn: () => budgetsApi.list(params),

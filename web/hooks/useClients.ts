@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { clientsApi } from "@/lib/api/clients";
-import type { ClientCreateRequest } from "@/types/entities";
+import type { ClientCreateRequest, ClientUpdateRequest } from "@/types/entities";
 
 export function useClients(
   params: { page?: number; pageSize?: number; search?: string } = {},
@@ -26,6 +26,17 @@ export function useCreateClient() {
   return useMutation({
     mutationFn: (data: ClientCreateRequest) => clientsApi.create(data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["clients"] }),
+  });
+}
+
+export function useUpdateClient() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: ClientUpdateRequest }) => clientsApi.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "clients"] });
+    },
   });
 }
 

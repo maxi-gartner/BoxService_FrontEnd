@@ -4,9 +4,11 @@ import { ErrorState } from "@/components/ui/ErrorState";
 import { useState } from "react";
 import Link from "next/link";
 import { useInvoiceStats, useInvoices, useUpdateInvoiceStatus } from "@/hooks/useInvoices";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { ApiClientError } from "@/lib/api/client";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { Alert } from "@/components/ui/Alert";
 import { Badge } from "@/components/ui/Badge";
 import { Pagination } from "@/components/ui/Pagination";
@@ -17,18 +19,22 @@ import type { InvoiceStatus } from "@/types/entities";
 export default function FacturasPage() {
   const [page, setPage] = useState(1);
   const [filter, setFilter] = useState<"todas" | "por-cobrar">("por-cobrar");
-  const { data: invoicesPage, isLoading, error: invoicesLoadError, isLoading: invoicesLoading, refetch: refetchInvoices } = useInvoices({ page, pageSize: 25, status: filter });
+  const [term, setTerm] = useState("");
+  const debouncedTerm = useDebouncedValue(term);
+  const { data: invoicesPage, isLoading, error: invoicesLoadError, isLoading: invoicesLoading, refetch: refetchInvoices } = useInvoices({ page, pageSize: 25, status: filter, search: debouncedTerm || undefined });
   const { data: stats, error: invoiceStatsLoadError, isLoading: invoiceStatsLoading, refetch: refetchInvoiceStats } = useInvoiceStats();
   const updateStatus = useUpdateInvoiceStatus();
 
   const [message, setMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
   const [workingId, setWorkingId] = useState<number | null>(null);
 
-  // Reset de página al cambiar el filtro — ajuste de estado durante el
-  // render (patrón recomendado por React), no un efecto.
+  // Reset de página al cambiar el filtro/búsqueda — ajuste de estado
+  // durante el render (patrón recomendado por React), no un efecto.
   const [filterForPage, setFilterForPage] = useState(filter);
-  if (filter !== filterForPage) {
+  const [termForPage, setTermForPage] = useState(debouncedTerm);
+  if (filter !== filterForPage || debouncedTerm !== termForPage) {
     setFilterForPage(filter);
+    setTermForPage(debouncedTerm);
     setPage(1);
   }
 
@@ -77,22 +83,30 @@ export default function FacturasPage() {
       </div>
 
       <Card>
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
           <CardTitle className="mb-0">Listado</CardTitle>
-          <div className="flex gap-1 text-xs">
-            {(["por-cobrar", "todas"] as const).map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={
-                  filter === f
-                    ? "rounded-full bg-accent-dim px-3 py-1 text-accent"
-                    : "rounded-full px-3 py-1 text-muted hover:text-light"
-                }
-              >
-                {f === "por-cobrar" ? "Por cobrar" : "Todas"}
-              </button>
-            ))}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Input
+              placeholder="Buscar por número, patente, marca, modelo o cliente…"
+              value={term}
+              onChange={(e) => setTerm(e.target.value)}
+              className="w-full sm:max-w-xs"
+            />
+            <div className="flex gap-1 text-xs">
+              {(["por-cobrar", "todas"] as const).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setFilter(f)}
+                  className={
+                    filter === f
+                      ? "rounded-full bg-accent-dim px-3 py-1 text-accent"
+                      : "rounded-full px-3 py-1 text-muted hover:text-light"
+                  }
+                >
+                  {f === "por-cobrar" ? "Por cobrar" : "Todas"}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 

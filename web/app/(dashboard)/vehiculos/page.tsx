@@ -5,7 +5,7 @@ import { useState, type ChangeEvent } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useVehicles, useCreateVehicle } from "@/hooks/useVehicles";
+import { useVehicles, useCreateVehicle, useUpdateVehicle } from "@/hooks/useVehicles";
 import { useClients } from "@/hooks/useClients";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useVehicleBrands, useVehicleModels, useVehicleVersions } from "@/hooks/useVehicleCatalog";
@@ -16,10 +16,70 @@ import { Input, Label, Select } from "@/components/ui/Input";
 import { Alert } from "@/components/ui/Alert";
 import { Pagination } from "@/components/ui/Pagination";
 import { TableWrapper, THead, TBody, TR, TD, EmptyRow } from "@/components/ui/Table";
+import type { Vehicle } from "@/types/entities";
 
 const OTHER_BRAND = "__otra__";
 const OTHER_MODEL = "__otro__";
 const OTHER_VERSION = "__otra_version__";
+
+function EditVehicleRow({
+  vehicle,
+  onDone,
+}: {
+  vehicle: Vehicle;
+  onDone: (msg: { type: "ok" | "error"; text: string } | null) => void;
+}) {
+  const updateVehicle = useUpdateVehicle();
+  const [plate, setPlate] = useState(vehicle.plate);
+  const [brand, setBrand] = useState(vehicle.brand);
+  const [model, setModel] = useState(vehicle.model);
+  const [version, setVersion] = useState(vehicle.version ?? "");
+  const [year, setYear] = useState(vehicle.year?.toString() ?? "");
+  const [mileage, setMileage] = useState(String(vehicle.currentMileage));
+
+  async function save() {
+    try {
+      await updateVehicle.mutateAsync({
+        id: vehicle.vehicleId,
+        data: {
+          plate: plate.trim().toUpperCase(),
+          brand: brand.trim(),
+          model: model.trim(),
+          version: version.trim() || undefined,
+          year: year ? Number(year) : null,
+          currentMileage: mileage ? Number(mileage) : 0,
+        },
+      });
+      onDone({ type: "ok", text: `"${plate}" actualizado.` });
+    } catch (err) {
+      onDone({ type: "error", text: err instanceof ApiClientError ? err.message : "No se pudo actualizar el vehículo." });
+    }
+  }
+
+  return (
+    <TR className="bg-surface-2">
+      <TD><Input value={plate} onChange={(e) => setPlate(e.target.value)} className="max-w-28" /></TD>
+      <TD>
+        <div className="flex gap-1">
+          <Input value={brand} onChange={(e) => setBrand(e.target.value)} placeholder="Marca" />
+          <Input value={model} onChange={(e) => setModel(e.target.value)} placeholder="Modelo" />
+        </div>
+        <Input value={version} onChange={(e) => setVersion(e.target.value)} placeholder="Versión (opcional)" className="mt-1" />
+      </TD>
+      <TD><Input type="number" value={year} onChange={(e) => setYear(e.target.value)} className="max-w-20" /></TD>
+      <TD><Input type="number" value={mileage} onChange={(e) => setMileage(e.target.value)} className="max-w-24" /></TD>
+      <TD className="text-muted">{vehicle.clientName ?? `Cliente #${vehicle.clientId}`}</TD>
+      <TD className="flex gap-2">
+        <Button size="sm" loading={updateVehicle.isPending} disabled={updateVehicle.isPending} onClick={save}>
+          Guardar
+        </Button>
+        <Button size="sm" variant="secondary" onClick={() => onDone(null)}>
+          Cancelar
+        </Button>
+      </TD>
+    </TR>
+  );
+}
 
 const schema = z.object({
   clientId: z.string().min(1, "Elegí un cliente"),
@@ -61,6 +121,8 @@ export default function VehiculosPage() {
 
   const [formError, setFormError] = useState("");
   const [formOk, setFormOk] = useState("");
+  const [editingVehicleId, setEditingVehicleId] = useState<number | null>(null);
+  const [editMessage, setEditMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
   const [customBrand, setCustomBrand] = useState(false);
   const [customModel, setCustomModel] = useState(false);
   const [customVersion, setCustomVersion] = useState(false);
@@ -302,6 +364,7 @@ export default function VehiculosPage() {
               className="w-full sm:max-w-xs"
             />
           </div>
+          {editMessage && <div className="mb-3"><Alert type={editMessage.type}>{editMessage.text}</Alert></div>}
           <TableWrapper>
             <THead>
               <th>Patente</th>
@@ -309,15 +372,26 @@ export default function VehiculosPage() {
               <th>Año</th>
               <th>KM</th>
               <th>Cliente</th>
+              <th></th>
             </THead>
             <TBody>
-              {isLoading && <EmptyRow colSpan={5}><LoadingState label="Cargando..." className="py-0" /></EmptyRow>}
+              {isLoading && <EmptyRow colSpan={6}><LoadingState label="Cargando..." className="py-0" /></EmptyRow>}
               {!isLoading && vehicles?.length === 0 && (
-                <EmptyRow colSpan={5}>
+                <EmptyRow colSpan={6}>
                   {debouncedSearch ? "Ningún vehículo coincide con la búsqueda." : "No hay vehículos registrados."}
                 </EmptyRow>
               )}
-              {vehicles?.map((v) => (
+              {vehicles?.map((v) =>
+                editingVehicleId === v.vehicleId ? (
+                  <EditVehicleRow
+                    key={v.vehicleId}
+                    vehicle={v}
+                    onDone={(msg) => {
+                      setEditingVehicleId(null);
+                      if (msg) setEditMessage(msg);
+                    }}
+                  />
+                ) : (
                 <TR key={v.vehicleId}>
                   <TD className="text-accent">{v.plate}</TD>
                   <TD>
@@ -327,8 +401,21 @@ export default function VehiculosPage() {
                   <TD>{v.year ?? "-"}</TD>
                   <TD>{v.currentMileage.toLocaleString("es-AR")}</TD>
                   <TD>{v.clientName ?? `Cliente #${v.clientId}`}</TD>
+                  <TD>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => {
+                        setEditMessage(null);
+                        setEditingVehicleId(v.vehicleId);
+                      }}
+                    >
+                      Editar
+                    </Button>
+                  </TD>
                 </TR>
-              ))}
+                ),
+              )}
             </TBody>
           </TableWrapper>
           {vehiclesPage && (

@@ -1,5 +1,5 @@
 import { api, buildQuery } from "./client";
-import type { PagedResult, Service, Vehicle, VehicleCreateRequest } from "@/types/entities";
+import type { PagedResult, Service, Vehicle, VehicleCreateRequest, VehicleUpdateRequest } from "@/types/entities";
 
 export const vehiclesApi = {
   list: (params: { page?: number; pageSize?: number; search?: string } = {}) =>
@@ -8,6 +8,7 @@ export const vehiclesApi = {
   findByPlate: (plate: string) => api.get<Vehicle>(`vehicles?plate=${encodeURIComponent(plate)}`),
   getHistory: (id: number) => api.get<Service[]>(`vehicles/${id}/history`),
   create: (data: VehicleCreateRequest) => api.post<Vehicle>("vehicles", data),
+  update: (id: number, data: VehicleUpdateRequest) => api.patch<Vehicle>(`vehicles/${id}`, data),
   transfer: (vehicleId: number, newClientId: number) =>
     api.post<Vehicle>(`vehicles/${vehicleId}/transfer`, { newClientId }),
 };

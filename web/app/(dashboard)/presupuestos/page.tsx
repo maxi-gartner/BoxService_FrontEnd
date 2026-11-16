@@ -4,10 +4,12 @@ import { ErrorState } from "@/components/ui/ErrorState";
 import { Fragment, useState } from "react";
 import Link from "next/link";
 import { useBudgets, useUpdateBudgetStatus, useUpdateBudgetDetails, useBudget } from "@/hooks/useBudgets";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { ApiClientError } from "@/lib/api/client";
 import { BudgetDetailsEditor } from "@/components/taller/BudgetDetailsEditor";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { Alert } from "@/components/ui/Alert";
 import { Badge } from "@/components/ui/Badge";
 import { Pagination } from "@/components/ui/Pagination";
@@ -78,7 +80,9 @@ function EditBudgetRow({ budgetId, colSpan, onSave, saving }: {
 export default function PresupuestosPage() {
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<"todos" | "pendientes">("todos");
-  const { data: budgetsPage, isLoading, error: budgetsLoadError, isLoading: budgetsLoading, refetch: refetchBudgets } = useBudgets({ page, pageSize: 25, status: statusFilter });
+  const [term, setTerm] = useState("");
+  const debouncedTerm = useDebouncedValue(term);
+  const { data: budgetsPage, isLoading, error: budgetsLoadError, isLoading: budgetsLoading, refetch: refetchBudgets } = useBudgets({ page, pageSize: 25, status: statusFilter, search: debouncedTerm || undefined });
   const updateStatus = useUpdateBudgetStatus();
   const updateDetails = useUpdateBudgetDetails();
 
@@ -87,11 +91,13 @@ export default function PresupuestosPage() {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
 
-  // Reset de página al cambiar el filtro — ajuste de estado durante el
-  // render (patrón recomendado por React), no un efecto.
+  // Reset de página al cambiar el filtro/búsqueda — ajuste de estado
+  // durante el render (patrón recomendado por React), no un efecto.
   const [statusFilterForPage, setStatusFilterForPage] = useState(statusFilter);
-  if (statusFilter !== statusFilterForPage) {
+  const [termForPage, setTermForPage] = useState(debouncedTerm);
+  if (statusFilter !== statusFilterForPage || debouncedTerm !== termForPage) {
     setStatusFilterForPage(statusFilter);
+    setTermForPage(debouncedTerm);
     setPage(1);
   }
 
@@ -138,22 +144,30 @@ export default function PresupuestosPage() {
       {message && <Alert type={message.type}>{message.text}</Alert>}
 
       <Card>
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
           <CardTitle className="mb-0">Listado</CardTitle>
-          <div className="flex gap-1 text-xs">
-            {(["pendientes", "todos"] as const).map((f) => (
-              <button
-                key={f}
-                onClick={() => setStatusFilter(f)}
-                className={
-                  statusFilter === f
-                    ? "rounded-full bg-accent-dim px-3 py-1 text-accent"
-                    : "rounded-full px-3 py-1 text-muted hover:text-light"
-                }
-              >
-                {f === "pendientes" ? "Pendientes" : "Todos"}
-              </button>
-            ))}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Input
+              placeholder="Buscar por número, patente, marca, modelo o cliente…"
+              value={term}
+              onChange={(e) => setTerm(e.target.value)}
+              className="w-full sm:max-w-xs"
+            />
+            <div className="flex gap-1 text-xs">
+              {(["pendientes", "todos"] as const).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setStatusFilter(f)}
+                  className={
+                    statusFilter === f
+                      ? "rounded-full bg-accent-dim px-3 py-1 text-accent"
+                      : "rounded-full px-3 py-1 text-muted hover:text-light"
+                  }
+                >
+                  {f === "pendientes" ? "Pendientes" : "Todos"}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 

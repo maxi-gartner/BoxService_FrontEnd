@@ -2,7 +2,7 @@ import { api, buildQuery } from "./client";
 import type { Budget, BudgetCreateRequest, BudgetDetailRequest, BudgetStatus, BudgetWithDetails, PagedResult } from "@/types/entities";
 
 export const budgetsApi = {
-  list: (params: { page?: number; pageSize?: number; status?: "todos" | "pendientes" } = {}) =>
+  list: (params: { page?: number; pageSize?: number; status?: "todos" | "pendientes"; search?: string } = {}) =>
     api.get<PagedResult<Budget>>(`budgets${buildQuery(params)}`),
   // Sin paginar — todos los presupuestos de un vehículo puntual (lo usa
   // BudgetsList en el Taller en vez de pedir el listado global).

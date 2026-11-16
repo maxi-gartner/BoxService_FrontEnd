@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { vehiclesApi } from "@/lib/api/vehicles";
-import type { VehicleCreateRequest } from "@/types/entities";
+import type { VehicleCreateRequest, VehicleUpdateRequest } from "@/types/entities";
 
 export function useVehicles(params: { page?: number; pageSize?: number; search?: string } = {}) {
   return useQuery({ queryKey: ["vehicles", params], queryFn: () => vehiclesApi.list(params) });
@@ -21,6 +21,16 @@ export function useCreateVehicle() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vehicles"] });
       queryClient.invalidateQueries({ queryKey: ["clients"] });
+    },
+  });
+}
+
+export function useUpdateVehicle() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: VehicleUpdateRequest }) => vehiclesApi.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
     },
   });
 }

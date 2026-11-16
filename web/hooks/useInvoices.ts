@@ -4,7 +4,7 @@ import type { InvoiceCreateRequest, InvoiceStatus } from "@/types/entities";
 
 // Mismo criterio que useBudgets/useServices: cobrar una factura desde otro
 // puesto tiene que verse rápido acá.
-export function useInvoices(params: { page?: number; pageSize?: number; status?: "todas" | "por-cobrar" } = {}) {
+export function useInvoices(params: { page?: number; pageSize?: number; status?: "todas" | "por-cobrar"; search?: string } = {}) {
   return useQuery({
     queryKey: ["invoices", params],
     queryFn: () => invoicesApi.list(params),
