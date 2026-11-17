@@ -49,7 +49,6 @@ function EditClientRow({
 
   return (
     <TR className="bg-surface-2">
-      <TD className="text-muted">{client.clientId}</TD>
       <TD>
         <Input value={name} onChange={(e) => setName(e.target.value)} />
       </TD>
@@ -180,16 +179,15 @@ export default function ClientesPage() {
           {editMessage && <Alert type={editMessage.type}>{editMessage.text}</Alert>}
           <TableWrapper>
             <THead>
-              <th>ID</th>
               <th>Nombre</th>
               <th>Teléfono</th>
               <th>Email</th>
               <th></th>
             </THead>
             <TBody>
-              {isLoading && <EmptyRow colSpan={5}><LoadingState label="Cargando..." className="py-0" /></EmptyRow>}
+              {isLoading && <EmptyRow colSpan={4}><LoadingState label="Cargando..." className="py-0" /></EmptyRow>}
               {!isLoading && clients?.length === 0 && (
-                <EmptyRow colSpan={5}>
+                <EmptyRow colSpan={4}>
                   {debouncedSearch ? "Ningún cliente coincide con la búsqueda." : "No hay clientes cargados."}
                 </EmptyRow>
               )}
@@ -205,7 +203,6 @@ export default function ClientesPage() {
                   />
                 ) : (
                 <TR key={client.clientId}>
-                  <TD>{client.clientId}</TD>
                   <TD>{client.name}</TD>
                   <TD>{client.phone}</TD>
                   <TD>{client.email}</TD>
