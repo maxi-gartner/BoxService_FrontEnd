@@ -14,6 +14,7 @@ import { InvoicingList } from "@/components/taller/InvoicingList";
 import { NewBudgetTab } from "@/components/taller/NewBudgetTab";
 import { NewServiceTab } from "@/components/taller/NewServiceTab";
 import { Card, CardTitle } from "@/components/ui/Card";
+import { useDashboardUser } from "@/components/layout/DashboardShell";
 import { cn } from "@/lib/utils";
 import type { Vehicle } from "@/types/entities";
 
@@ -42,6 +43,7 @@ const ACTIONS: { id: View; label: string }[] = [
 ];
 
 function TallerContent() {
+  const { tenantName } = useDashboardUser();
   const searchParams = useSearchParams();
   const idParam = searchParams.get("id");
   // Un pedido directo por ID, no la lista completa de vehículos — antes
@@ -86,7 +88,7 @@ function TallerContent() {
     <div>
       <div className="flex items-start justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Taller</h1>
+          <h1 className="text-2xl font-bold">{tenantName ?? "Taller"}</h1>
 
           <p className="text-sm text-muted mt-1">
             {view === "buscar"
