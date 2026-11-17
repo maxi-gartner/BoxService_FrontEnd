@@ -70,6 +70,10 @@ export function VehicleCard({ vehicle, budgets, services, workOrder }: PortalVeh
   }
 
   const hasMovements = budgets.length > 0 || services.length > 0;
+  // No tiene sentido preguntar "¿cómo va?" de un auto que nunca se
+  // recibió en el taller, o que ya se entregó — no hay nada que
+  // responder todavía (o ya no hay nada pendiente).
+  const canAskStatus = workOrder !== null && workOrder.status !== "entregado";
 
   return (
     <div className="rounded-lg border border-border bg-surface p-4 sm:bg-surface-2 sm:p-6">
@@ -87,12 +91,14 @@ export function VehicleCard({ vehicle, budgets, services, workOrder }: PortalVeh
           </p>
           {workOrder && <div className="mt-2"><Badge status={workOrder.status} /></div>}
         </div>
-        <div className="flex flex-col items-end gap-2">
-          <Button variant="secondary" loading={sending} disabled={sending || asked} onClick={askStatus}>
-            {asked ? "Consulta enviada" : "¿Cómo va mi auto?"}
-          </Button>
-          {inquiry && <Alert type={inquiry.type}>{inquiry.text}</Alert>}
-        </div>
+        {canAskStatus && (
+          <div className="flex flex-col items-end gap-2">
+            <Button variant="secondary" loading={sending} disabled={sending || asked} onClick={askStatus}>
+              {asked ? "Consulta enviada" : "¿Cómo va mi auto?"}
+            </Button>
+            {inquiry && <Alert type={inquiry.type}>{inquiry.text}</Alert>}
+          </div>
+        )}
       </div>
 
       {!hasMovements && (
