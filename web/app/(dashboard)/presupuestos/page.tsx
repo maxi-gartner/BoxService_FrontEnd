@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/Input";
 import { Alert } from "@/components/ui/Alert";
 import { Badge } from "@/components/ui/Badge";
 import { Pagination } from "@/components/ui/Pagination";
-import { TableWrapper, THead, TBody, TR, TD, EmptyRow } from "@/components/ui/Table";
+import { TableWrapper, THead, TBody, TR, TD, EmptyRow, CardList, CardItem } from "@/components/ui/Table";
 import { formatDate, formatMoney } from "@/lib/utils";
 import type { Budget, BudgetDetailRequest } from "@/types/entities";
 
@@ -21,38 +21,68 @@ function isCompleted(b: Budget) {
   return b.status === "completed" || (b.status === "approved" && !!b.serviceId);
 }
 
-function BudgetDetailRow({ budgetId, colSpan }: { budgetId: number; colSpan: number }) {
+// Contenido de "Ver detalle" sin el wrapper de fila — lo usa tanto la
+// fila expandible de la tabla (desktop) como la tarjeta (mobile/tablet),
+// sin duplicar el fetch.
+function BudgetDetailContent({ budgetId }: { budgetId: number }) {
   const { data, isLoading, error: budgetLoadError, isLoading: budgetLoading, refetch: refetchBudget } = useBudget(budgetId);
   const loadError = budgetLoadError;
-  if (loadError) return <tr><td colSpan={colSpan}><ErrorState error={loadError} resource="la información" onRetry={() => { if (budgetLoadError) void refetchBudget(); }} /></td></tr>;
-  if (budgetLoading) return <tr><td colSpan={colSpan}><LoadingState label="Cargando la información..." /></td></tr>;
+  if (loadError) return <ErrorState error={loadError} resource="la información" onRetry={() => { if (budgetLoadError) void refetchBudget(); }} />;
+  if (budgetLoading) return <LoadingState label="Cargando la información..." />;
 
+  return (
+    <>
+      {isLoading && <LoadingState label="Cargando detalle..." />}
+      {data && (
+        <div className="space-y-2">
+          {data.details.length === 0 && <p className="text-sm text-muted">Sin ítems.</p>}
+          {data.details.map((d) => (
+            <div key={d.detailId} className="flex justify-between text-sm">
+              <span>
+                {d.description}{" "}
+                <span className="text-muted">
+                  ({d.quantity} × {formatMoney(d.unitPrice)})
+                </span>
+              </span>
+              <span className="text-light">{formatMoney(d.subtotal)}</span>
+            </div>
+          ))}
+          <div className="flex justify-between border-t border-border pt-2 text-sm font-semibold">
+            <span>Total</span>
+            <span className="text-accent">{formatMoney(data.total)}</span>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+function BudgetDetailRow({ budgetId, colSpan }: { budgetId: number; colSpan: number }) {
   return (
     <tr>
       <td colSpan={colSpan} className="px-4 py-3 bg-surface-2">
-        {isLoading && <LoadingState label="Cargando detalle..." />}
-        {data && (
-          <div className="space-y-2">
-            {data.details.length === 0 && <p className="text-sm text-muted">Sin ítems.</p>}
-            {data.details.map((d) => (
-              <div key={d.detailId} className="flex justify-between text-sm">
-                <span>
-                  {d.description}{" "}
-                  <span className="text-muted">
-                    ({d.quantity} × {formatMoney(d.unitPrice)})
-                  </span>
-                </span>
-                <span className="text-light">{formatMoney(d.subtotal)}</span>
-              </div>
-            ))}
-            <div className="flex justify-between border-t border-border pt-2 text-sm font-semibold">
-              <span>Total</span>
-              <span className="text-accent">{formatMoney(data.total)}</span>
-            </div>
-          </div>
-        )}
+        <BudgetDetailContent budgetId={budgetId} />
       </td>
     </tr>
+  );
+}
+
+// Mismo criterio que BudgetDetailContent — el editor en sí, sin tr/td.
+function EditBudgetContent({ budgetId, onSave, saving }: {
+  budgetId: number;
+  onSave: (id: number, details: BudgetDetailRequest[]) => void;
+  saving: boolean;
+}) {
+  const { data, isLoading, error: budgetLoadError, isLoading: budgetLoading, refetch: refetchBudget } = useBudget(budgetId);
+  const loadError = budgetLoadError;
+  if (loadError) return <ErrorState error={loadError} resource="la información" onRetry={() => { if (budgetLoadError) void refetchBudget(); }} />;
+  if (budgetLoading) return <LoadingState label="Cargando la información..." />;
+
+  return (
+    <>
+      {isLoading && <LoadingState label="Cargando ítems..." />}
+      {data && <BudgetDetailsEditor details={data.details} saving={saving} onSave={(details) => onSave(budgetId, details)} />}
+    </>
   );
 }
 
@@ -62,16 +92,10 @@ function EditBudgetRow({ budgetId, colSpan, onSave, saving }: {
   onSave: (id: number, details: BudgetDetailRequest[]) => void;
   saving: boolean;
 }) {
-  const { data, isLoading, error: budgetLoadError, isLoading: budgetLoading, refetch: refetchBudget } = useBudget(budgetId);
-  const loadError = budgetLoadError;
-  if (loadError) return <tr><td colSpan={colSpan}><ErrorState error={loadError} resource="la información" onRetry={() => { if (budgetLoadError) void refetchBudget(); }} /></td></tr>;
-  if (budgetLoading) return <tr><td colSpan={colSpan}><LoadingState label="Cargando la información..." /></td></tr>;
-
   return (
     <tr>
       <td colSpan={colSpan} className="bg-surface-2 px-4 py-4">
-        {isLoading && <LoadingState label="Cargando ítems..." />}
-        {data && <BudgetDetailsEditor details={data.details} saving={saving} onSave={(details) => onSave(budgetId, details)} />}
+        <EditBudgetContent budgetId={budgetId} onSave={onSave} saving={saving} />
       </td>
     </tr>
   );
@@ -171,7 +195,7 @@ export default function PresupuestosPage() {
           </div>
         </div>
 
-        <TableWrapper>
+        <TableWrapper className="hidden lg:block">
           <THead>
             <th>Número</th>
             <th>Fecha</th>
@@ -260,6 +284,90 @@ export default function PresupuestosPage() {
             })}
           </TBody>
         </TableWrapper>
+
+        <CardList>
+          {isLoading && <LoadingState label="Cargando..." />}
+          {!isLoading && rows.length === 0 && (
+            <p className="py-6 text-center text-sm text-muted">
+              {statusFilter === "pendientes" ? "No hay presupuestos pendientes." : "No hay presupuestos."}
+            </p>
+          )}
+          {rows.map((b) => {
+            const label = b.vehiclePlate
+              ? `${b.vehiclePlate} — ${b.vehicleBrand} ${b.vehicleModel}`
+              : `Vehículo #${b.vehicleId}`;
+            const completed = isCompleted(b);
+            const busy = workingId === b.budgetId;
+            const pending = b.status === "draft" || b.status === "sent";
+            const editable = pending || (b.status === "approved" && !completed);
+
+            return (
+              <CardItem key={b.budgetId}>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-semibold text-accent">{b.number}</span>
+                  <Badge status={completed ? "completed" : b.status} />
+                </div>
+                <p className="text-sm text-muted">{formatDate(b.date)}</p>
+                <Link href={`/taller?id=${b.vehicleId}`} className="block text-sm hover:text-accent hover:underline">
+                  {label}
+                </Link>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {!editable && (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => setExpandedId(expandedId === b.budgetId ? null : b.budgetId)}
+                    >
+                      {expandedId === b.budgetId ? "Ocultar" : "Ver detalle"}
+                    </Button>
+                  )}
+                  {editable && (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => setEditingId(editingId === b.budgetId ? null : b.budgetId)}
+                    >
+                      {editingId === b.budgetId ? "Cerrar" : "Editar"}
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => window.open(`/presupuesto?id=${b.budgetId}`, "_blank")}
+                  >
+                    Imprimir / PDF
+                  </Button>
+                  {pending && (
+                    <>
+                      <Button size="sm" loading={busy} disabled={busy} onClick={() => act(b.budgetId, "approved")}>
+                        Aprobar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        loading={busy} disabled={busy}
+                        onClick={() => act(b.budgetId, "rejected")}
+                      >
+                        Rechazar
+                      </Button>
+                    </>
+                  )}
+                </div>
+                {expandedId === b.budgetId && (
+                  <div className="border-t border-border pt-2">
+                    <BudgetDetailContent budgetId={b.budgetId} />
+                  </div>
+                )}
+                {editingId === b.budgetId && (
+                  <div className="border-t border-border pt-2">
+                    <EditBudgetContent budgetId={b.budgetId} onSave={handleSaveDetails} saving={busy} />
+                  </div>
+                )}
+              </CardItem>
+            );
+          })}
+        </CardList>
+
         {budgetsPage && (
           <Pagination
             page={budgetsPage.page}

@@ -15,9 +15,46 @@ import { Card, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input, Label } from "@/components/ui/Input";
 import { Alert } from "@/components/ui/Alert";
+import { Modal } from "@/components/ui/Modal";
 import { Pagination } from "@/components/ui/Pagination";
-import { TableWrapper, THead, TBody, TR, TD, EmptyRow } from "@/components/ui/Table";
+import { TableWrapper, THead, TBody, TR, TD, EmptyRow, CardList, CardItem } from "@/components/ui/Table";
 import type { Client } from "@/types/entities";
+
+function ClientVehiclesModal({ clientId, clientName, onClose }: { clientId: number; clientName: string; onClose: () => void }) {
+  const { data: vehicles, isLoading, error: vehiclesLoadError, refetch } = useClientVehicles(clientId);
+
+  return (
+    <Modal open onClose={onClose} title={`Vehículos de ${clientName}`}>
+      {vehiclesLoadError && <ErrorState error={vehiclesLoadError} resource="los vehículos" onRetry={() => void refetch()} />}
+      {isLoading && <LoadingState label="Cargando..." />}
+      {!isLoading && !vehiclesLoadError && (
+        <TableWrapper>
+          <THead>
+            <th>Patente</th>
+            <th>Marca</th>
+            <th>Modelo</th>
+            <th>Año</th>
+            <th>KM</th>
+          </THead>
+          <TBody>
+            {vehicles?.length === 0 && (
+              <EmptyRow colSpan={5}>Este cliente no tiene vehículos asociados todavía.</EmptyRow>
+            )}
+            {vehicles?.map((v) => (
+              <TR key={v.vehicleId}>
+                <TD className="text-accent">{v.plate}</TD>
+                <TD>{v.brand}</TD>
+                <TD>{v.model}</TD>
+                <TD>{v.year ?? "-"}</TD>
+                <TD>{v.currentMileage}</TD>
+              </TR>
+            ))}
+          </TBody>
+        </TableWrapper>
+      )}
+    </Modal>
+  );
+}
 
 const schema = z.object({
   name: z.string().min(1, "Ingresá el nombre"),
@@ -70,6 +107,53 @@ function EditClientRow({
   );
 }
 
+function EditClientCard({
+  client,
+  onDone,
+}: {
+  client: Client;
+  onDone: (msg: { type: "ok" | "error"; text: string } | null) => void;
+}) {
+  const updateClient = useUpdateClient();
+  const [name, setName] = useState(client.name);
+  const [phone, setPhone] = useState(client.phone);
+  const [email, setEmail] = useState(client.email);
+
+  async function save() {
+    try {
+      await updateClient.mutateAsync({ id: client.clientId, data: { name, phone, email } });
+      onDone({ type: "ok", text: `"${name}" actualizado.` });
+    } catch (err) {
+      onDone({ type: "error", text: err instanceof ApiClientError ? err.message : "No se pudo actualizar el cliente." });
+    }
+  }
+
+  return (
+    <CardItem className="bg-surface-2">
+      <div>
+        <Label>Nombre</Label>
+        <Input value={name} onChange={(e) => setName(e.target.value)} />
+      </div>
+      <div>
+        <Label>Teléfono</Label>
+        <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
+      </div>
+      <div>
+        <Label>Email</Label>
+        <Input value={email} onChange={(e) => setEmail(e.target.value)} />
+      </div>
+      <div className="flex gap-2 pt-1">
+        <Button size="sm" loading={updateClient.isPending} disabled={updateClient.isPending} onClick={save}>
+          Guardar
+        </Button>
+        <Button size="sm" variant="secondary" onClick={() => onDone(null)}>
+          Cancelar
+        </Button>
+      </div>
+    </CardItem>
+  );
+}
+
 export default function ClientesPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
@@ -80,7 +164,6 @@ export default function ClientesPage() {
   const invitePortal = useInvitePortal();
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
   const [selectedClientName, setSelectedClientName] = useState("");
-  const { data: vehicles, isLoading: loadingVehicles, error: clientVehiclesLoadError, isLoading: clientVehiclesLoading, refetch: refetchClientVehicles } = useClientVehicles(selectedClientId);
   const [inviteError, setInviteError] = useState("");
   const [invitingClientId, setInvitingClientId] = useState<number | null>(null);
   const [editingClientId, setEditingClientId] = useState<number | null>(null);
@@ -131,9 +214,8 @@ export default function ClientesPage() {
     }
   }
 
-  const loadError = clientsLoadError ?? clientVehiclesLoadError;
-  if (loadError) return <ErrorState error={loadError} resource="los clientes" onRetry={() => { if (clientsLoadError) void refetchClients(); if (clientVehiclesLoadError) void refetchClientVehicles(); }} />;
-  if (clientsLoading || clientVehiclesLoading) return <LoadingState label="Cargando los clientes..." />;
+  if (clientsLoadError) return <ErrorState error={clientsLoadError} resource="los clientes" onRetry={() => void refetchClients()} />;
+  if (clientsLoading) return <LoadingState label="Cargando los clientes..." />;
 
   return (
     <div>
@@ -177,7 +259,7 @@ export default function ClientesPage() {
           </div>
           <Alert type="error">{inviteError}</Alert>
           {editMessage && <Alert type={editMessage.type}>{editMessage.text}</Alert>}
-          <TableWrapper>
+          <TableWrapper className="hidden lg:block">
             <THead>
               <th>Nombre</th>
               <th>Teléfono</th>
@@ -241,6 +323,62 @@ export default function ClientesPage() {
               )}
             </TBody>
           </TableWrapper>
+
+          <CardList>
+            {isLoading && <LoadingState label="Cargando..." />}
+            {!isLoading && clients?.length === 0 && (
+              <p className="py-6 text-center text-sm text-muted">
+                {debouncedSearch ? "Ningún cliente coincide con la búsqueda." : "No hay clientes cargados."}
+              </p>
+            )}
+            {clients?.map((client) =>
+              editingClientId === client.clientId ? (
+                <EditClientCard
+                  key={client.clientId}
+                  client={client}
+                  onDone={(msg) => {
+                    setEditingClientId(null);
+                    if (msg) setEditMessage(msg);
+                  }}
+                />
+              ) : (
+                <CardItem key={client.clientId}>
+                  <p className="font-semibold text-light">{client.name}</p>
+                  {client.phone && <p className="text-sm text-muted">{client.phone}</p>}
+                  {client.email && <p className="text-sm text-muted">{client.email}</p>}
+                  <div className="flex flex-wrap gap-x-4 gap-y-1.5 pt-1">
+                    <button
+                      onClick={() => {
+                        setSelectedClientId(client.clientId);
+                        setSelectedClientName(client.name);
+                      }}
+                      className="text-xs text-accent hover:underline"
+                    >
+                      Ver vehículos
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditMessage(null);
+                        setEditingClientId(client.clientId);
+                      }}
+                      className="text-xs text-accent hover:underline"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      onClick={() => handleInvite(client.clientId)}
+                      disabled={invitingClientId === client.clientId}
+                      className="text-xs text-accent hover:underline disabled:opacity-50"
+                      title="Genera un link para que el cliente vea el estado de su auto y abre WhatsApp para mandárselo"
+                    >
+                      {invitingClientId === client.clientId ? <span className="inline-flex items-center gap-2"><Spinner />Generando...</span> : "Invitar al portal"}
+                    </button>
+                  </div>
+                </CardItem>
+              ),
+            )}
+          </CardList>
+
           {clientsPage && (
             <Pagination
               page={clientsPage.page}
@@ -252,39 +390,13 @@ export default function ClientesPage() {
         </Card>
       </div>
 
-      <Card>
-        <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-          <CardTitle className="mb-0">Vehículos del cliente</CardTitle>
-          <p className="text-sm text-muted">
-            {selectedClientId ? `Vehículos de ${selectedClientName}` : "Seleccioná un cliente para ver sus vehículos."}
-          </p>
-        </div>
-        <TableWrapper>
-          <THead>
-            <th>Patente</th>
-            <th>Marca</th>
-            <th>Modelo</th>
-            <th>Año</th>
-            <th>KM</th>
-          </THead>
-          <TBody>
-            {!selectedClientId && <EmptyRow colSpan={5}>Sin datos para mostrar.</EmptyRow>}
-            {selectedClientId && loadingVehicles && <EmptyRow colSpan={5}><LoadingState label="Cargando..." className="py-0" /></EmptyRow>}
-            {selectedClientId && !loadingVehicles && vehicles?.length === 0 && (
-              <EmptyRow colSpan={5}>Este cliente no tiene vehículos asociados todavía.</EmptyRow>
-            )}
-            {vehicles?.map((v) => (
-              <TR key={v.vehicleId}>
-                <TD className="text-accent">{v.plate}</TD>
-                <TD>{v.brand}</TD>
-                <TD>{v.model}</TD>
-                <TD>{v.year ?? "-"}</TD>
-                <TD>{v.currentMileage}</TD>
-              </TR>
-            ))}
-          </TBody>
-        </TableWrapper>
-      </Card>
+      {selectedClientId && (
+        <ClientVehiclesModal
+          clientId={selectedClientId}
+          clientName={selectedClientName}
+          onClose={() => setSelectedClientId(null)}
+        />
+      )}
     </div>
   );
 }

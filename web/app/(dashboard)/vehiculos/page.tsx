@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/Button";
 import { Input, Label, Select } from "@/components/ui/Input";
 import { Alert } from "@/components/ui/Alert";
 import { Pagination } from "@/components/ui/Pagination";
-import { TableWrapper, THead, TBody, TR, TD, EmptyRow } from "@/components/ui/Table";
+import { TableWrapper, THead, TBody, TR, TD, EmptyRow, CardList, CardItem } from "@/components/ui/Table";
 import type { Vehicle } from "@/types/entities";
 
 const OTHER_BRAND = "__otra__";
@@ -78,6 +78,83 @@ function EditVehicleRow({
         </Button>
       </TD>
     </TR>
+  );
+}
+
+function EditVehicleCard({
+  vehicle,
+  onDone,
+}: {
+  vehicle: Vehicle;
+  onDone: (msg: { type: "ok" | "error"; text: string } | null) => void;
+}) {
+  const updateVehicle = useUpdateVehicle();
+  const [plate, setPlate] = useState(vehicle.plate);
+  const [brand, setBrand] = useState(vehicle.brand);
+  const [model, setModel] = useState(vehicle.model);
+  const [version, setVersion] = useState(vehicle.version ?? "");
+  const [year, setYear] = useState(vehicle.year?.toString() ?? "");
+  const [mileage, setMileage] = useState(String(vehicle.currentMileage));
+
+  async function save() {
+    try {
+      await updateVehicle.mutateAsync({
+        id: vehicle.vehicleId,
+        data: {
+          plate: plate.trim().toUpperCase(),
+          brand: brand.trim(),
+          model: model.trim(),
+          version: version.trim() || undefined,
+          year: year ? Number(year) : null,
+          currentMileage: mileage ? Number(mileage) : 0,
+        },
+      });
+      onDone({ type: "ok", text: `"${plate}" actualizado.` });
+    } catch (err) {
+      onDone({ type: "error", text: err instanceof ApiClientError ? err.message : "No se pudo actualizar el vehículo." });
+    }
+  }
+
+  return (
+    <CardItem className="bg-surface-2">
+      <div>
+        <Label>Patente</Label>
+        <Input value={plate} onChange={(e) => setPlate(e.target.value)} />
+      </div>
+      <div className="flex gap-2">
+        <div className="flex-1">
+          <Label>Marca</Label>
+          <Input value={brand} onChange={(e) => setBrand(e.target.value)} />
+        </div>
+        <div className="flex-1">
+          <Label>Modelo</Label>
+          <Input value={model} onChange={(e) => setModel(e.target.value)} />
+        </div>
+      </div>
+      <div>
+        <Label>Versión (opcional)</Label>
+        <Input value={version} onChange={(e) => setVersion(e.target.value)} />
+      </div>
+      <div className="flex gap-2">
+        <div className="flex-1">
+          <Label>Año</Label>
+          <Input type="number" value={year} onChange={(e) => setYear(e.target.value)} />
+        </div>
+        <div className="flex-1">
+          <Label>KM</Label>
+          <Input type="number" value={mileage} onChange={(e) => setMileage(e.target.value)} />
+        </div>
+      </div>
+      <p className="text-sm text-muted">Cliente: {vehicle.clientName ?? `#${vehicle.clientId}`}</p>
+      <div className="flex gap-2 pt-1">
+        <Button size="sm" loading={updateVehicle.isPending} disabled={updateVehicle.isPending} onClick={save}>
+          Guardar
+        </Button>
+        <Button size="sm" variant="secondary" onClick={() => onDone(null)}>
+          Cancelar
+        </Button>
+      </div>
+    </CardItem>
   );
 }
 
@@ -365,7 +442,7 @@ export default function VehiculosPage() {
             />
           </div>
           {editMessage && <div className="mb-3"><Alert type={editMessage.type}>{editMessage.text}</Alert></div>}
-          <TableWrapper>
+          <TableWrapper className="hidden lg:block">
             <THead>
               <th>Patente</th>
               <th>Marca / Modelo</th>
@@ -418,6 +495,49 @@ export default function VehiculosPage() {
               )}
             </TBody>
           </TableWrapper>
+
+          <CardList>
+            {isLoading && <LoadingState label="Cargando..." />}
+            {!isLoading && vehicles?.length === 0 && (
+              <p className="py-6 text-center text-sm text-muted">
+                {debouncedSearch ? "Ningún vehículo coincide con la búsqueda." : "No hay vehículos registrados."}
+              </p>
+            )}
+            {vehicles?.map((v) =>
+              editingVehicleId === v.vehicleId ? (
+                <EditVehicleCard
+                  key={v.vehicleId}
+                  vehicle={v}
+                  onDone={(msg) => {
+                    setEditingVehicleId(null);
+                    if (msg) setEditMessage(msg);
+                  }}
+                />
+              ) : (
+                <CardItem key={v.vehicleId}>
+                  <p className="font-semibold text-accent">{v.plate}</p>
+                  <p className="text-sm text-light">
+                    {v.brand} {v.model}
+                    {v.version && <span className="text-muted"> · {v.version}</span>}
+                  </p>
+                  <p className="text-sm text-muted">
+                    {v.year ?? "-"} · {v.currentMileage.toLocaleString("es-AR")} km · {v.clientName ?? `Cliente #${v.clientId}`}
+                  </p>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => {
+                      setEditMessage(null);
+                      setEditingVehicleId(v.vehicleId);
+                    }}
+                  >
+                    Editar
+                  </Button>
+                </CardItem>
+              ),
+            )}
+          </CardList>
+
           {vehiclesPage && (
             <Pagination
               page={vehiclesPage.page}

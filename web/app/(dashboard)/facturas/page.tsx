@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/Input";
 import { Alert } from "@/components/ui/Alert";
 import { Badge } from "@/components/ui/Badge";
 import { Pagination } from "@/components/ui/Pagination";
-import { TableWrapper, THead, TBody, TR, TD, EmptyRow } from "@/components/ui/Table";
+import { TableWrapper, THead, TBody, TR, TD, EmptyRow, CardList, CardItem } from "@/components/ui/Table";
 import { formatDate, formatMoney } from "@/lib/utils";
 import type { InvoiceStatus } from "@/types/entities";
 
@@ -110,7 +110,7 @@ export default function FacturasPage() {
           </div>
         </div>
 
-        <TableWrapper>
+        <TableWrapper className="hidden lg:block">
           <THead>
             <th>Número</th>
             <th>Fecha</th>
@@ -178,6 +178,64 @@ export default function FacturasPage() {
             })}
           </TBody>
         </TableWrapper>
+
+        <CardList>
+          {isLoading && <LoadingState label="Cargando..." />}
+          {!isLoading && rows.length === 0 && (
+            <p className="py-6 text-center text-sm text-muted">
+              {filter === "por-cobrar" ? "No hay facturas por cobrar." : "No hay facturas."}
+            </p>
+          )}
+          {rows.map((i) => {
+            const label = i.vehiclePlate
+              ? `${i.vehiclePlate} — ${i.vehicleBrand} ${i.vehicleModel}`
+              : `Service #${i.serviceId}`;
+            const busy = workingId === i.invoiceId;
+
+            return (
+              <CardItem key={i.invoiceId}>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-semibold text-accent">{i.number}</span>
+                  <Badge status={i.status} />
+                </div>
+                <p className="text-sm text-muted">{formatDate(i.date)}</p>
+                {i.vehicleId ? (
+                  <Link href={`/taller?id=${i.vehicleId}`} className="block text-sm hover:text-accent hover:underline">
+                    {label}
+                  </Link>
+                ) : (
+                  <p className="text-sm text-light">{label}</p>
+                )}
+                <p className="text-lg font-bold text-accent">{formatMoney(i.total)}</p>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => window.open(`/factura?id=${i.invoiceId}`, "_blank")}
+                  >
+                    Imprimir / PDF
+                  </Button>
+                  {i.status === "issued" && (
+                    <>
+                      <Button size="sm" loading={busy} disabled={busy} onClick={() => act(i.invoiceId, "paid", "Cobrada")}>
+                        Cobrar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        loading={busy} disabled={busy}
+                        onClick={() => act(i.invoiceId, "cancelled", "Anulada")}
+                      >
+                        Anular
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </CardItem>
+            );
+          })}
+        </CardList>
+
         {invoicesPage && (
           <Pagination
             page={invoicesPage.page}

@@ -1,12 +1,24 @@
 import type { HTMLAttributes, ReactNode, TdHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
-export function TableWrapper({ children }: { children: ReactNode }) {
+export function TableWrapper({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className="overflow-x-auto rounded-lg border border-border">
+    <div className={cn("overflow-x-auto rounded-lg border border-border", className)}>
       <table className="w-full text-sm">{children}</table>
     </div>
   );
+}
+
+// Contraparte de la tabla para mobile/tablet: una lista de tarjetas en
+// vez de columnas peleando por ancho. `hidden lg:block` en TableWrapper
+// + CardList (lg:hidden) es el mismo auto apagándose uno al otro según
+// el breakpoint — nunca se ven los dos a la vez.
+export function CardList({ children }: { children: ReactNode }) {
+  return <div className="space-y-3 lg:hidden">{children}</div>;
+}
+
+export function CardItem({ children, className }: { children: ReactNode; className?: string }) {
+  return <div className={cn("space-y-2 rounded-lg border border-border bg-surface p-4", className)}>{children}</div>;
 }
 
 export function THead({ children }: { children: ReactNode }) {

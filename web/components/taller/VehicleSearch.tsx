@@ -9,7 +9,7 @@ import { Card, CardTitle } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Pagination } from "@/components/ui/Pagination";
-import { TableWrapper, THead, TBody, TR, TD, EmptyRow } from "@/components/ui/Table";
+import { TableWrapper, THead, TBody, TR, TD, EmptyRow, CardList, CardItem } from "@/components/ui/Table";
 import { NewClientVehicleForm, VehicleStep } from "@/components/taller/NewClientVehicleForm";
 import type { Client, Vehicle } from "@/types/entities";
 
@@ -102,7 +102,7 @@ export function VehicleSearch({
         className="mb-4"
       />
 
-      <TableWrapper>
+      <TableWrapper className="hidden lg:block">
         <THead>
           <th>Cliente</th>
           <th>Marca / Modelo</th>
@@ -148,6 +148,37 @@ export function VehicleSearch({
           })}
         </TBody>
       </TableWrapper>
+
+      <CardList>
+        {isLoading && <LoadingState label="Cargando..." />}
+        {!isLoading && vehicles.length === 0 && matchedClients.length === 0 && (
+          <p className="py-6 text-center text-sm text-muted">No se encontraron vehículos.</p>
+        )}
+        {matchedClients.map((c) => (
+          <CardItem key={`client-${c.clientId}`}>
+            <p className="font-semibold text-light">{c.name}</p>
+            <p className="text-xs text-muted">Cliente existente</p>
+            <Button size="sm" variant="secondary" onClick={() => setMode({ kind: "nuevo-vehiculo", client: c })}>
+              + Registrar nuevo vehículo
+            </Button>
+          </CardItem>
+        ))}
+        {vehicles.map((v) => {
+          const isSelected = v.vehicleId === selectedVehicleId;
+          return (
+            <CardItem key={v.vehicleId} className={isSelected ? "bg-accent-dim" : undefined}>
+              <p className="font-semibold text-light">{v.clientName ?? `Cliente #${v.clientId}`}</p>
+              <p className="text-sm text-muted">{v.brand} {v.model}</p>
+              <p className="text-sm text-accent">{v.plate}</p>
+              <p className="text-sm text-muted">{v.currentMileage} km</p>
+              <Button size="sm" variant={isSelected ? "primary" : "secondary"} onClick={() => onSelect(v)}>
+                {isSelected ? "Seleccionado" : "Elegir"}
+              </Button>
+            </CardItem>
+          );
+        })}
+      </CardList>
+
       {vehiclesPage && (
         <Pagination
           page={vehiclesPage.page}

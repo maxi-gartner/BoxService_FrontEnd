@@ -16,7 +16,7 @@ import { Card, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input, Label, Select } from "@/components/ui/Input";
 import { Alert } from "@/components/ui/Alert";
-import { TableWrapper, THead, TBody, TR, TD, EmptyRow } from "@/components/ui/Table";
+import { TableWrapper, THead, TBody, TR, TD, EmptyRow, CardList, CardItem } from "@/components/ui/Table";
 import { formatMoney } from "@/lib/utils";
 import type { CatalogItem } from "@/types/entities";
 
@@ -80,6 +80,60 @@ function EditRow({
         </Button>
       </TD>
     </TR>
+  );
+}
+
+function EditCard({
+  item,
+  onDone,
+}: {
+  item: CatalogItem;
+  onDone: (msg: { type: "ok" | "error"; text: string } | null) => void;
+}) {
+  const update = useUpdateCatalogItem();
+  const [name, setName] = useState(item.name);
+  const [type, setType] = useState(item.type);
+  const [price, setPrice] = useState(String(item.price));
+  const [busy, setBusy] = useState(false);
+
+  async function save() {
+    setBusy(true);
+    try {
+      await update.mutateAsync({ id: item.catalogId, data: { name, type, price: Number(price) } });
+      onDone({ type: "ok", text: `"${name}" actualizado.` });
+    } catch (err) {
+      onDone({ type: "error", text: err instanceof ApiClientError ? err.message : "No se pudo actualizar." });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <CardItem className="bg-surface-2">
+      <div>
+        <Label>Nombre</Label>
+        <Input value={name} onChange={(e) => setName(e.target.value)} />
+      </div>
+      <div>
+        <Label>Tipo</Label>
+        <Select value={type} onChange={(e) => setType(e.target.value as CatalogItem["type"])}>
+          <option value="labor">Mano de obra</option>
+          <option value="part">Repuesto</option>
+        </Select>
+      </div>
+      <div>
+        <Label>Precio</Label>
+        <Input type="number" value={price} onChange={(e) => setPrice(e.target.value)} />
+      </div>
+      <div className="flex gap-2 pt-1">
+        <Button size="sm" loading={busy} disabled={busy} onClick={save}>
+          Guardar
+        </Button>
+        <Button size="sm" variant="secondary" onClick={() => onDone(null)}>
+          Cancelar
+        </Button>
+      </div>
+    </CardItem>
   );
 }
 
@@ -166,7 +220,7 @@ export function CatalogPanel({ canManage }: { canManage: boolean }) {
 
         <Card>
           <CardTitle>Ítems del catálogo</CardTitle>
-          <TableWrapper>
+          <TableWrapper className="hidden lg:block">
             <THead>
               <th>Nombre</th>
               <th>Tipo</th>
@@ -211,6 +265,46 @@ export function CatalogPanel({ canManage }: { canManage: boolean }) {
               )}
             </TBody>
           </TableWrapper>
+
+          <CardList>
+            {isLoading && <LoadingState label="Cargando..." />}
+            {!isLoading && items?.length === 0 && (
+              <p className="py-6 text-center text-sm text-muted">El catálogo está vacío.</p>
+            )}
+            {items?.map((item) =>
+              canManage && editingId === item.catalogId ? (
+                <EditCard
+                  key={item.catalogId}
+                  item={item}
+                  onDone={(msg) => {
+                    setEditingId(null);
+                    if (msg) setMessage(msg);
+                  }}
+                />
+              ) : (
+                <CardItem key={item.catalogId}>
+                  <p className="font-semibold text-light">{item.name}</p>
+                  <p className="text-sm text-muted">{TYPE_LABEL[item.type] ?? item.type}</p>
+                  <p className="text-sm text-light">{formatMoney(item.price)}</p>
+                  {canManage && (
+                    <div className="flex gap-2 pt-1">
+                      <Button size="sm" variant="secondary" onClick={() => setEditingId(item.catalogId)}>
+                        Editar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        disabled={workingId === item.catalogId}
+                        onClick={() => handleDelete(item)}
+                      >
+                        Borrar
+                      </Button>
+                    </div>
+                  )}
+                </CardItem>
+              ),
+            )}
+          </CardList>
         </Card>
       </div>
     </div>

@@ -12,7 +12,7 @@ import { Card, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input, Label } from "@/components/ui/Input";
 import { Alert } from "@/components/ui/Alert";
-import { TableWrapper, THead, TBody, TR, TD, EmptyRow } from "@/components/ui/Table";
+import { TableWrapper, THead, TBody, TR, TD, EmptyRow, CardList, CardItem } from "@/components/ui/Table";
 import { ResetPasswordButton } from "@/components/admin/ResetPasswordButton";
 
 const ROLE_LABEL: Record<string, string> = { dueno: "Dueño", empleado: "Empleado" };
@@ -107,7 +107,7 @@ function EmpleadosCard() {
 
       <Card>
         <CardTitle>Empleados del taller</CardTitle>
-        <TableWrapper>
+        <TableWrapper className="hidden lg:block">
           <THead>
             <th>Nombre</th>
             <th>Usuario</th>
@@ -141,6 +141,37 @@ function EmpleadosCard() {
             ))}
           </TBody>
         </TableWrapper>
+
+        <CardList>
+          {isLoading && <LoadingState label="Cargando..." />}
+          {!isLoading && users?.length === 0 && (
+            <p className="py-6 text-center text-sm text-muted">Todavía no hay empleados.</p>
+          )}
+          {users?.map((u) => (
+            <CardItem key={u.userId}>
+              <p className="font-semibold text-light">{u.name}</p>
+              <p className="text-sm text-muted">{u.username}</p>
+              <p className="text-sm">
+                <span className="text-muted">{ROLE_LABEL[u.role] ?? u.role}</span>
+                {" · "}
+                <span className={u.active ? "text-success" : "text-danger"}>{u.active ? "Activo" : "Inactivo"}</span>
+              </p>
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <ResetPasswordButton userId={u.userId} onDone={(msg) => msg && setMessage(msg)} />
+                {u.role !== "dueno" && (
+                  <Button
+                    size="sm"
+                    variant={u.active ? "danger" : "secondary"}
+                    disabled={workingId === u.userId}
+                    onClick={() => toggleActive(u.userId, u.active)}
+                  >
+                    {u.active ? "Desactivar" : "Activar"}
+                  </Button>
+                )}
+              </div>
+            </CardItem>
+          ))}
+        </CardList>
       </Card>
     </div>
   );
@@ -210,7 +241,7 @@ function SucursalesCard() {
 
       <Card>
         <CardTitle>Sucursales</CardTitle>
-        <TableWrapper>
+        <TableWrapper className="hidden lg:block">
           <THead>
             <th>Nombre</th>
             <th>Dirección</th>
@@ -239,6 +270,28 @@ function SucursalesCard() {
             ))}
           </TBody>
         </TableWrapper>
+
+        <CardList>
+          {isLoading && <LoadingState label="Cargando..." />}
+          {!isLoading && sucursales?.length === 0 && (
+            <p className="py-6 text-center text-sm text-muted">Todavía no hay sucursales.</p>
+          )}
+          {sucursales?.map((s) => (
+            <CardItem key={s.sucursalId}>
+              <p className="font-semibold text-light">{s.name}</p>
+              <p className="text-sm text-muted">{s.address ?? "—"}</p>
+              <p className={`text-sm ${s.active ? "text-success" : "text-danger"}`}>{s.active ? "Activa" : "Inactiva"}</p>
+              <Button
+                size="sm"
+                variant={s.active ? "danger" : "secondary"}
+                disabled={workingId === s.sucursalId}
+                onClick={() => toggleActive(s.sucursalId, s.active)}
+              >
+                {s.active ? "Desactivar" : "Activar"}
+              </Button>
+            </CardItem>
+          ))}
+        </CardList>
       </Card>
     </div>
   );
