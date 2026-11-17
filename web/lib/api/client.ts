@@ -5,22 +5,36 @@ import { apiErrorMessage } from "./error-messages";
 
 /**
  * Cliente HTTP para el browser. Le habla siempre a /api/proxy/* (mismo
- * origen, sin CORS) — nunca al backend real directamente. Si el backend
- * responde 401, intenta refrescar la sesión una vez; si eso también
- * falla, manda a /login.
+ * origen, sin CORS) — nunca al backend real directamente. El backend real
+ * no tiene refresh token (un solo JWT de 60 min, ver app/api/auth/refresh/
+ * route.ts) — así que ante un 401 no hay nada que "refrescar": se
+ * reintenta la misma request una vez después de una pausa corta, por si
+ * fue un bache momentáneo del backend (ej: justo en medio de un redeploy
+ * en Render, visto en producción) y no la sesión realmente vencida. Si el
+ * token de verdad venció, el reintento también va a dar 401 y ahí sí se
+ * manda a /login.
  */
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
   const isFormData = body instanceof FormData;
+  const init: RequestInit = {
+    method,
+    headers: body !== undefined && !isFormData ? { "Content-Type": "application/json" } : undefined,
+    body: body === undefined ? undefined : isFormData ? body : JSON.stringify(body),
+  };
 
-  let res: Response;
-  try {
-    res = await fetch(`/api/proxy/${path}`, {
-      method,
-      headers: body !== undefined && !isFormData ? { "Content-Type": "application/json" } : undefined,
-      body: body === undefined ? undefined : isFormData ? body : JSON.stringify(body),
-    });
-  } catch {
-    throw new ApiClientError(apiErrorMessage(503), 503);
+  async function send(): Promise<Response> {
+    try {
+      return await fetch(`/api/proxy/${path}`, init);
+    } catch {
+      throw new ApiClientError(apiErrorMessage(503), 503);
+    }
+  }
+
+  let res = await send();
+
+  if (res.status === 401) {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    res = await send();
   }
 
   if (res.status === 401) {
