@@ -2,7 +2,7 @@
 import { LoadingState } from "@/components/ui/LoadingState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { useState } from "react";
-import { useServiceReminders, useContactReminder, useReminderPhone } from "@/hooks/useServiceReminders";
+import { useServiceReminders, useContactReminder, useReminderPhone, useResolveStatusInquiry } from "@/hooks/useServiceReminders";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { Input, Label } from "@/components/ui/Input";
@@ -11,17 +11,25 @@ export default function RecordatoriosPage() {
   const reminders = useServiceReminders();
   const contact = useContactReminder();
   const updatePhone = useReminderPhone();
+  const resolveInquiry = useResolveStatusInquiry();
   const [contacted, setContacted] = useState(false);
   const [phoneClient, setPhoneClient] = useState<number | null>(null);
   const [phone, setPhone] = useState("");
   const [error, setError] = useState("");
   const items = reminders.data?.items.filter(r => Boolean(r.contactedAt) === contacted) ?? [];
+  const statusInquiries = reminders.data?.statusInquiries ?? [];
 
   async function mark(id: number) {
     if (!window.confirm("¿Confirmás que ya contactaste al cliente? Abrir WhatsApp no confirma el envío.")) return;
     setError("");
     try { await contact.mutateAsync(id); }
     catch (err) { setError(err instanceof Error ? err.message : "No se pudo guardar el contacto."); }
+  }
+
+  async function resolve(id: number) {
+    setError("");
+    try { await resolveInquiry.mutateAsync(id); }
+    catch (err) { setError(err instanceof Error ? err.message : "No se pudo marcar la consulta como atendida."); }
   }
 
   async function savePhone() {
@@ -40,6 +48,19 @@ export default function RecordatoriosPage() {
       <h1 className="text-2xl font-bold">Recordatorios de service</h1>
       <p className="mt-2 text-sm text-muted">Próximos en siete días y vencidos, según el último service de cada vehículo. El mensaje se envía manualmente.</p>
     </div>
+    {statusInquiries.length > 0 && <div className="space-y-3">
+      <h2 className="font-semibold text-light">Consultas de estado desde el portal ({statusInquiries.length})</h2>
+      <div className="grid gap-3 lg:grid-cols-2">
+        {statusInquiries.map(q => <article key={q.inquiryId} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-surface p-4">
+          <div>
+            <p className="font-semibold">{q.clientName}</p>
+            <p className="text-sm text-muted">{q.vehicle} · {q.plate}</p>
+            <p className="text-xs text-muted">Preguntó el {new Date(q.createdAt).toLocaleString("es-AR")}</p>
+          </div>
+          <Button variant="secondary" loading={resolveInquiry.isPending} disabled={resolveInquiry.isPending} onClick={() => resolve(q.inquiryId)}>Marcar como atendida</Button>
+        </article>)}
+      </div>
+    </div>}
     <div className="flex flex-wrap gap-2">
       <Button variant={contacted ? "secondary" : "primary"} onClick={() => setContacted(false)}>Pendientes ({reminders.data?.pendingCount ?? 0})</Button>
       <Button variant={contacted ? "primary" : "secondary"} onClick={() => setContacted(true)}>Contactados</Button>

@@ -7,7 +7,16 @@ export type ServiceReminder = {
   status: "upcoming" | "today" | "overdue";
   contactedAt: string | null; contactedBy: string | null; whatsappUrl: string | null;
 };
-type ReminderList = { items: ServiceReminder[]; pendingCount: number; today: string };
+export type StatusInquiry = {
+  inquiryId: number; vehicleId: number; clientId: number; clientName: string;
+  vehicle: string; plate: string; createdAt: string;
+};
+type ReminderList = {
+  items: ServiceReminder[];
+  statusInquiries: StatusInquiry[];
+  pendingCount: number;
+  today: string;
+};
 
 export function useServiceReminders(enabled = true) {
   return useQuery({
@@ -21,6 +30,14 @@ export function useContactReminder() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: (id: number) => api.post(`service-reminders/${id}/contact`),
+    onSuccess: () => client.invalidateQueries({ queryKey: ["service-reminders"] }),
+  });
+}
+
+export function useResolveStatusInquiry() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => api.post(`service-reminders/status-inquiries/${id}/resolve`),
     onSuccess: () => client.invalidateQueries({ queryKey: ["service-reminders"] }),
   });
 }

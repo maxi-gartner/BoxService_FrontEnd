@@ -1,35 +1,8 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { PORTAL_TOKEN_COOKIE } from "@/lib/auth/portalCookies";
-
-type PortalBudgetDetail = { description: string; quantity: number; unitPrice: number; subtotal: number };
-type PortalBudget = {
-  budget: { budgetId: number; number: string; date: string; status: string };
-  details: PortalBudgetDetail[];
-  total: number;
-};
-type PortalService = { serviceId: number; date: string; mileage: number; serviceType: string; notes: string };
-type PortalVehicle = {
-  vehicle: {
-    vehicleId: number;
-    brand: string;
-    model: string;
-    plate: string;
-    year: number | null;
-    currentMileage: number;
-  };
-  budgets: PortalBudget[];
-  services: PortalService[];
-};
-type PortalMe = { client: { clientId: number; name: string }; vehicles: PortalVehicle[] };
-
-const STATUS_LABELS: Record<string, string> = {
-  draft: "Borrador",
-  sent: "Enviado",
-  approved: "Aprobado",
-  completed: "Completado",
-  rejected: "Rechazado",
-};
+import { VehicleCard } from "@/components/portal/VehicleCard";
+import type { PortalMe } from "@/types/portal";
 
 // Server Component, no pasa por el proxy genérico de staff (ese está
 // atado a la cookie de staff) — para un solo endpoint de solo lectura no
@@ -72,59 +45,8 @@ export default async function MiVehiculoPage() {
         )}
 
         <div className="space-y-6 sm:grid sm:grid-cols-2 sm:gap-6 sm:space-y-0 lg:grid-cols-3">
-          {vehicles.map(({ vehicle, budgets, services }) => (
-            <div key={vehicle.vehicleId} className="space-y-4 rounded-lg border border-border bg-surface p-4 sm:bg-surface-2">
-              <div>
-                <p className="font-semibold text-light">
-                  {vehicle.brand} {vehicle.model}
-                </p>
-                <p className="text-sm text-muted">
-                  {vehicle.plate}
-                  {vehicle.year ? ` · ${vehicle.year}` : ""} · {vehicle.currentMileage} km
-                </p>
-              </div>
-
-              {budgets.length > 0 && (
-                <div>
-                  <p className="mb-2 text-sm font-semibold text-light">Presupuestos</p>
-                  <div className="space-y-2">
-                    {budgets.map(({ budget, details, total }) => (
-                      <div key={budget.budgetId} className="rounded-md bg-surface-2 p-3 text-sm sm:bg-surface">
-                        <div className="flex flex-wrap items-baseline justify-between gap-x-2">
-                          <span className="text-light">{budget.number}</span>
-                          <span className="text-accent">{STATUS_LABELS[budget.status] ?? budget.status}</span>
-                        </div>
-                        <ul className="mt-1 space-y-0.5 text-muted">
-                          {details.map((d, i) => (
-                            <li key={i} className="wrap-break-word">
-                              {d.description} — ${d.subtotal.toFixed(2)}
-                            </li>
-                          ))}
-                        </ul>
-                        <p className="mt-1 font-medium text-light">Total: ${total.toFixed(2)}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {services.length > 0 && (
-                <div>
-                  <p className="mb-2 text-sm font-semibold text-light">Historial de service</p>
-                  <ul className="space-y-1 text-sm text-muted">
-                    {services.map((s) => (
-                      <li key={s.serviceId}>
-                        {s.date} — {s.serviceType} ({s.mileage} km)
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {budgets.length === 0 && services.length === 0 && (
-                <p className="text-sm text-muted">Todavía no hay movimientos para este vehículo.</p>
-              )}
-            </div>
+          {vehicles.map((item) => (
+            <VehicleCard key={item.vehicle.vehicleId} {...item} />
           ))}
         </div>
       </div>
