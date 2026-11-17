@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { PORTAL_TOKEN_COOKIE } from "@/lib/auth/portalCookies";
-import { VehicleCard } from "@/components/portal/VehicleCard";
+import { VehiclePicker } from "@/components/portal/VehiclePicker";
 import type { PortalMe } from "@/types/portal";
 
 // Server Component, no pasa por el proxy genérico de staff (ese está
@@ -40,15 +40,11 @@ export default async function MiVehiculoPage() {
           <h1 className="text-xl font-bold text-light sm:text-2xl">Hola, {client.name}</h1>
         </div>
 
-        {vehicles.length === 0 && (
+        {vehicles.length === 0 ? (
           <p className="text-sm text-muted">Todavía no tenés vehículos cargados.</p>
+        ) : (
+          <VehiclePicker vehicles={vehicles} />
         )}
-
-        <div className="space-y-6 sm:grid sm:grid-cols-2 sm:gap-6 sm:space-y-0 lg:grid-cols-3">
-          {vehicles.map((item) => (
-            <VehicleCard key={item.vehicle.vehicleId} {...item} />
-          ))}
-        </div>
       </div>
     </main>
   );
