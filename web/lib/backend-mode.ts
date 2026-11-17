@@ -28,6 +28,7 @@ const REAL_BACKEND_RESOURCES = new Set([
   "admin",
   "metrics",
   "vehicle-catalog",
+  "work-orders",
 ]);
 
 // Para mostrar en UI si hiciera falta — no usar para decidir ruteo, para
