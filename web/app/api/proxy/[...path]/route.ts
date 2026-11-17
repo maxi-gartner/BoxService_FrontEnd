@@ -61,7 +61,8 @@ async function handle(req: NextRequest, path: string[]) {
     status: upstreamResponse.status,
     headers: { "Content-Type": "application/json" },
   });
-  } catch {
+  } catch (err) {
+    console.error(`[proxy] upstream fetch failed for ${req.method} ${pathname} (body: ${rawBody?.byteLength ?? 0} bytes):`, err);
     return NextResponse.json({ success: false, data: null, error: { code: 503, message: "No pudimos conectar con el servidor." } }, { status: 503 });
   }
 }
