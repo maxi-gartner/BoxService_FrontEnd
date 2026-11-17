@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { logout } from "@/lib/api/auth";
 import { ROLE_LABELS, type Role } from "@/types/auth";
 import { useServiceReminders } from "@/hooks/useServiceReminders";
+import { useOpenWorkOrders } from "@/hooks/useWorkOrders";
 import { cn } from "@/lib/utils";
 
 type NavItem = { href: string; label: string; icon: string; roles?: Role[] };
@@ -13,6 +14,7 @@ type NavItem = { href: string; label: string; icon: string; roles?: Role[] };
 // no opera un taller, administra talleres — no tiene sentido acá.
 const STAFF_NAV_ITEMS: NavItem[] = [
   { href: "/taller", label: "Taller", icon: "🔧" },
+  { href: "/ordenes-trabajo", label: "Órdenes de trabajo", icon: "🗂" },
   { href: "/recordatorios", label: "Recordatorios", icon: "🔔" },
   { href: "/clientes", label: "Clientes", icon: "👤" },
   { href: "/vehiculos", label: "Vehículos", icon: "🚗" },
@@ -49,6 +51,8 @@ export function Sidebar({ userName, role, tenantName, isOpen, onClose }: Props) 
   const pathname = usePathname();
   const router = useRouter();
   const reminders = useServiceReminders(role !== "superadmin");
+  const workOrders = useOpenWorkOrders(role !== "superadmin");
+  const readyCount = workOrders.data?.filter((o) => o.status === "terminado").length ?? 0;
 
   async function handleLogout() {
     await logout();
@@ -93,6 +97,7 @@ export function Sidebar({ userName, role, tenantName, isOpen, onClose }: Props) 
               <span>{item.icon}</span>
               <span>{item.label}</span>
               {item.href === "/recordatorios" && !!reminders.data?.pendingCount && <span className="ml-auto rounded-full bg-accent px-2 text-xs font-bold text-[#0d1117]">{reminders.data.pendingCount}</span>}
+              {item.href === "/ordenes-trabajo" && !!readyCount && <span className="ml-auto rounded-full bg-accent px-2 text-xs font-bold text-[#0d1117]">{readyCount}</span>}
             </Link>
           );
         })}

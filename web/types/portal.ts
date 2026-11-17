@@ -12,6 +12,7 @@ export type PortalService = {
   service: { serviceId: number; date: string; mileage: number; serviceType: string; notes: string };
   details: PortalServiceDetail[];
 };
+export type PortalWorkOrder = { status: string; deliveredAt: string | null };
 export type PortalVehicle = {
   vehicle: {
     vehicleId: number;
@@ -23,5 +24,6 @@ export type PortalVehicle = {
   };
   budgets: PortalBudget[];
   services: PortalService[];
+  workOrder: PortalWorkOrder | null;
 };
 export type PortalMe = { client: { clientId: number; name: string }; vehicles: PortalVehicle[] };

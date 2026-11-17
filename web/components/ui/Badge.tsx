@@ -7,6 +7,12 @@ const STATUS_STYLES: Record<string, string> = {
   issued: "bg-[#f59e0b26] text-accent",
   paid: "bg-[#3fb95026] text-success",
   cancelled: "bg-[#8b949e26] text-muted",
+  // Progreso físico del vehículo en el taller (ver WorkOrder) — estados
+  // propios, no confundir con los de arriba (presupuestos/facturas).
+  en_espera: "bg-[#8b949e26] text-muted",
+  en_proceso: "bg-[#f59e0b26] text-accent",
+  terminado: "bg-[#3fb95026] text-success",
+  entregado: "bg-[#a371f726] text-completed",
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -18,6 +24,10 @@ const STATUS_LABELS: Record<string, string> = {
   issued: "Emitida",
   paid: "Cobrada",
   cancelled: "Anulada",
+  en_espera: "En espera",
+  en_proceso: "En proceso",
+  terminado: "Terminado",
+  entregado: "Entregado",
 };
 
 export function Badge({ status }: { status: string }) {

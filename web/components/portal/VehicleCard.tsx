@@ -2,7 +2,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
-import type { PortalBudget, PortalService, PortalVehicle } from "@/types/portal";
+import { Badge } from "@/components/ui/Badge";
+import type { PortalService, PortalVehicle } from "@/types/portal";
 
 const STATUS_LABELS: Record<string, string> = {
   sent: "Enviado",
@@ -10,21 +11,6 @@ const STATUS_LABELS: Record<string, string> = {
   completed: "Completado",
   rejected: "Rechazado",
 };
-
-// "¿Ya está listo o no?" en una sola mirada: un presupuesto aprobado y
-// todavía sin service generado significa que el trabajo está autorizado
-// pero no se hizo — recién pasa a "completed" cuando se genera el
-// service (ver BudgetRepository.AssignService). Eso es lo que distingue
-// "en proceso" de "listo para retirar".
-function vehicleStatus(budgets: PortalBudget[]): { label: string; className: string } | null {
-  if (budgets.some(({ budget }) => budget.status === "approved")) {
-    return { label: "⚙ En proceso", className: "bg-accent-dim text-accent" };
-  }
-  if (budgets.some(({ budget }) => budget.status === "completed")) {
-    return { label: "✓ Listo para retirar", className: "border border-success text-success" };
-  }
-  return null;
-}
 
 function ServiceRow({ item }: { item: PortalService }) {
   const [open, setOpen] = useState(false);
@@ -59,11 +45,10 @@ function ServiceRow({ item }: { item: PortalService }) {
   );
 }
 
-export function VehicleCard({ vehicle, budgets, services }: PortalVehicle) {
+export function VehicleCard({ vehicle, budgets, services, workOrder }: PortalVehicle) {
   const [inquiry, setInquiry] = useState<{ type: "ok" | "error"; text: string } | null>(null);
   const [sending, setSending] = useState(false);
   const [asked, setAsked] = useState(false);
-  const status = vehicleStatus(budgets);
 
   async function askStatus() {
     setSending(true);
@@ -96,11 +81,7 @@ export function VehicleCard({ vehicle, budgets, services }: PortalVehicle) {
             {vehicle.year ? ` · ${vehicle.year}` : ""} · {vehicle.currentMileage} km
           </p>
         </div>
-        {status && (
-          <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${status.className}`}>
-            {status.label}
-          </span>
-        )}
+        {workOrder && <Badge status={workOrder.status} />}
       </div>
 
       {budgets.length > 0 && (

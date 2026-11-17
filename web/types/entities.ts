@@ -227,6 +227,31 @@ export type VehicleUpdateRequest = {
   currentMileage?: number;
 };
 
+// Progreso físico del vehículo en el taller — independiente del estado
+// del presupuesto (ver Budget.status). Secuencia estricta, sin saltos.
+export type WorkOrderStatus = "en_espera" | "en_proceso" | "terminado" | "entregado";
+
+export type WorkOrder = {
+  orderId: number | null;
+  status: WorkOrderStatus | null;
+  notes: string | null;
+  createdAt: string | null;
+  startedAt: string | null;
+  finishedAt: string | null;
+  deliveredAt: string | null;
+};
+
+export type WorkOrderRow = {
+  orderId: number;
+  vehicleId: number;
+  status: WorkOrderStatus;
+  notes: string | null;
+  clientName: string;
+  vehicle: string;
+  plate: string;
+  createdAt: string;
+};
+
 // Sugerencias de marca/modelo/versión al cargar un vehículo, sacadas del
 // catálogo público de Mercado Libre Argentina (GET /vehicle-catalog/*).
 // Solo son sugerencias — los campos siguen aceptando texto libre.
