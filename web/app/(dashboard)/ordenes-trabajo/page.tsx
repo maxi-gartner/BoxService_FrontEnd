@@ -8,28 +8,16 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Alert } from "@/components/ui/Alert";
 import { VehicleSearch } from "@/components/taller/VehicleSearch";
-import { useOpenWorkOrders, useAdvanceWorkOrder, useReceiveVehicle } from "@/hooks/useWorkOrders";
+import { useOpenWorkOrders, useAdvanceWorkOrder, useReceiveVehicle, useCancelWorkOrder } from "@/hooks/useWorkOrders";
 import { ApiClientError } from "@/lib/api/client";
+import { NEXT_STATUS, NEXT_LABEL, type OpenWorkOrderStatus } from "@/lib/workOrderTransitions";
 import type { Vehicle, WorkOrderStatus } from "@/types/entities";
 
-type OpenStatus = "en_espera" | "en_proceso" | "terminado";
-
-const COLUMNS: { status: OpenStatus; title: string }[] = [
+const COLUMNS: { status: OpenWorkOrderStatus; title: string }[] = [
   { status: "en_espera", title: "En espera" },
   { status: "en_proceso", title: "En proceso" },
   { status: "terminado", title: "Terminado" },
 ];
-
-const NEXT_STATUS: Record<OpenStatus, WorkOrderStatus> = {
-  en_espera: "en_proceso",
-  en_proceso: "terminado",
-  terminado: "entregado",
-};
-const NEXT_LABEL: Record<OpenStatus, string> = {
-  en_espera: "Pasar a en proceso",
-  en_proceso: "Marcar terminado",
-  terminado: "Entregar al cliente",
-};
 
 function timeAgo(iso: string): string {
   const minutes = Math.floor((Date.now() - new Date(iso).getTime()) / 60_000);
@@ -42,14 +30,27 @@ function timeAgo(iso: string): string {
 export default function OrdenesTrabajoPage() {
   const orders = useOpenWorkOrders();
   const advance = useAdvanceWorkOrder();
+  const cancel = useCancelWorkOrder();
   const receive = useReceiveVehicle();
   const [showReceive, setShowReceive] = useState(false);
   const [error, setError] = useState("");
 
+  // Nada de advance.isPending/cancel.isPending en los botones de abajo:
+  // son mutaciones COMPARTIDAS por todas las tarjetas del tablero, así
+  // que atarles el loading/disabled dejaría a TODAS las tarjetas
+  // congeladas apenas se clickea una sola. El propio <Button> ya trackea
+  // su busy-state por click (ver components/ui/Button.tsx), que es lo
+  // que corresponde acá.
   async function handleAdvance(id: number, next: WorkOrderStatus) {
     setError("");
     try { await advance.mutateAsync({ id, status: next }); }
     catch (err) { setError(err instanceof ApiClientError ? err.message : "No se pudo actualizar el estado."); }
+  }
+
+  async function handleCancel(id: number) {
+    setError("");
+    try { await cancel.mutateAsync(id); }
+    catch (err) { setError(err instanceof ApiClientError ? err.message : "No se pudo cancelar la recepción."); }
   }
 
   async function handleReceive(vehicle: Vehicle) {
@@ -112,12 +113,15 @@ export default function OrdenesTrabajoPage() {
                     <div className="flex flex-wrap items-center gap-3 pt-1">
                       <Button
                         size="sm"
-                        loading={advance.isPending}
-                        disabled={advance.isPending}
                         onClick={() => handleAdvance(order.orderId, NEXT_STATUS[column.status])}
                       >
                         {NEXT_LABEL[column.status]}
                       </Button>
+                      {column.status === "en_espera" && (
+                        <Button size="sm" variant="secondary" onClick={() => handleCancel(order.orderId)}>
+                          Cancelar
+                        </Button>
+                      )}
                       <Link href={`/taller?id=${order.vehicleId}`} className="text-sm text-accent hover:underline">
                         Ver vehículo
                       </Link>

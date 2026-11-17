@@ -9,24 +9,17 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { useVehicleWorkOrder, useReceiveVehicle, useAdvanceWorkOrder } from "@/hooks/useWorkOrders";
 import { ApiClientError } from "@/lib/api/client";
+import { NEXT_STATUS, NEXT_LABEL } from "@/lib/workOrderTransitions";
 import type { Vehicle, WorkOrderStatus } from "@/types/entities";
-
-const NEXT_STATUS: Record<WorkOrderStatus, WorkOrderStatus | null> = {
-  en_espera: "en_proceso",
-  en_proceso: "terminado",
-  terminado: "entregado",
-  entregado: null,
-};
-const NEXT_LABEL: Record<WorkOrderStatus, string> = {
-  en_espera: "Pasar a en proceso",
-  en_proceso: "Marcar terminado",
-  terminado: "Entregar al cliente",
-  entregado: "Recibir de nuevo",
-};
 
 export function VehicleWorkspaceHeader({ vehicle }: { vehicle: Vehicle }) {
   const { data: client, error: clientLoadError, isLoading: clientLoading, refetch: refetchClient } = useQuery({ queryKey: ["clients", vehicle.clientId], queryFn: () => clientsApi.getById(vehicle.clientId) });
-  const { data: workOrder } = useVehicleWorkOrder(vehicle.vehicleId);
+  // isLoading (no solo "data"): mientras esto todavía no respondió,
+  // workOrder es undefined y no hay que leerlo como "nunca se recibió" —
+  // si no, por un instante se muestra "Recibir vehículo" para un auto
+  // que ya tiene una orden abierta, y un click ahí dispara un 409 en vez
+  // de la acción que la persona realmente quería (avanzar el estado).
+  const { data: workOrder, isLoading: workOrderLoading } = useVehicleWorkOrder(vehicle.vehicleId);
   const receive = useReceiveVehicle();
   const advance = useAdvanceWorkOrder();
   const [error, setError] = useState("");
@@ -45,10 +38,10 @@ export function VehicleWorkspaceHeader({ vehicle }: { vehicle: Vehicle }) {
 
   const loadError = clientLoadError;
   if (loadError) return <ErrorState error={loadError} resource="la información" onRetry={() => { if (clientLoadError) void refetchClient(); }} />;
-  if (clientLoading) return <LoadingState label="Cargando la información..." />;
+  if (clientLoading || workOrderLoading) return <LoadingState label="Cargando la información..." />;
 
   const busy = receive.isPending || advance.isPending;
-  const next = workOrder?.status ? NEXT_STATUS[workOrder.status] : null;
+  const next = workOrder?.status && workOrder.status !== "entregado" ? NEXT_STATUS[workOrder.status] : null;
 
   return (
     <Card className="mb-4 border-l-2 border-l-accent">
@@ -73,7 +66,7 @@ export function VehicleWorkspaceHeader({ vehicle }: { vehicle: Vehicle }) {
           )}
           {workOrder?.orderId && workOrder.status === "entregado" && (
             <Button size="sm" variant="secondary" loading={busy} disabled={busy} onClick={handleReceive}>
-              {NEXT_LABEL.entregado}
+              Recibir de nuevo
             </Button>
           )}
           {workOrder?.orderId && workOrder.status && workOrder.status !== "entregado" && next && (
